@@ -1,0 +1,17 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/FliegeMonoVF.ttf",
+      "sha1": "068d85272429fd2711552c9d1e80aa9c3dc19979"
+    },
+    {
+      "path": "assets/fonts/Lexend-VariableFont_wght.ttf",
+      "sha1": "7c1eeee7ea029415d7e6deeea3701a4b7bd5287e"
+    },
+    {
+      "path": "assets/fonts/VariableFont_wght.ttf",
+      "sha1": "83708d011b4d9bab0f4e275cf22b588558037a79"
+    }
+  ]
+}
