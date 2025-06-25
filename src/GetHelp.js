@@ -5,46 +5,30 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  // Image, // Not currently used, can be added back if icons are desired
   Linking,
   useColorScheme,
   StatusBar,
-  Platform, // For platform-specific styling
+  Platform,
 } from 'react-native';
-// Removed: import { Colors } from 'react-native/Libraries/NewAppScreen';
 
-// --- Theme Colors ---
 const lightThemeColors = {
-  screenBackground: '#F4F6F8', // Softer white for a premium feel
-  textPrimary: '#1A202C',    // Dark primary text for readability
-  textSecondary: '#4A5568',  // Softer secondary text
-  linkColor: 'rgba(20, 52, 164, 1)', // Your brand's primary color for links
-  borderColor: '#E2E8F0',      // Light border for dividers
+  screenBackground: '#F4F6F8',
+  textPrimary: '#1A202C',
+  textSecondary: '#4A5568',
+  linkColor: 'rgba(20, 52, 164, 1)',
+  borderColor: '#E2E8F0',
   statusBarContent: 'dark-content',
-  // Bottom Nav (if it were on this screen, styles would be similar to other screens)
-  // bottomNavBackground: '#FFFFFF',
-  // bottomNavActiveTint: 'rgba(20, 52, 164, 1)',
-  // bottomNavInactiveTint: '#A0AEC0',
-  // bottomNavShadowColor: '#000000',
-  // elevation: 5,
 };
 
 const darkThemeColors = {
-  screenBackground: '#1A202C', // Dark blue-gray background
-  textPrimary: '#E2E8F0',    // Light primary text
-  textSecondary: '#A0AEC0',  // Lighter secondary text
-  linkColor: '#63B3ED',        // Accessible blue for links in dark mode
-  borderColor: '#4A5568',      // Darker border for dividers
+  screenBackground: '#1A202C',
+  textPrimary: '#E2E8F0',
+  textSecondary: '#A0AEC0',
+  linkColor: '#63B3ED',
+  borderColor: '#4A5568',
   statusBarContent: 'light-content',
-  // Bottom Nav (if it were on this screen)
-  // bottomNavBackground: '#2D3748',
-  // bottomNavActiveTint: '#63B3ED',
-  // bottomNavInactiveTint: '#718096',
-  // bottomNavShadowColor: '#000000',
-  // elevation: 0, // Prefer borders
 };
 
-// --- Dynamic Styles ---
 const createGetHelpStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
@@ -52,66 +36,64 @@ const createGetHelpStyles = (theme) => StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingHorizontal: 25, // Increased horizontal padding for content
-    paddingTop: 20, // Add some top padding for the content itself
-    paddingBottom: 40, // Ensure content is well above any potential bottom elements or OS gestures
+    paddingHorizontal: 25,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   title: {
-    fontSize: 24, // Larger title for more impact
+    fontSize: 24,
     textAlign: 'center',
-    marginTop: Platform.OS === 'ios' ? 40 : 25, // Adjust for status bar height
+    marginTop: Platform.OS === 'ios' ? 40 : 25,
     marginBottom: 15,
-    fontWeight: '600', // Semi-bold
+    fontWeight: '600',
     color: theme.textPrimary,
   },
   sectionDivider: {
     height: 1,
     backgroundColor: theme.borderColor,
-    marginHorizontal: 20, // Match horizontal padding of content if desired, or make wider
-    marginBottom: 25, // More space after the divider
+    marginHorizontal: 20,
+    marginBottom: 25,
   },
   introText: {
     fontSize: 16,
     color: theme.textSecondary,
-    lineHeight: 26, // Increased line height for readability
-    textAlign: 'left', // Default, but good to be explicit
-    marginBottom: 30, // More space before the email link
+    lineHeight: 26,
+    textAlign: 'left',
+    marginBottom: 30,
   },
   emailLinkButton: {
-    alignSelf: 'flex-start', // Keep it aligned to the start of its container
-    paddingVertical: 10, // Increase touchable area
+    alignSelf: 'flex-start',
+    paddingVertical: 10,
     marginBottom: 30,
   },
   emailTextWrapper: {
-    flexDirection: 'row', // To align emoji and text
+    flexDirection: 'row',
     alignItems: 'center',
   },
   emailEmoji: {
-    fontSize: 20, // Slightly larger emoji
+    fontSize: 20,
     marginRight: 8,
-    color: theme.textPrimary, // Make emoji color consistent with text or a subtle accent
+    color: theme.textPrimary,
   },
   emailLink: {
     textDecorationLine: 'underline',
     color: theme.linkColor,
-    fontWeight: '600', // Semi-bold for the link
-    fontSize: 17, // Slightly larger link text
+    fontWeight: '600',
+    fontSize: 17,
   },
   closingText: {
     fontSize: 16,
     color: theme.textSecondary,
     lineHeight: 26,
     textAlign: 'center',
-    marginTop: 20, // Space from the email link
+    marginTop: 20,
   },
-  // Removed bottomNav styles as they are not rendered on this screen's JSX
-  // If you add a bottom nav here, copy the themed styles from another component.
 });
 
 const GetHelp = ({ navigation }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
-  const styles = createGetHelpStyles(theme); // Generate styles based on the theme
+  const styles = createGetHelpStyles(theme);
 
   const handleEmailPress = () => {
     Linking.openURL('mailto:support@allrounderbaby.com').catch(err =>
@@ -119,15 +101,11 @@ const GetHelp = ({ navigation }) => {
     );
   };
 
-  // Note: BackHandler logic is usually handled by React Navigation's default behavior
-  // unless you need specific override for this screen (e.g., show a confirmation dialog).
-  // If this screen is part of a stack navigator, the header's back button will work.
-
   return (
     <View style={styles.container}>
       <StatusBar
         barStyle={theme.statusBarContent}
-        backgroundColor={theme.screenBackground} // Match screen background
+        backgroundColor={theme.screenBackground}
       />
       <Text style={styles.title}>Customer Support 💕</Text>
       <View style={styles.sectionDivider} />
@@ -145,7 +123,6 @@ const GetHelp = ({ navigation }) => {
           Your parenting journey matters to us! 🌟✨
         </Text>
       </ScrollView>
-      {/* No Bottom Nav Bar is rendered in the provided JSX for this screen */}
     </View>
   );
 };

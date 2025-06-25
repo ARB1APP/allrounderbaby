@@ -15,7 +15,6 @@ import { Colors } from 'react-native/Libraries/NewAppScreen';
 import Orientation from 'react-native-orientation-locker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// !! IMPORTANT: Verify this URL is absolutely correct for your API base !!
 const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
 
 const VideoPlayerScreen = () => {
@@ -46,28 +45,21 @@ const VideoPlayerScreen = () => {
 
   const isDarkMode = useColorScheme() === 'dark';
 
-  // Refs for mutable values that don't trigger re-renders
   const playerRef = useRef(null);
-  const progressRef = useRef(0); // Stores current playback position in ms
-  const totalDurationRef = useRef(0); // Stores total video duration in ms
-  const targetSeekPositionRef = useRef(0); // Stores the position to seek to (in seconds)
-  const isSeekingRef = useRef(false); // Flag to indicate if a seek operation is in progress
-  const hasShownLimitAlertRef = useRef(false); // Prevents multiple view limit alerts
-  const initialSeekAttemptedRef = useRef(false); // Ensures initial seek only happens once per video load
-  const saveProgressTimeoutRef = useRef(null); // Timeout for debouncing save progress
+  const progressRef = useRef(0);
+  const totalDurationRef = useRef(0);
+  const targetSeekPositionRef = useRef(0);
+  const isSeekingRef = useRef(false);
+  const hasShownLimitAlertRef = useRef(false);
+  const initialSeekAttemptedRef = useRef(false);
+  const saveProgressTimeoutRef = useRef(null);
 
-  // State variables that trigger re-renders
-  const [isLoading, setIsLoading] = useState(true); // Manages loading spinner visibility
-  const [error, setError] = useState(null); // Stores error messages
-  const [totalViews, setTotalViews] = useState(0); // Stores total views from API
-  const [isViewLimitReached, setIsViewLimitReached] = useState(false); // Flag for view limit
-  const [isPlayerReady, setIsPlayerReady] = useState(false); // Flag indicating player is initialized and ready
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalViews, setTotalViews] = useState(0);
+  const [isViewLimitReached, setIsViewLimitReached] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
-  /**
-   * Saves video progress to the backend API.
-   * @param {number} currentTimeMs The current playback time in milliseconds.
-   * @param {boolean} [isFinalSave=false] True if this is the final save (e.g., video ended).
-   */
   const saveProgress = useCallback(async (currentTimeMs, isFinalSave = false) => {
     console.log(`saveProgress called: currentTimeMs=${currentTimeMs}, isFinalSave=${isFinalSave}, isViewLimitReached=${isViewLimitReached}`);
     if (isViewLimitReached) {
@@ -95,13 +87,11 @@ const VideoPlayerScreen = () => {
 
       const currentTimeSeconds = Math.floor(currentTimeMs / 1000);
 
-      // Only save if progress is meaningful (not 0, unless it's a final save)
       if (currentTimeSeconds <= 0 && !isFinalSave) {
         console.log("Save progress skipped: current time is 0 and not a final save.");
         return;
       }
 
-      // Ensure total_duration_seconds is a valid number, prioritizing actual duration
       const finalTotalDurationSeconds =
         totalDurationRef.current > 0
           ? Math.floor(totalDurationRef.current / 1000)
@@ -143,14 +133,8 @@ const VideoPlayerScreen = () => {
     }
   }, [videoId, url, isViewLimitReached, videoLengthFromParams]);
 
-  /**
-   * Checks if the view limit for the video has been reached.
-   * If reached, it sets the state and shows an alert.
-   * @param {number} viewCount The current total view count for the video.
-   * @returns {boolean} True if the view limit is reached, false otherwise.
-   */
   const checkViewLimit = useCallback((viewCount) => {
-    const MAX_VIEWS = 3; // Define your maximum view limit
+    const MAX_VIEWS = 3;
     console.log(`checkViewLimit: Current views = ${viewCount}, Max views = ${MAX_VIEWS}`);
     if (viewCount >= MAX_VIEWS) {
       setIsViewLimitReached(true);
@@ -171,10 +155,6 @@ const VideoPlayerScreen = () => {
     return false;
   }, [navigation]);
 
-  /**
-   * Fetches the last watched position for the current video from the backend API.
-   * @returns {Promise<number>} The last watched position in seconds, or 0 if not found/error, or -1 if view limit reached.
-   */
   const fetchLastWatchedPosition = useCallback(async () => {
     console.log('fetchLastWatchedPosition called.');
     if (!videoId) {
@@ -256,24 +236,21 @@ const VideoPlayerScreen = () => {
     }
   }, [videoId, url, checkViewLimit]);
 
-  // useEffect for handling component focus/mount and cleanup
   useFocusEffect(
     useCallback(() => {
       console.log('--- useFocusEffect: Component Focused ---');
-      // Reset all relevant states and refs when screen comes into focus
       setIsLoading(true);
       setError(null);
       progressRef.current = 0;
       totalDurationRef.current = 0;
       setIsPlayerReady(false);
-      targetSeekPositionRef.current = 0; // Reset target seek
+      targetSeekPositionRef.current = 0;
       setTotalViews(0);
       setIsViewLimitReached(false);
       isSeekingRef.current = false;
       hasShownLimitAlertRef.current = false;
-      initialSeekAttemptedRef.current = false; // Reset for a fresh seek attempt for THIS component instance
+      initialSeekAttemptedRef.current = false;
 
-      // Clear any pending save progress timeout
       if (saveProgressTimeoutRef.current) {
         clearTimeout(saveProgressTimeoutRef.current);
         saveProgressTimeoutRef.current = null;
@@ -298,7 +275,6 @@ const VideoPlayerScreen = () => {
           } else {
             console.log('initializePlayerAndFetchProgress: No seek needed (lastPosition is 0).');
           }
-          // The actual seek will now be triggered by the useEffect below watching isPlayerReady
         } catch (err) {
           setError("Could not load video details.");
           setIsLoading(false);
@@ -307,17 +283,14 @@ const VideoPlayerScreen = () => {
       };
       initializePlayerAndFetchProgress();
 
-      // Cleanup function for when the component loses focus or unmounts
       return () => {
         console.log('--- useFocusEffect Cleanup: Component Unfocused/Unmounting ---');
-        // Clear any pending save progress timeout
         if (saveProgressTimeoutRef.current) {
           clearTimeout(saveProgressTimeoutRef.current);
           saveProgressTimeoutRef.current = null;
           console.log('Cleanup: Cleared save progress timeout.');
         }
 
-        // Attempt a final save if not view limited
         const lastKnownTime = progressRef.current;
         if (lastKnownTime > 0 && !isViewLimitReached) {
           console.log("Cleanup: Attempting final progress save for:", lastKnownTime);
@@ -328,20 +301,19 @@ const VideoPlayerScreen = () => {
           console.log(`Cleanup: Skipping final save. lastKnownTime=${lastKnownTime}, isViewLimitReached=${isViewLimitReached}`);
         }
 
-        // Release player resources
         if (playerRef.current) {
           try {
             console.log('Cleanup: Attempting to pause and release VdoPlayerView.');
             if (typeof playerRef.current.pause === 'function') {
-              playerRef.current.pause(); // Explicitly pause
+              playerRef.current.pause();
             }
             if (typeof playerRef.current.release === 'function') {
-              playerRef.current.release(); // Explicitly release
+              playerRef.current.release();
             }
           } catch (e) {
             console.error('Cleanup: Error pausing or releasing VdoPlayerView:', e);
           } finally {
-            playerRef.current = null; // Important to nullify ref
+            playerRef.current = null;
             console.log('Cleanup: playerRef.current set to null.');
           }
         } else {
@@ -351,7 +323,6 @@ const VideoPlayerScreen = () => {
     }, [fetchLastWatchedPosition, saveProgress, isViewLimitReached, navigation])
   );
 
-  // Effect to re-evaluate view limit if totalViews state changes
   useEffect(() => {
     if (totalViews > 0 || isViewLimitReached) {
       console.log(`useEffect [totalViews]: Checking view limit with totalViews=${totalViews}`);
@@ -359,46 +330,38 @@ const VideoPlayerScreen = () => {
     }
   }, [totalViews, checkViewLimit, isViewLimitReached]);
 
-  // ** IMPORTANT: NEW/MODIFIED EFFECT FOR SEEKING **
   useEffect(() => {
-    // This effect ensures seek is attempted when player is ready AND a target position exists,
-    // and it hasn't been attempted for the current video session.
     console.log(`useEffect [isPlayerReady, targetSeekPositionRef.current]: isPlayerReady=${isPlayerReady}, targetSeekPosition=${targetSeekPositionRef.current}, initialSeekAttempted=${initialSeekAttemptedRef.current}`);
 
     if (isPlayerReady && targetSeekPositionRef.current > 0 && !initialSeekAttemptedRef.current) {
-      initialSeekAttemptedRef.current = true; // Mark as attempted for this component instance
-      isSeekingRef.current = true; // Indicate seek is in progress
+      initialSeekAttemptedRef.current = true;
+      isSeekingRef.current = true;
 
       if (playerRef.current && typeof playerRef.current.seek === 'function') {
         const seekTimeMs = targetSeekPositionRef.current * 1000;
         console.log(`useEffect [seek trigger]: Attempting to seek to ${seekTimeMs}ms (target: ${targetSeekPositionRef.current}s).`);
         playerRef.current.seek(seekTimeMs);
 
-        // Add a small delay before playing after seek for stability
         setTimeout(() => {
-          // Double check playerRef.current just in case component unmounted during delay
           if (playerRef.current && typeof playerRef.current.play === 'function') {
             playerRef.current.play();
             console.log('useEffect [seek trigger]: Player resumed after seek with delay.');
           } else {
             console.warn('useEffect [seek trigger]: playerRef.current or play function not available after seek delay. Player state might be unexpected.');
           }
-        }, 500); // 500ms delay
+        }, 500);
       } else {
         console.warn("useEffect [seek trigger]: playerRef.current.seek is not a function or playerRef.current is null. Cannot perform initial seek.");
-        isSeekingRef.current = false; // Reset seek flag if seek cannot be performed
-        setIsLoading(false); // Hide loading if seek can't happen
+        isSeekingRef.current = false;
+        setIsLoading(false);
       }
     } else if (isPlayerReady && targetSeekPositionRef.current === 0 && !initialSeekAttemptedRef.current) {
-        // If player is ready and no seek needed (start from 0), hide loading and mark initial seek attempted
         initialSeekAttemptedRef.current = true;
         setIsLoading(false);
         console.log('useEffect [seek trigger]: Player ready, no seek needed (starting from 0), hiding loading.');
     }
   }, [isPlayerReady, targetSeekPositionRef.current, initialSeekAttemptedRef.current]);
 
-
-  // VdoPlayerView Callbacks
   const handleLoaded = useCallback(({ duration }) => {
     console.log(`VdoPlayerView handleLoaded: Player reported duration=${duration}ms.`);
     if (typeof duration === 'number' && !isNaN(duration) && duration > 0) {
@@ -426,16 +389,13 @@ const VideoPlayerScreen = () => {
     const targetSeekSeconds = targetSeekPositionRef.current;
     const seekToleranceSeconds = 3;
 
-    // If a seek was initiated and current progress is significantly behind the target
     if (isSeekingRef.current && targetSeekSeconds > 0 && currentProgressSeconds < (targetSeekSeconds - seekToleranceSeconds)) {
-      // console.log(`onProgress: Skipping save - currently seeking. currentProgress=${currentProgressSeconds}s, targetSeek=${targetSeekSeconds}s`);
       return;
     }
 
-    // Once current progress is near or past the target seek position, consider seek complete
     if (isSeekingRef.current && currentProgressSeconds >= (targetSeekSeconds - seekToleranceSeconds)) {
       isSeekingRef.current = false;
-      targetSeekPositionRef.current = 0; // Clear target after successful seek
+      targetSeekPositionRef.current = 0;
       console.log(`onProgress: Seek operation completed around ${currentProgressSeconds}s. Clearing targetSeekPositionRef.`);
     }
 
@@ -448,7 +408,7 @@ const VideoPlayerScreen = () => {
     saveProgressTimeoutRef.current = setTimeout(() => {
       console.log(`onProgress: Debounced saveProgress triggered for ${progress.currentTime}ms.`);
       saveProgress(progress.currentTime);
-    }, 10000); // Save every 10 seconds
+    }, 10000);
   }, [isViewLimitReached, saveProgress]);
 
   const backAction = useCallback(async () => {
@@ -513,7 +473,6 @@ const VideoPlayerScreen = () => {
     console.error('VdoPlayerView Initialization Failure:', err);
     setIsLoading(false);
     const errorMessage = err.errorDescription || "Video initialization failed. Please try again.";
-    setError(errorMessage);
     Alert.alert("Video Error", errorMessage,
       [{
         text: "OK",
@@ -536,7 +495,6 @@ const VideoPlayerScreen = () => {
     console.error('VdoPlayerView Load Error:', errorDescription);
     setIsLoading(false);
     const errorMessage = errorDescription || "Video failed to load. Please try again.";
-    setError(errorMessage);
     Alert.alert("Video Error", errorMessage,
       [{
         text: "OK",
@@ -564,7 +522,6 @@ const VideoPlayerScreen = () => {
       console.log('handleError: Cleared save progress timeout.');
     }
     const errorMessage = errorDescription || "An unknown playback error occurred. Please try again.";
-    setError(errorMessage);
     Alert.alert("Video Error", errorMessage,
       [{
         text: "OK",
@@ -585,17 +542,13 @@ const VideoPlayerScreen = () => {
 
   const handleInitializationSuccess = useCallback(() => {
     console.log('VdoPlayerView handleInitializationSuccess: Player reports ready.');
-    setIsPlayerReady(true); // Player is ready, this will trigger the useEffect for seeking
+    setIsPlayerReady(true);
   }, []);
 
   const onPlaybackStateChanged = useCallback((state) => {
     console.log('VdoPlayerView onPlaybackStateChanged:', state);
-    // You can use this for more fine-grained control or debugging player states
-    // For example, if state.isPlaying is false and state.isBuffering is true for long,
-    // you know it's stuck buffering.
   }, []);
 
-  // useEffect for handling hardware back button
   useEffect(() => {
     console.log('BackHandler useEffect: Adding hardwareBackPress listener.');
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
@@ -611,7 +564,6 @@ const VideoPlayerScreen = () => {
     };
   }, [backAction]);
 
-  // Render logic
   if (!otp || !playbackInfo) {
     return (
       <View style={[styles.container, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter, justifyContent: 'center', alignItems: 'center' }]}>
@@ -656,7 +608,7 @@ const VideoPlayerScreen = () => {
           onProgress={onProgress}
           onLoadError={handleLoadError}
           onError={handleError}
-          onPlaybackStateChanged={onPlaybackStateChanged} // Added for better state monitoring
+          onPlaybackStateChanged={onPlaybackStateChanged}
           onPlaybackComplete={() => {
             console.log('VdoPlayerView onPlaybackComplete.');
             if (!isViewLimitReached) {

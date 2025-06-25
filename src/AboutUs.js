@@ -8,11 +8,9 @@ import {
   Image,
   StatusBar,
   useColorScheme,
-  Platform, // For potential platform-specific styling
+  Platform,
 } from 'react-native';
-// Removed: import { Colors } from 'react-native/Libraries/NewAppScreen'; // Not needed
 
-// --- Theme Colors (Consistent with CashbackforFeedback.js) ---
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
   textPrimary: '#1A202C',
@@ -33,7 +31,6 @@ const darkThemeColors = {
   statusBarContent: 'light-content',
 };
 
-// --- Dynamic Styles ---
 const createCashbackConditionsStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
@@ -44,9 +41,8 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
     paddingBottom: 30, 
     marginTop: 5,
   },
-  // --- Typography & Structure ---
   headerTitle: {
-    fontSize: 17, // Consistent with other header titles
+    fontSize: 17,
     textAlign: 'center',
     marginHorizontal: 20,
     marginTop: 20,
@@ -75,20 +71,17 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
     marginBottom: 20,
     fontSize: 24,
     fontWeight: '700',
-    //color: theme.textPrimary,
-    //textAlign:'center',
-    //color:'#1434a4',
   },
-  listItem: { // For main bullet points or section intros
+  listItem: {
     marginHorizontal: 20,
     fontSize: 15,
     lineHeight: 22,
     color: theme.textSecondary,
-    marginBottom: 10, // Increased margin for better separation
+    marginBottom: 10,
     textAlign: 'left',
   },
-  subListItem: { // For indented details or bullet points under a listItem
-    marginLeft: 35, // Standard indent
+  subListItem: {
+    marginLeft: 35,
     marginRight: 20,
     fontSize: 15,
     lineHeight: 22,
@@ -96,40 +89,34 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
     marginBottom: 8,
     textAlign: 'left',
   },
-  emphasisText: { // For bolding key phrases
+  emphasisText: {
     fontWeight: '600',
-    color: theme.textPrimary, // Make emphasized text stand out
+    color: theme.textPrimary,
   },
-  highlightText: { // For specific highlights like emojis or strong calls to action
+  highlightText: {
     color: theme.accentColor,
     fontWeight: '600',
   },
   finalCallToAction: {
     marginHorizontal: 20,
     marginTop: 25,
-    marginBottom: 15, // Ensure it's the last element before paddingBottom of scrollview kicks in
+    marginBottom: 15,
     fontSize: 15,
     lineHeight: 22,
     color: theme.textSecondary,
     textAlign: 'center',
   },
     logo: {
-    width: 250, // Size of the logo
+    width: 250,
     height: 150,
-    resizeMode: 'cover', // Ensures the whole logo is visible
-    marginBottom: 15, // Space below the logo
-    //borderRadius: 50, // Slightly rounded logo corners
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 5 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 10,
-    // elevation: 5,
+    resizeMode: 'cover',
+    marginBottom: 15,
   }, 
   sectionlogo:{
     width: '100%',
-    alignItems: 'center',   // horizontally center the image
-    justifyContent: 'center', // vertically center (optional)
-    marginVertical: 10, // spacing (optional)
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
   },
   Titlelogo : {
     marginTop: 2,
@@ -146,7 +133,6 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
     marginBottom: 12,
     fontSize: 22,
     fontWeight: '700',
-   // color: theme.textPrimary,
   },
   sectionHeaderFlex:{
     marginHorizontal: 20,
@@ -154,16 +140,15 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
   },
    sectionContainer: {
     padding: 10,
-    marginHorizontal: 16, // Adds some horizontal margin
+    marginHorizontal: 16,
     marginVertical: 10,
-    borderRadius: 12, // Rounded corners for a modern card look
-    borderWidth: 1, // Subtle border
-    // Shadows for a premium feel
+    borderRadius: 12,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 5, // For Android shadow
+    elevation: 5,
   },
 });
 
@@ -174,12 +159,9 @@ const AboutUs = ({ navigation }) => {
   const isDarkMode = useColorScheme() === 'dark';
   useEffect(() => {
     const backAction = () => {
-        // console.log('Hardware back press detected on Cashback Conditions');
         if (navigation.canGoBack()) {
-            // console.log('Navigating back to Cashback for Feedback');
-            navigation.navigate('Cashback for Feedback'); // Explicit navigation
+            navigation.navigate('Cashback for Feedback');
         } else {
-            // console.log('Cannot go back from Cashback Conditions');
         }
         return true; 
     };
@@ -197,8 +179,8 @@ const AboutUs = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
          <Text style={[
                 styles.sectionHeader,
@@ -226,8 +208,8 @@ const AboutUs = ({ navigation }) => {
         <View style={styles.sectionDivider} />
             <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
         <View style={styles.sectionHeaderFlex}>
              <Image
@@ -251,8 +233,8 @@ const AboutUs = ({ navigation }) => {
         </View>
             <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
         <View style={styles.sectionHeaderFlex}>
              <Image
@@ -277,8 +259,8 @@ const AboutUs = ({ navigation }) => {
        <View style={styles.sectionDivider} />
            <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
          <Text style={[
                 styles.sectionHeader,
@@ -287,36 +269,31 @@ const AboutUs = ({ navigation }) => {
             
          <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
-      {/* Header section with image and title */}
       <View style={styles.sectionHeaderFlex}>
         <Image
-          // Assuming 'heart.png' is in '../img/' relative to this component's location
-          source={require('../img/heart.png')} // Your heart icon
+          source={require('../img/heart.png')}
           style={[
             styles.Titlelogo,
-            // Dynamic tint color for the heart icon
-            { tintColor: isDarkMode ? '#fff' : '#dc3545' } // White in dark mode, red in light mode
+            { tintColor: isDarkMode ? '#fff' : '#dc3545' }
           ]}
           accessibilityLabel="Heart icon representing empathy"
         />
         <Text
           style={[
             styles.TitleText,
-            // Dynamic text color for the title
-            { color: isDarkMode ? '#fff' : '#1434a4' } // White in dark mode, blue in light mode
+            { color: isDarkMode ? '#fff' : '#1434a4' }
           ]}
         >
           Empathy at the Core
         </Text>
       </View>
 
-      {/* Introductory paragraph */}
       <Text style={[
         styles.introParagraph,
-        { color: isDarkMode ? '#fff' : '#4A5568'  } // Light gray in dark mode, dark gray in light mode
+        { color: isDarkMode ? '#fff' : '#4A5568'  }
       ]}>
         We understand the joys and struggles of parenting firsthand. We uplift parents with warmth, kindness, and unwavering support.
       </Text>
@@ -324,8 +301,8 @@ const AboutUs = ({ navigation }) => {
 
         <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
    <View style={styles.sectionHeaderFlex}>
              <Image
@@ -349,8 +326,8 @@ const AboutUs = ({ navigation }) => {
     </View>
            <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
      
         <View style={styles.sectionHeaderFlex}>
@@ -375,8 +352,8 @@ const AboutUs = ({ navigation }) => {
         </View>
             <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
         <View style={styles.sectionHeaderFlex}>
              <Image
@@ -400,8 +377,8 @@ const AboutUs = ({ navigation }) => {
         </View>
             <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
         <View style={styles.sectionHeaderFlex}>
              <Image
@@ -427,8 +404,8 @@ const AboutUs = ({ navigation }) => {
         <View style={styles.sectionDivider} />
             <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
          <Text style={[
                 styles.sectionHeader,
@@ -453,8 +430,8 @@ const AboutUs = ({ navigation }) => {
         <View style={styles.sectionDivider} />
             <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
         <Text style={[
                 styles.sectionHeader,
@@ -480,8 +457,8 @@ const AboutUs = ({ navigation }) => {
         <View style={styles.sectionDivider} />
             <View style={[
       styles.sectionContainer,
-      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, // Dynamic background
-      { borderColor: isDarkMode ? '#444' : '#e0e0e0' } // Dynamic border color
+      { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+      { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
     ]}>
          <Text style={[
                 styles.sectionHeader,

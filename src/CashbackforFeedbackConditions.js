@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'; // Added useEffect for BackHandler
+import React, { useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,29 +8,27 @@ import {
   Image,
   useColorScheme,
   StatusBar,
-  BackHandler, // Added BackHandler
-  Platform, // For platform-specific styling
+  BackHandler,
+  Platform,
 } from 'react-native';
-// Removed: import { Colors } from 'react-native/Libraries/NewAppScreen';
 
-// --- Theme Colors ---
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
-  cardBackground: '#FFFFFF', // For video links section
+  cardBackground: '#FFFFFF',
   textPrimary: '#1A202C',
   textSecondary: '#4A5568',
   textMuted: '#718096',
-  accentColor: 'rgba(20, 52, 164, 1)', // Your primary brand color
+  accentColor: 'rgba(20, 52, 164, 1)',
   linkColor: 'rgba(20, 52, 164, 1)',
   borderColor: '#E2E8F0',
-  iconColor: '#4A5568', // General icon color
-  videoIconTint: 'rgba(20, 52, 164, 1)', // Specific for play icon
+  iconColor: '#4A5568',
+  videoIconTint: 'rgba(20, 52, 164, 1)',
   bottomNavBackground: '#FFFFFF',
   bottomNavActiveTint: 'rgba(20, 52, 164, 1)',
   bottomNavInactiveTint: '#A0AEC0',
   bottomNavShadowColor: '#000000',
   statusBarContent: 'dark-content',
-  elevation: 5, // General elevation for cards/nav
+  elevation: 5,
 };
 
 const darkThemeColors = {
@@ -39,8 +37,8 @@ const darkThemeColors = {
   textPrimary: '#E2E8F0',
   textSecondary: '#A0AEC0',
   textMuted: '#718096',
-  accentColor: 'rgba(40, 72, 184, 1)', // Brighter accent for dark
-  linkColor: '#63B3ED', // Lighter blue for links
+  accentColor: 'rgba(40, 72, 184, 1)',
+  linkColor: '#63B3ED',
   borderColor: '#4A5568',
   iconColor: '#A0AEC0',
   videoIconTint: 'rgba(40, 72, 184, 1)',
@@ -49,21 +47,18 @@ const darkThemeColors = {
   bottomNavInactiveTint: '#718096',
   bottomNavShadowColor: '#000000',
   statusBarContent: 'light-content',
-  elevation: 0, // Prefer borders in dark mode
+  elevation: 0,
 };
 
-// --- Dynamic Styles ---
 const createCashbackStyles = (theme) => StyleSheet.create({
-  // --- Main Container & ScrollView ---
   container: {
     flex: 1,
     backgroundColor: theme.screenBackground,
   },
   scrollViewContent: {
     flexGrow: 1,
-    paddingBottom: 20, // Space for content before bottom nav
+    paddingBottom: 20,
   },
-  // --- Typography & Structure ---
   headerTitle: {
     fontSize: 17,
     textAlign: 'center',
@@ -85,7 +80,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     fontSize: 12,
     color: theme.textMuted,
     marginBottom: 20,
-    marginTop: 10, // Added some top margin
+    marginTop: 10,
   },
   introParagraph: {
     marginHorizontal: 20,
@@ -100,7 +95,6 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     marginBottom: 12,
     fontSize: 24,
     fontWeight: '600',
-    //color: theme.textPrimary,
   },
   listItem: {
     marginHorizontal: 10,
@@ -109,7 +103,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     color: theme.textSecondary,
     marginBottom: 8,
   },
-  subListItem: { // For indented points or details under a list item
+  subListItem: {
     marginLeft: 15,
     marginRight: 20,
     fontSize: 15,
@@ -121,19 +115,19 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     fontWeight: '600',
     color: theme.textPrimary,
   },
-  highlightText: { // For emojis or special callouts
+  highlightText: {
     color: theme.accentColor,
     fontWeight: '600',
   },
   importantDetailsBox: {
     marginHorizontal: 20,
-    marginTop: 0, // Reduced from checkListBox
+    marginTop: 0,
     padding: 15,
-    backgroundColor: theme.cardBackground, // Use card background for this box
+    backgroundColor: theme.cardBackground,
     borderRadius: 8,
     borderWidth: theme.elevation === 0 ? 1 : 0,
     borderColor: theme.borderColor,
-    elevation: theme.elevation / 2, // Subtle elevation
+    elevation: theme.elevation / 2,
     shadowColor: theme.bottomNavShadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -151,7 +145,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     lineHeight: 22,
     color: theme.textSecondary,
     textAlign: 'center',
-    fontWeight: '500', // Give it some prominence
+    fontWeight: '500',
   },
   linkButton: {
     alignSelf: 'flex-end',
@@ -165,7 +159,6 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  // --- Video Links Section ---
   videoLinksContainer: {
     marginHorizontal: 20,
     marginTop: 20,
@@ -194,7 +187,6 @@ const createCashbackStyles = (theme) => StyleSheet.create({
   videoIcon: {
     width: 28,
     height: 28,
-    //tintColor: theme.videoIconTint,
     marginRight: 12,
   },
   videoTitle: {
@@ -212,14 +204,13 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     backgroundColor: theme.borderColor,
     marginHorizontal: 15,
   },
-  // --- Bottom Navigation ---
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: theme.bottomNavBackground,
     paddingVertical: Platform.OS === 'ios' ? 15 : 10,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 10, // For home indicator
+    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
     borderTopWidth: 1,
     borderTopColor: theme.borderColor,
     shadowColor: theme.bottomNavShadowColor,
@@ -230,7 +221,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
   },
   navItem: {
     alignItems: 'center',
-    flex: 1, // Ensure items take equal space
+    flex: 1,
   },
   navIcon: {
     width: 24,
@@ -240,7 +231,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
   },
   navText: {
     fontSize: 10,
-    fontWeight: '500', // Medium weight for readability
+    fontWeight: '500',
     textAlign: 'center',
   },
 });
@@ -253,22 +244,17 @@ const CashbackforFeedbackConditions = ({ navigation }) => {
 
        useEffect(() => {
     const backAction = () => {
-        // console.log('Hardware back press detected on Cashback Conditions');
         if (navigation.canGoBack()) {
-            // console.log('Navigating back to Cashback for Feedback');
-            navigation.navigate('Cashback for Feedback'); // Explicit navigation
+            navigation.navigate('Cashback for Feedback');
         } else {
-            // console.log('Cannot go back from Cashback Conditions');
         }
-        return true; // Prevent default back action
+        return true;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     return () => {
-        // console.log('Removing back handler from Cashback Conditions');
         backHandler.remove();
-        // StatusBar.setHidden(false); // Only if it was set hidden for this screen
     };
   }, [navigation]);
  
@@ -282,7 +268,6 @@ const CashbackforFeedbackConditions = ({ navigation }) => {
 
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
          <View style={styles.importantDetailsBox}>
-        {/* <Text style={styles.lastUpdatedText}>Last updated: 21st April, 2025</Text> */}
         <Text style={styles.introParagraph}>
            Your opinion matters! 💖 Help us improve <Text style={styles.emphasisText}>AllrounderBaby.com</Text> and <Text style={styles.emphasisText}>get rewarded</Text> with up to <Text style={styles.emphasisText}>₹1,000 / $10 / €10</Text> cashback! 💰
         </Text>
@@ -391,7 +376,6 @@ const CashbackforFeedbackConditions = ({ navigation }) => {
           <Text style={styles.emphasisText}>📲 Submit your feedback now on our website & earn up to ₹1,000 / $10 / €10 !🚀</Text>
         </Text>
          </View>
-
 
 
 

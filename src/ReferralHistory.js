@@ -10,18 +10,16 @@ import {
   useColorScheme,
   Alert,
   StatusBar,
-  ActivityIndicator, // Added ActivityIndicator for loading state
+  ActivityIndicator,
 } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Base URL for your API
 const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
 
 const ReferralHistory = ({ navigation }) => {
   const isDarkMode = useColorScheme() === 'dark';
 
-  // Define theme colors directly within the component for simplicity, matching ReferAndEarn
   const lightThemeColors = {
     screenBackground: '#F4F6F8',
     cardBackground: '#FFFFFF',
@@ -48,13 +46,11 @@ const ReferralHistory = ({ navigation }) => {
     backgroundColor: theme.screenBackground,
   };
 
-  // State for referral history data, loading, token, and userId
   const [referralHistory, setReferralHistory] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // Start loading immediately
+  const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState(null);
   const [userId, setUserId] = useState(null);
 
-  // Load user token and ID from AsyncStorage
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -66,8 +62,8 @@ const ReferralHistory = ({ navigation }) => {
         if (storedToken && storedUserId) {
           fetchReferralHistory(storedToken, storedUserId);
         } else {
-          console.warn("Authentication: Token or User ID not found in AsyncStorage. Cannot fetch referral history.");
-          setIsLoading(false); // Stop loading if credentials are missing
+          console.warn("Authentication: Token or User ID not available for fetching referral history.");
+          setIsLoading(false);
           Alert.alert("Authentication Required", "Please log in to view your referral history.");
         }
       } catch (error) {
@@ -77,11 +73,9 @@ const ReferralHistory = ({ navigation }) => {
       }
     };
     loadUserData();
-  }, []); // Run once on component mount
+  }, []);
 
-  // Function to fetch referral history from the API
   const fetchReferralHistory = async (currentToken, currentUserId) => {
-    // Ensure we have a token and userId before making the API call
     if (!currentToken || !currentUserId) {
       console.log("Skipping fetchReferralHistory: Token or User ID is missing.");
       setIsLoading(false);
@@ -89,7 +83,6 @@ const ReferralHistory = ({ navigation }) => {
     }
 
     setIsLoading(true);
-    // Updated API endpoint as per the user's request
     const API_ENDPOINT = `${url}ReferralTransaction/ReferralTransactionList_Get_ByID?ReferralCodeFromUserID=${currentUserId}`;
     console.log(`Fetching referral history from: ${API_ENDPOINT}`);
 
@@ -114,14 +107,13 @@ const ReferralHistory = ({ navigation }) => {
         }
         console.error("ReferralHistory API Error:", errorData);
         Alert.alert("API Error", `Failed to load referral history: ${errorData.message || response.statusText}. Raw response: ${errorData.rawResponse || 'N/A'}`);
-        setReferralHistory([]); // Clear history on error
+        setReferralHistory([]);
         return;
       }
 
       const jsonResponse = await response.json();
       console.log("ReferralHistory Raw API Response:", jsonResponse);
 
-      // --- CRITICAL CHANGE: Access jsonResponse.data ---
       if (jsonResponse && Array.isArray(jsonResponse.data)) {
         if (jsonResponse.data.length > 0) {
           setReferralHistory(jsonResponse.data);
@@ -132,20 +124,19 @@ const ReferralHistory = ({ navigation }) => {
         }
       } else {
         console.log("API response does not contain a 'data' array or is in an unexpected format.");
-        setReferralHistory([]); // Ensure it's an empty array if no data or invalid format
+        setReferralHistory([]);
       }
 
     } catch (error) {
       console.error("Network or unexpected error fetching referral history:", error);
       Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
-      setReferralHistory([]); // Clear history on network error
+      setReferralHistory([]);
     } finally {
       setIsLoading(false);
     }
   };
 
 
-  // Back button handling
   useEffect(() => {
     const backAction = () => {
       console.log('Hardware back press detected on ReferralHistory screen');
@@ -154,9 +145,9 @@ const ReferralHistory = ({ navigation }) => {
         navigation.navigate('Refer and Earn');
       } else {
         console.log('Cannot go back, navigating to Home');
-        navigation.navigate('Home'); // Fallback to Home if cannot go back
+        navigation.navigate('Home');
       }
-      return true; // Prevent default behavior
+      return true;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -167,11 +158,10 @@ const ReferralHistory = ({ navigation }) => {
     return () => {
       console.log('Removing back handler on ReferralHistory screen unmount');
       backHandler.remove();
-      StatusBar.setHidden(false); // Ensure status bar is visible on exit
+      StatusBar.setHidden(false);
     };
-  }, [navigation]); // Depend on navigation to re-attach if navigation object changes
+  }, [navigation]);
 
-  // Function for the button in case it's used (though backhandler covers it)
   const handlereferAndearnBackpress = () => {
     navigation.navigate('Refer and Earn');
   };
@@ -204,10 +194,6 @@ const ReferralHistory = ({ navigation }) => {
               <Text style={[styles.historyText, { color: theme.textPrimary }]}>
                 Phone Number: <Text style={styles.boldText}>{item.phoneNumber || 'N/A'}</Text>
               </Text>
-              {/* Removed other fields as per user request */}
-              {/* <Text style={[styles.historyText, { color: theme.textPrimary }]}>
-                Amount: <Text style={styles.boldText}>{item.amount ? `₹${item.amount}` : 'N/A'}</Text>
-              </Text> */}
             </View>
           ))
         ) : (
@@ -225,7 +211,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 20, // Add some top padding
+    paddingTop: 20,
   },
   header: {
     flexDirection: 'row',
@@ -238,7 +224,7 @@ const styles = StyleSheet.create({
   backIcon: {
     width: 24,
     height: 24,
-    transform: [{ rotate: '180deg' }], // Rotate to make it a back arrow
+    transform: [{ rotate: '180deg' }],
   },
   headerTitle: {
     fontSize: 22,
@@ -249,7 +235,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 200, // Ensure loading indicator is visible
+    minHeight: 200,
   },
   loadingText: {
     marginTop: 10,

@@ -6,20 +6,16 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  // useColorScheme, // Removed useColorScheme import
-  Linking, // Import Linking to open app settings
-  Platform, // To potentially tailor settings link
+  Linking,
+  Platform,
   BackHandler,
   StatusBar
 } from 'react-native';
-// If you plan to actually request permissions, you'll need a library like:
-// import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
-// --- Hardcoded Style Values (Based on previous lightColors) ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f1f2f2', // Hardcoded background
+    backgroundColor: '#f1f2f2',
   },
   scrollContainer: {
      flexGrow: 1,
@@ -33,42 +29,40 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 25,
-    color: '#000000',   // Hardcoded text color
+    color: '#000000',
     position: 'absolute',
     top: 30,
     left: 0,
     right: 0,
   },
   explanationCard: {
-    backgroundColor: '#ffffff', // Hardcoded card background
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     paddingVertical: 35,
     paddingHorizontal: 25,
     width: '100%',
     alignItems: 'center',
-    elevation: 5, // Hardcoded light mode elevation
-    shadowColor: '#000', // Hardcoded shadow color
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2, // Hardcoded light mode shadow opacity
-    shadowRadius: 5, // Hardcoded light mode shadow radius
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
   permissionIcon: {
     width: 60,
     height: 60,
     resizeMode: 'contain',
     marginBottom: 25,
-    // Optional tint for template icons:
-    // tintColor: 'rgba(20, 52, 164, 1)', // Hardcoded active tint
   },
   explanationText: {
     fontSize: 15,
-    color: '#555555', // Hardcoded secondary text color
+    color: '#555555',
     textAlign: 'center',
     lineHeight: 23,
     marginBottom: 15,
   },
   permissionButton: {
-    backgroundColor: 'rgba(20, 52, 164, 1)', // Hardcoded button background
+    backgroundColor: 'rgba(20, 52, 164, 1)',
     paddingVertical: 13,
     paddingHorizontal: 30,
     borderRadius: 25,
@@ -78,33 +72,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   permissionButtonText: {
-    color: '#ffffff', // Hardcoded button text color
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },
   settingsLink: {
       fontSize: 14,
-      color: 'rgba(20, 52, 164, 1)', // Hardcoded link color
+      color: 'rgba(20, 52, 164, 1)',
       textDecorationLine: 'underline',
       marginTop: 10,
   },
-  // --- Bottom Nav Styles (Hardcoded based on light mode) ---
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#ffffff', // Hardcoded nav background
+    backgroundColor: '#ffffff',
     paddingVertical: 10,
     width: '100%',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    shadowColor: '#000', // Hardcoded shadow color
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2, // Hardcoded light mode shadow opacity
-    shadowRadius: 10, // Hardcoded light mode shadow radius
-    elevation: 10, // Hardcoded light mode elevation
-    borderTopWidth: 0, // No top border in light mode equivalent
-    // borderTopColor: '#ccc', // Not needed
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
   },
   navItem: {
     alignItems: 'center',
@@ -116,41 +107,34 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   activeIcon: {
-    tintColor: 'rgba(20, 52, 164, 1)', // Hardcoded active tint
+    tintColor: 'rgba(20, 52, 164, 1)',
   },
   inactiveIcon: {
-    tintColor: 'gray', // Hardcoded inactive tint
+    tintColor: 'gray',
   },
   navTextActive: {
-    color: 'rgba(20, 52, 164, 1)', // Hardcoded active text color
+    color: 'rgba(20, 52, 164, 1)',
     fontSize: 10,
     marginTop: 4,
     fontWeight: 'bold',
     textAlign: 'center',
   },
   navText: {
-    color: 'gray', // Hardcoded inactive text color
+    color: 'gray',
     fontSize: 10,
     marginTop: 4,
     fontWeight: 'bold',
     textAlign: 'center',
   },
 });
-// --- End of Styles ---
-
 
 const PhotoPermission = ({ navigation }) => {
-  // Removed colorScheme, isDarkMode, colors, and getStyles call
-
-  // --- Placeholder Function for Requesting Permission ---
   const handleRequestPermission = async () => {
     console.log("Attempting to request photo permission...");
-    // IMPORTANT: Implement actual permission request logic here
     alert("Please grant Photo Library access in your device Settings.");
-    Linking.openSettings(); // Open settings directly
+    Linking.openSettings();
   };
 
-  // --- Function to Open App Settings ---
   const openAppSettings = () => {
     Linking.openSettings();
   };
@@ -180,12 +164,10 @@ const PhotoPermission = ({ navigation }) => {
       }, [navigation]);
       
   return (
-    // Use hardcoded styles directly
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Photo Library Access Needed</Text>
 
-        {/* Explanation Card */}
         <View style={styles.explanationCard}>
             <Image
                  source={require('../img/picture.png')}
@@ -198,7 +180,6 @@ const PhotoPermission = ({ navigation }) => {
              We value your privacy and will only access photos when you choose to upload them.
            </Text>
 
-            {/* Action Buttons */}
             <TouchableOpacity style={styles.permissionButton} onPress={handleRequestPermission}>
                  <Text style={styles.permissionButtonText}>Allow Photo Access</Text>
              </TouchableOpacity>
@@ -210,6 +191,5 @@ const PhotoPermission = ({ navigation }) => {
     </View>
   );
 };
-
 
 export default PhotoPermission;

@@ -44,7 +44,6 @@ const AppVersion = ({ navigation }) => {
           style={styles.logo}
           accessibilityLabel="App Logo"
         />
-        {/* <Text style={[styles.appName, textColor]}>Allrounderbaby App</Text> */}
         <Text style={[styles.versionText, textColor]}>Version 1.0.0</Text>
       </View>
     </View>
@@ -61,19 +60,14 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     padding: 0,
     borderRadius: 20, 
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-    // shadowColor: '#000', 
-    // shadowOffset: { width: 0, height: 10 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 20,
-    // elevation: 10, 
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   logo: {
-    width: 250, // Size of the logo
+    width: 250, 
     height: 130,
-    resizeMode: 'cover', // Ensures the whole logo is visible
-    marginBottom: 15, // Space below the logo
-    borderRadius: 50, // Slightly rounded logo corners
+    resizeMode: 'cover', 
+    marginBottom: 15,
+    borderRadius: 50, 
     // shadowColor: '#000',
     // shadowOffset: { width: 0, height: 5 },
     // shadowOpacity: 0.1,

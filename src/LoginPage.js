@@ -4,7 +4,7 @@ import {View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, Sc
 import CheckBox from 'react-native-check-box';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import NetInfo from '@react-native-community/netinfo'; 
-import { useRoute, useFocusEffect } from '@react-navigation/native'; // Import useRoute and useFocusEffect
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 
 const LoginPage = ({ navigation }) => {
     const isDarkMode = useColorScheme() === 'dark';
@@ -27,7 +27,6 @@ const LoginPage = ({ navigation }) => {
     const rememberMePosition = useRef(new Animated.Value(-300)).current;
     const imageOpacity = useRef(new Animated.Value(0)).current;
 
-    // Get route parameters to check for logout action
     const route = useRoute();
 
     const handleUsernameChange = (text) => {
@@ -116,7 +115,6 @@ const LoginPage = ({ navigation }) => {
         }
     };
 
-    // Effect for animations when credentials are done loading
     useEffect(() => {
         if (!isLoadingCredentials) {
             Animated.timing(imageOpacity, {
@@ -136,7 +134,6 @@ const LoginPage = ({ navigation }) => {
         }
     }, [isLoadingCredentials]);
 
-    // Effect to load credentials on component mount
     useEffect(() => {
         const loadCredentials = async () => {
             setIsLoadingCredentials(true);
@@ -170,15 +167,12 @@ const LoginPage = ({ navigation }) => {
         loadCredentials();
     }, []);
 
-    // useFocusEffect to handle logout action when screen comes into focus
     useFocusEffect(
         React.useCallback(() => {
             const handleLogout = async () => {
-                // Check if the 'logout' parameter is passed through navigation
                 if (route.params?.logout) {
                     console.log("Logout action detected in LoginPage. Clearing all stored credentials.");
                     try {
-                        // Clear all relevant AsyncStorage items
                         await AsyncStorage.removeItem('rememberedUsername');
                         await AsyncStorage.removeItem('rememberedPassword');
                         await AsyncStorage.removeItem('termsAccepted');
@@ -186,18 +180,14 @@ const LoginPage = ({ navigation }) => {
                         await AsyncStorage.removeItem('token'); 
                         await AsyncStorage.removeItem('userId'); 
 
-                        // Reset local state variables
                         setUsername('');
                         setPassword('');
-                        setRememberMe(false); // Do not remember me after explicit logout
-                        setTermsAccepted(true); // Default to accepted, but can be set to false if desired for logout
+                        setRememberMe(false);
+                        setTermsAccepted(true);
                         
                         Alert.alert("Logged Out", "You have been successfully logged out.");
                         
-                        // Clear the 'logout' param to prevent re-triggering if navigating back
-                        // This might require a trick using navigation.setParams or resetting the route
-                        // For simplicity, clearing storage is often sufficient.
-                        navigation.setParams({ logout: undefined }); // Remove the logout param
+                        navigation.setParams({ logout: undefined });
                     } catch (error) {
                         console.error("Error during logout credential clearing:", error);
                         Alert.alert("Logout Error", "Failed to clear local credentials during logout.");
@@ -209,11 +199,9 @@ const LoginPage = ({ navigation }) => {
 
             handleLogout();
 
-            // Cleanup function for useFocusEffect
             return () => {
-                // Any cleanup needed when the screen loses focus
             };
-        }, [route.params?.logout]) // Re-run effect if logout param changes
+        }, [route.params?.logout])
     );
 
 

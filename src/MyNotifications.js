@@ -5,29 +5,26 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Image, // Kept in case you want to add icons later
+  Image,
   useColorScheme,
   BackHandler,
   StatusBar,
 } from 'react-native';
-// Removed: import { Colors } from 'react-native/Libraries/NewAppScreen'; // Not used with custom theming
 
-// --- Theme Colors ---
 const lightThemeColors = {
-  screenBackground: '#f1f2f2', // Original light background
-  cardBackground: '#ffffff', // For notification items
-  cardBorder: '#cccccc', // Border for notification items
-  textPrimary: '#000000', // For main titles
-  textSecondary: '#333333', // For notification titles
-  textBody: '#666666', // For notification body
+  screenBackground: '#f1f2f2',
+  cardBackground: '#ffffff',
+  cardBorder: '#cccccc',
+  textPrimary: '#000000',
+  textSecondary: '#333333',
+  textBody: '#666666',
   textTimestamp: '#999999',
   textPlaceholder: 'gray',
   unreadIndicator: 'rgba(20, 52, 164, 0.7)',
-  unreadItemBackground: '#f8f9fa', // Optional: distinct unread item background
-  shadowColor: '#000000', // For bottom nav if used
+  unreadItemBackground: '#f8f9fa',
+  shadowColor: '#000000',
   statusBarContent: 'dark-content',
 
-  // Bottom Nav (if used on this screen)
   bottomNavBackground: '#ffffff',
   activeIconTint: 'rgba(20, 52, 164, 1)',
   inactiveIconTint: 'gray',
@@ -36,20 +33,19 @@ const lightThemeColors = {
 };
 
 const darkThemeColors = {
-  screenBackground: '#121212', // Dark background
-  cardBackground: '#1E1E1E',   // Dark card for notification items
-  cardBorder: '#3A3A3A',   // Darker border
-  textPrimary: '#E0E0E0',    // Light text for main titles
-  textSecondary: '#D0D0D0', // Light text for notification titles
-  textBody: '#B0B0B0',    // Light text for notification body
+  screenBackground: '#121212',
+  cardBackground: '#1E1E1E',
+  cardBorder: '#3A3A3A',
+  textPrimary: '#E0E0E0',
+  textSecondary: '#D0D0D0',
+  textBody: '#B0B0B0',
   textTimestamp: '#888888',
   textPlaceholder: '#777777',
-  unreadIndicator: 'rgba(60, 102, 224, 0.8)', // Brighter indicator
-  unreadItemBackground: '#252525', // Optional: distinct unread item background for dark
+  unreadIndicator: 'rgba(60, 102, 224, 0.8)',
+  unreadItemBackground: '#252525',
   shadowColor: '#000000',
   statusBarContent: 'light-content',
 
-  // Bottom Nav (if used on this screen)
   bottomNavBackground: '#1E1E1E',
   activeIconTint: 'rgba(60, 102, 224, 1)',
   inactiveIconTint: '#888888',
@@ -57,7 +53,6 @@ const darkThemeColors = {
   inactiveNavText: '#888888',
 };
 
-// --- Dynamic Styles ---
 const createMyNotificationsStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
@@ -65,9 +60,9 @@ const createMyNotificationsStyles = (theme) => StyleSheet.create({
   },
   scrollContainer: {
      flexGrow: 1,
-     paddingBottom: 20, // Adjusted if no bottom nav present on this screen
+     paddingBottom: 20,
   },
-  title: { // If you decide to add a screen title
+  title: {
     fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -81,7 +76,7 @@ const createMyNotificationsStyles = (theme) => StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 20,
-      minHeight: 200, // Ensure it takes some space if scrollview is short
+      minHeight: 200,
   },
   placeholderText: {
       fontSize: 16,
@@ -97,7 +92,7 @@ const createMyNotificationsStyles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  unreadBackground: { // Style for unread items, applied if item.read is false
+  unreadBackground: {
     backgroundColor: theme.unreadItemBackground,
   },
   unreadIndicator: {
@@ -126,7 +121,6 @@ const createMyNotificationsStyles = (theme) => StyleSheet.create({
     fontSize: 12,
     color: theme.textTimestamp,
   },
-  // --- Bottom Nav Styles (Kept for consistency if added later) ---
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -138,7 +132,6 @@ const createMyNotificationsStyles = (theme) => StyleSheet.create({
     borderTopRightRadius: 20,
     shadowColor: theme.shadowColor,
     shadowOffset: { width: 0, height: -2 },
-    // shadowOpacity, shadowRadius, elevation, borderTopColor would be themed
   },
   navItem: { alignItems: 'center', flex: 1, },
   navIcon: { width: 25, height: 25, resizeMode: 'contain', },
@@ -147,8 +140,6 @@ const createMyNotificationsStyles = (theme) => StyleSheet.create({
   navTextActive: { color: theme.activeNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
   navText: { color: theme.inactiveNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
 });
-// --- End of Styles ---
-
 
 const MyNotifications = ({ navigation }) => {
   const colorScheme = useColorScheme();
@@ -157,15 +148,11 @@ const MyNotifications = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-        // console.log('Hardware back press detected on MyNotifications');
         if (navigation.canGoBack()) {
-            // console.log('Navigating back from MyNotifications');
-            navigation.navigate('My Profile'); // Or navigation.goBack();
+            navigation.navigate('My Profile');
         } else {
-            // console.log('Cannot go back from MyNotifications');
-            // navigation.navigate('Home'); // Fallback if needed
         }
-        return true; // Prevent default back behavior
+        return true;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -174,27 +161,20 @@ const MyNotifications = ({ navigation }) => {
     );
 
     return () => {
-        // console.log('Removing back handler from MyNotifications');
         backHandler.remove();
-        // StatusBar.setHidden(false); // Only if it was specifically hidden for this screen
     };
   }, [navigation]);
 
-  // --- Sample Data ---
   const notifications = [
     { id: 1, title: 'Feedback Approved!', body: 'Your recent feedback has been approved. Cashback of ₹500 is being processed.', timestamp: '2 hours ago', read: false },
     { id: 2, title: 'Referral Success!', body: 'Your referred friend John Doe has signed up! You both earned rewards.', timestamp: '1 day ago', read: false },
     { id: 3, title: 'Withdrawal Processed', body: 'Your withdrawal request of ₹3500 has been successfully processed.', timestamp: '3 days ago', read: true },
     { id: 4, title: 'New Feature: Medals', body: 'Check out the new Medals section in your profile to track your achievements!', timestamp: '1 week ago', read: true },
-    // Add more notifications or leave empty to test placeholder
-    // { id: 5, title: 'Test Read', body: 'This is a test read notification.', timestamp: '1 min ago', read: true },
   ];
-  // --- End Sample Data ---
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
-      {/* <Text style={styles.title}>Notifications</Text> */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {notifications.length === 0 ? (
           <View style={styles.placeholderContainer}>
@@ -206,14 +186,10 @@ const MyNotifications = ({ navigation }) => {
               key={item.id}
               style={[
                 styles.notificationItem,
-                !item.read && styles.unreadBackground // Apply unread style if not read
+                !item.read && styles.unreadBackground
               ]}
               onPress={() => {
-                // Handle notification press, e.g., navigate or mark as read
                 console.log('Notification pressed:', item.id);
-                // Example: Mark as read (you'd update your state/data source here)
-                // const updatedNotifications = notifications.map(n => n.id === item.id ? {...n, read: true} : n);
-                // setNotifications(updatedNotifications); // If notifications were in state
               }}
             >
               {!item.read && <View style={styles.unreadIndicator} />}
@@ -226,7 +202,6 @@ const MyNotifications = ({ navigation }) => {
           ))
         )}
       </ScrollView>
-      {/* If a bottom nav is needed on this screen, add its JSX here */}
     </View>
   );
 };
