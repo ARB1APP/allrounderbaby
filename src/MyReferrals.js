@@ -4,20 +4,16 @@ import {
   Text,
   View,
   ScrollView,
-  // TouchableOpacity, // Not used in this version, but can be added for item interaction
-  // Image, // Not used
   useColorScheme,
   BackHandler,
   StatusBar,
-  Platform, // Added for platform-specific styling
+  Platform,
 } from 'react-native';
-// Removed: import { Colors } from 'react-native/Libraries/NewAppScreen';
 
-// --- Theme Colors ---
 const lightThemeColors = {
   screenBackground: '#f1f2f2',
   cardBackground: '#ffffff',
-  cardBorder: 'transparent', // No border in light mode for cards with elevation
+  cardBorder: 'transparent',
   textPrimary: '#000000',
   textSecondary: 'gray',
   textPlaceholder: 'gray',
@@ -31,7 +27,6 @@ const lightThemeColors = {
   elevation: 4,
   statusBarContent: 'dark-content',
 
-  // Bottom Nav (if used)
   bottomNavBackground: '#ffffff',
   activeIconTint: 'rgba(20, 52, 164, 1)',
   inactiveIconTint: 'gray',
@@ -56,7 +51,6 @@ const darkThemeColors = {
   elevation: 0,
   statusBarContent: 'light-content',
 
-  // Bottom Nav (if used)
   bottomNavBackground: '#1E1E1E',
   activeIconTint: 'rgba(60, 102, 224, 1)',
   inactiveIconTint: '#888888',
@@ -115,7 +109,7 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
       padding: 20,
-      minHeight: 200, // Ensure it's visible
+      minHeight: 200,
   },
   placeholderText: {
       fontSize: 16,
@@ -124,7 +118,6 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
       lineHeight: 22,
   },
   listContainer: {
-     // No specific styles needed here if items are styled individually
   },
   listHeader: {
      fontSize: 18,
@@ -207,34 +200,25 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
   navText: { color: theme.inactiveNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
 });
 
-
-
 const MyReferrals = ({ navigation }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = createMyReferralsStyles(theme);
 
-  // --- Sample Data ---
   const referrals = [
     { id: 'ref1', name: 'Alice Smith', date: '2023-10-25', status: 'Completed', earnings: '₹300' },
     { id: 'ref2', name: 'Bob Johnson', date: '2023-10-27', status: 'Pending', earnings: 'Pending' },
     { id: 'ref3', name: 'Charlie Brown', date: '2023-09-15', status: 'Completed', earnings: '₹300' },
     { id: 'ref4', name: 'Diana Prince', date: '2023-11-01', status: 'Pending', earnings: 'Pending' },
-    // { id: 'ref5', name: 'Eve Adams', date: '2023-08-01', status: 'Completed', earnings: '₹300' },
   ];
-  // --- End Sample Data ---
 
   useEffect(() => {
     const backAction = () => {
-        // console.log('Hardware back press detected on MyReferrals');
         if (navigation.canGoBack()) {
-            // console.log('Navigating back from MyReferrals');
-            navigation.navigate('My Profile'); // Or navigation.goBack();
+            navigation.navigate('My Profile');
         } else {
-            // console.log('Cannot go back from MyReferrals');
-            // navigation.navigate('Home'); // Fallback if needed
         }
-        return true; // Prevent default back behavior
+        return true;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -243,9 +227,7 @@ const MyReferrals = ({ navigation }) => {
     );
 
     return () => {
-        // console.log('Removing back handler from MyReferrals');
         backHandler.remove();
-        // StatusBar.setHidden(false); // Only if it was specifically hidden
     };
   }, [navigation]);
 
@@ -255,7 +237,6 @@ const MyReferrals = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>My Referrals</Text>
 
-        {/* Stats Summary */}
         <View style={styles.statsContainer}>
            <View style={styles.statBox}>
                <Text style={styles.statValue}>{referrals.length}</Text>
@@ -271,7 +252,6 @@ const MyReferrals = ({ navigation }) => {
            </View>
         </View>
 
-        {/* Referral List or Placeholder */}
         {referrals.length === 0 ? (
           <View style={styles.placeholderContainer}>
             <Text style={styles.placeholderText}>You haven't referred anyone yet. Share your code to start earning!</Text>
@@ -299,7 +279,6 @@ const MyReferrals = ({ navigation }) => {
           </View>
         )}
       </ScrollView>
-      {/* If a bottom nav is needed, add its JSX here */}
     </View>
   );
 };

@@ -248,10 +248,9 @@ const MyEarnings = ({ navigation }) => {
   const [userId, setUserID] = useState(null);
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [bankDetails, setBankDetails] = useState(null); // Renamed userDetails to bankDetails for clarity
+  const [bankDetails, setBankDetails] = useState(null);
 
-  // States for earning details
-  const [totalEarnings, setTotalEarnings] = useState('0.00'); // Grand total
+  const [totalEarnings, setTotalEarnings] = useState('0.00');
   const [referralCount, setReferralCount] = useState(0);
   const [earningsPerReferral, setEarningsPerReferral] = useState(0);
   const [feedbackEarnings, setFeedbackEarnings] = useState('0.00');
@@ -282,30 +281,7 @@ useFocusEffect(
   }, []) 
 );
 
-  // useEffect(() => {
-  //   const loadAllData = async () => {
-  //     try {
-
-  //       const storedToken = await AsyncStorage.getItem('token');
-  //       const storedUserId = await AsyncStorage.getItem('userId');
-  //       setUserID(storedUserId);
-  //       setToken(storedToken);
-  //       handleBankDetails(storedToken, storedUserId),
-  //       handleEarningDetails(storedToken, storedUserId),
-  //       handleFeedbackEarnings(storedToken, storedUserId)
-       
-  //     } catch (error) {
-  //       console.error("Error loading all user data from AsyncStorage or APIs:", error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  //   loadAllData();
-  // }, [token, userId]); // Dependencies for initial load
-
-  // New useEffect to calculate totalEarnings when its components change
   useEffect(() => {
-      // Ensure numerical values for calculation
       const calculatedTotal = (referralCount * earningsPerReferral) + parseFloat(feedbackEarnings || '0');
       setTotalEarnings(calculatedTotal.toFixed(2));
   }, [referralCount, earningsPerReferral, feedbackEarnings]);
@@ -357,7 +333,6 @@ useFocusEffect(
         console.error("handleBankDetails: Network or unexpected error:", error);
         Alert.alert("Network Error", `An unexpected error occurred during bank details fetch: ${error.message}`);
     } finally {
-        // setIsLoading(false); // Managed by loadAllData
     }
   };
 
@@ -438,7 +413,6 @@ useFocusEffect(
         setEarningsPerReferral(0);
         if (code === "Login Req." || code === "") setCode("Error");
     } finally {
-        // setIsLoading(false); // Managed by loadAllData
     }
   };
 

@@ -10,18 +10,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   BackHandler,
-  StatusBar, // Import StatusBar
-  useColorScheme, // Import useColorScheme
+  StatusBar,
+  useColorScheme,
 } from 'react-native';
 import { format } from 'date-fns';
 
-// --- Theme Colors ---
 const lightThemeColors = {
   screenBackground: '#dfe6ff',
   cardBackground: '#ffffff',
-  cardBorder: 'transparent', // No border in light mode, elevation is used
+  cardBorder: 'transparent',
   textPrimary: '#000000',
-  textSecondary: '#333333', // For input text
+  textSecondary: '#333333',
   inputBackground: '#ffffff',
   inputBorderColor: '#ced4da',
   inputText: '#333333',
@@ -34,7 +33,6 @@ const lightThemeColors = {
   elevation: 4,
   statusBarContent: 'dark-content',
 
-  // Bottom Nav (if used on this screen)
   bottomNavBackground: '#ffffff',
   bottomNavShadowColor: '#000',
   bottomNavShadowOpacity: 0.2,
@@ -66,11 +64,10 @@ const darkThemeColors = {
   statusBarContent: 'light-content',
 };
 
-// --- Dynamic Styles ---
 const createMyOrdersStyles = (theme) => StyleSheet.create({
   keyboardAvoidingContainer: {
     flex: 1,
-    backgroundColor: theme.screenBackground, // Added for consistency
+    backgroundColor: theme.screenBackground,
   },
   container: {
     flex: 1,
@@ -78,7 +75,7 @@ const createMyOrdersStyles = (theme) => StyleSheet.create({
   },
   scrollContainer: {
      flexGrow: 1,
-     paddingBottom: 20, // Adjusted default padding, can be increased if nav bar added
+     paddingBottom: 20,
   },
   transactionsSection: {
     marginHorizontal: 15,
@@ -92,8 +89,8 @@ const createMyOrdersStyles = (theme) => StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: theme.shadowOpacity,
     shadowRadius: theme.shadowRadius,
-    borderColor: theme.cardBorder, // For dark mode primarily
-    borderWidth: Platform.OS === 'android' && theme.elevation === 0 ? 1 : 0, // Add border if no elevation (typical for dark mode)
+    borderColor: theme.cardBorder,
+    borderWidth: Platform.OS === 'android' && theme.elevation === 0 ? 1 : 0,
   },
   sectionTitle: {
     fontSize: 18,
@@ -109,7 +106,7 @@ const createMyOrdersStyles = (theme) => StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: theme.textPrimary, // Using textPrimary for labels
+    color: theme.textPrimary,
   },
   input:{
     height: 45,
@@ -135,7 +132,6 @@ const createMyOrdersStyles = (theme) => StyleSheet.create({
       fontSize: 14,
       fontWeight: 'bold',
   },
-  // --- Bottom Nav Styles (if you add the JSX for it) ---
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -183,13 +179,11 @@ const createMyOrdersStyles = (theme) => StyleSheet.create({
     textAlign: 'center',
   },
 });
-// --- End of Styles ---
-
 
 const MyOrders = ({ navigation }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
-  const styles = createMyOrdersStyles(theme); // Generate styles based on theme
+  const styles = createMyOrdersStyles(theme);
 
   const [orderDate, setOrderDate] = useState('');
 
@@ -199,25 +193,13 @@ const MyOrders = ({ navigation }) => {
   const input4Ref = useRef(null);
   const input5Ref = useRef(null);
 
-  // Commented out as per original code, but can be used
-  // useEffect(() => {
-  //   const today = new Date();
-  //   const formattedDate = format(today, 'dd/MM/yyyy');
-  //   setOrderDate(formattedDate);
-  // }, []);
-
    useEffect(() => {
     const backAction = () => {
-        // console.log('Hardware back press detected');
         if (navigation.canGoBack()) {
-            // console.log('Navigating back');
-            navigation.navigate('My Profile'); // Or navigation.goBack(); if 'My Profile' is the immediate previous screen
+            navigation.navigate('My Profile');
         } else {
-            // console.log('Cannot go back, staying on screen or navigating to Home');
-            // Potentially navigate to a default screen if no back action is possible
-            // navigation.navigate('Home'); // Example
         }
-        return true; // Prevent default back action
+        return true;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -226,14 +208,11 @@ const MyOrders = ({ navigation }) => {
     );
 
     return () => {
-        // console.log('Removing back handler');
         backHandler.remove();
-        // No need to manage StatusBar.setHidden here unless it was explicitly set hidden
     };
   }, [navigation]);
 
   return (
-    // KeyboardAvoidingView style now uses theme.screenBackground
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.keyboardAvoidingContainer}
@@ -253,7 +232,7 @@ const MyOrders = ({ navigation }) => {
                  ref={input1Ref}
                  style={styles.input}
                  placeholder="Display Order ID"
-                 placeholderTextColor={theme.inputPlaceholderText} // Themed placeholder
+                 placeholderTextColor={theme.inputPlaceholderText}
                  returnKeyType="next"
                  onSubmitEditing={() => {
                   input2Ref.current?.focus();
@@ -266,11 +245,11 @@ const MyOrders = ({ navigation }) => {
                  ref={input2Ref}
                  style={styles.input}
                  placeholder="Display Order Date"
-                 placeholderTextColor={theme.inputPlaceholderText} // Themed placeholder
+                 placeholderTextColor={theme.inputPlaceholderText}
                  returnKeyType="next"
                  value={orderDate}
-                 onChangeText={setOrderDate} // Added to make it an actual controlled input if needed
-                 editable={false} // Assuming this is display-only from your previous `value` use
+                 onChangeText={setOrderDate}
+                 editable={false}
                  onSubmitEditing={() => {
                   input3Ref.current?.focus();
                 }}
@@ -282,7 +261,7 @@ const MyOrders = ({ navigation }) => {
                 ref={input3Ref}
                  style={styles.input}
                  placeholder="Display Amount Paid"
-                 placeholderTextColor={theme.inputPlaceholderText} // Themed placeholder
+                 placeholderTextColor={theme.inputPlaceholderText}
                  keyboardType="numeric"
                  returnKeyType="next"
                  onSubmitEditing={() => {
@@ -296,7 +275,7 @@ const MyOrders = ({ navigation }) => {
                 ref={input4Ref}
                  style={styles.input}
                  placeholder="Display Payment Method"
-                 placeholderTextColor={theme.inputPlaceholderText} // Themed placeholder
+                 placeholderTextColor={theme.inputPlaceholderText}
                  returnKeyType="next"
                  onSubmitEditing={() => {
                   input5Ref.current?.focus();
@@ -309,7 +288,7 @@ const MyOrders = ({ navigation }) => {
                 ref={input5Ref}
                  style={styles.input}
                  placeholder="Display Order Status"
-                 placeholderTextColor={theme.inputPlaceholderText} // Themed placeholder
+                 placeholderTextColor={theme.inputPlaceholderText}
                  returnKeyType="done"
               />
             </View>
@@ -322,20 +301,9 @@ const MyOrders = ({ navigation }) => {
 
           </View>
         </ScrollView>
-        {/* If you want a bottom navigation bar on this screen, you would add its JSX here */}
-        {/* Example:
-        <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
-            <Image source={require('./path/to/home_icon.png')} style={[styles.navIcon, styles.inactiveIconOrActive]} />
-            <Text style={styles.navTextOrActive}>Home</Text>
-          </TouchableOpacity>
-          // ... other nav items
-        </View>
-        */}
       </View>
     </KeyboardAvoidingView>
   );
 };
-
 
 export default MyOrders;

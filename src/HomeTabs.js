@@ -6,7 +6,6 @@ import ChasCashbackforFeedback from '../src/CashbackforFeedback';
 import ReferAndEarn from '../src/ReferAndEarn';
 import Profile from '../src/Profile';
 const Tab = createBottomTabNavigator();
-// Bottom Tab Navigator
 
 const HomeTabs = () => {
 
@@ -18,14 +17,13 @@ const HomeTabs = () => {
       
       try {
         const videoId = "c88fb7568e814d0e852f74387fe9aa61";
-        const response = await fetch(`https://dev.vdocipher.com/api/videos/${videoId}`); // Replace with your actual backend URL
+        const response = await fetch(`https://dev.vdocipher.com/api/videos/${videoId}`); 
         const data = await response.json();
         console.log('Response', data);
         setOtp(data.otp);
         setPlaybackInfo(data.playbackInfo);
       } catch (error) {
         console.error('Error fetching VdoCipher data:', error);
-        // Handle error appropriately (e.g., display an error message)
       } finally {
         setLoading(false);
       }

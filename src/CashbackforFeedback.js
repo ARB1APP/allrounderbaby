@@ -18,12 +18,7 @@ import {
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-// VdoPlayerView is not needed here anymore as video playback is moved to VideoPlayerScreen
-// import { VdoPlayerView } from 'vdocipher-rn-bridge';
-
 const { width, height } = Dimensions.get('window');
-
-// Theme colors are directly used from the provided structure
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
   cardBackground: '#FFFFFF',
@@ -69,28 +64,16 @@ const CashbackforFeedback = ({ navigation }) => {
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = createCashbackStyles(theme);
   const isDarkMode = useColorScheme() === 'dark';
-  // Using `navigation` prop directly instead of `useNavigation()` to avoid potential confusion
-  // const navigations = useNavigation();
-
-
   const [token, setToken] = useState(null);
   const [userId, setUserID] = useState(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [cashbackVideos, setCashbackVideos] = useState({});
-
-  // All in-page video playback states, refs, and related callbacks are removed.
-
-  // Opacity for blinking loading text (if still needed for general loading)
   const opacity = useRef(new Animated.Value(1)).current;
-
-  // Folder ID for cashback videos
   const CASHBACK_FOLDER_ID = "3b7737b5e34740318231b0f1c0797b34";
 
-  // BackHandler now only handles navigation, as no in-page player needs closing
+
   useEffect(() => {
     const backAction = () => {
-      // Navigate to 'Home' which is where the Dashboard is registered in App.js
-      // If 'Cashback for Feedback' is a top-level screen, this should bring the user back to the main app flow.
       navigation.navigate('Home');
       return true;
     };
@@ -98,7 +81,6 @@ const CashbackforFeedback = ({ navigation }) => {
     return () => backHandler.remove();
   }, [navigation]);
 
-  // Load user data on component mount
   useEffect(() => {
     const loadUserData = async () => {
       const storedToken = await AsyncStorage.getItem('token');
@@ -109,14 +91,12 @@ const CashbackforFeedback = ({ navigation }) => {
     loadUserData();
   }, []);
 
-  // Fetch cashback videos once token is available
   useEffect(() => {
     if (token) {
       fetchCashbackVideos(CASHBACK_FOLDER_ID);
     }
   }, [token]);
 
-  // Blinking animation for loading text (if used)
   useEffect(() => {
     const blinkingAnimation = Animated.loop(
       Animated.sequence([
@@ -137,7 +117,6 @@ const CashbackforFeedback = ({ navigation }) => {
     return () => blinkingAnimation.stop();
   }, []);
 
-  // Function to fetch all VDOCipher videos by folder ID
   const fetchCashbackVideos = async (folderId) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
@@ -187,7 +166,6 @@ const CashbackforFeedback = ({ navigation }) => {
     }
   };
 
-  // Function to get VDOCipher video details for playback
   const vdoCipher_api = async (videoId) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
@@ -198,7 +176,6 @@ const CashbackforFeedback = ({ navigation }) => {
       return { error: true, message: "No internet connection" };
     }
 
-    // Set loading state as we're preparing to load the video on a new screen
     setIsVideoLoading(true);
 
     if (!videoId) {
@@ -235,7 +212,6 @@ const CashbackforFeedback = ({ navigation }) => {
     }
   };
 
-  // Handles navigation to the VideoPlayerScreen with the fetched details
   const handleVideoPlayback = async (videoId, language, title, poster) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
@@ -246,7 +222,7 @@ const CashbackforFeedback = ({ navigation }) => {
       return;
     }
 
-    setIsVideoLoading(true); // Indicate loading as we fetch video details
+    setIsVideoLoading(true);
 
     const annotationObject = [
       {
@@ -282,36 +258,34 @@ const CashbackforFeedback = ({ navigation }) => {
           if (!response.ok) {
             const errorData = await response.json();
             Alert.alert("Error", errorData.message || "Video not found or failed to get OTP.");
-            setIsVideoLoading(false); // Turn off loading on error
+            setIsVideoLoading(false); 
           } else {
             const data = await response.json();
-            navigation.navigate('VideoPlayerScreen', { // Correct navigation name
+            navigation.navigate('VideoPlayerScreen', { 
               id: videoId,
               otp: data.otp,
               playbackInfo: data.playbackInfo,
               language: language,
               title: title,
               poster: poster,
-              cameFrom: 'Cashback for Feedback', // <--- THIS IS THE CORRECT NAME (with spaces)
+              cameFrom: 'Cashback for Feedback', 
             });
-            setIsVideoLoading(false); // Turn off loading once navigation is initiated
+            setIsVideoLoading(false); 
           }
         } else {
           Alert.alert("Error", detailsData?.message || "Failed to fetch video details from Vdocipher API.");
-          setIsVideoLoading(false); // Turn off loading on error
+          setIsVideoLoading(false); 
         }
       } else {
         Alert.alert("Error", "Video not found.");
-        setIsVideoLoading(false); // Turn off loading on error
+        setIsVideoLoading(false); 
       }
     } catch (err) {
       Alert.alert("Network Error", `An unexpected error occurred: ${err.message}`);
-      setIsVideoLoading(false); // Turn off loading on error
+      setIsVideoLoading(false); 
     }
   };
 
-  // This function is no longer strictly necessary if not showing duration on list,
-  // but kept for completeness if needed elsewhere.
   const formatDuration = (totalSeconds) => {
     if (isNaN(totalSeconds) || totalSeconds < 0) {
       return "--:--";
@@ -325,7 +299,6 @@ const CashbackforFeedback = ({ navigation }) => {
     return `${formattedMinutes}:${formattedSeconds}`;
   };
 
-  // Memoized list of playable cashback videos
   const playableCashbackVideos = useMemo(() => {
     const videos = [];
     let englishCashbackItem = null;
@@ -364,7 +337,6 @@ const CashbackforFeedback = ({ navigation }) => {
     return videos;
   }, [cashbackVideos]);
 
-  // Navigate to Cashback for Feedback Conditions screen
   const onPressKnowMoreButton = () => {
     navigation.navigate('Cashback for Feedback Conditions');
   };
@@ -372,8 +344,6 @@ const CashbackforFeedback = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
-
-      {/* Main content for Cashback for Feedback */}
       <>
         <View style={[styles.importantDetailsBox, { marginTop: 10 }]}>
           <Text style={styles.headerTitle}>🎉 Give Feedback & Get ₹1,000 / $10 / €10 Cashback! 🎉</Text>
@@ -428,7 +398,6 @@ const CashbackforFeedback = ({ navigation }) => {
           </TouchableOpacity>
 
           <View style={styles.videoLinksContainer}>
-            {/* Show loading indicator if videos are being fetched */}
             {isVideoLoading && playableCashbackVideos.length === 0 ? (
                 <View style={styles.loadingMessageContainer}>
                     <ActivityIndicator size="small" color={theme.textSecondary} />
@@ -461,7 +430,6 @@ const CashbackforFeedback = ({ navigation }) => {
           </View>
         </ScrollView>
 
-        {/* Bottom Navigation */}
         <View style={styles.bottomNav}>
           <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
             <Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
@@ -600,7 +568,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    minHeight: 100, // Ensure there's space for loading indicator if no videos initially
+    minHeight: 100, 
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -615,7 +583,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 15,
     paddingHorizontal: 15,
-    width: '100%', // Ensure it takes full width of its container
+    width: '100%', 
   },
   videoLinkItemInner: {
     flexDirection: 'row',
@@ -669,8 +637,6 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     marginTop: 4, 
     fontWeight: 'bold',
     },
-
-  // Remaining styles (modal, loading, duration etc.) are kept as they might be used elsewhere
   modalLikeContainer: {
     position: 'absolute',
     top: 0,
