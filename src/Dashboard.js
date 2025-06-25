@@ -1,18 +1,21 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Modal, Alert, BackHandler, StatusBar, ActivityIndicator,Pressable, useColorScheme, Platform } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native'; // Import useRoute
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import NetInfo from '@react-native-community/netinfo';
 import { VdoPlayerView } from 'vdocipher-rn-bridge';
 import { interval } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_KEY } from '@env';
+import { API_KEY, API_BASE_URL } from '@env'; // Import API_BASE_URL from environment variables
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
- const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+
+const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+
+
 const Dashboard = ({ navigation }) => {
     const [selectedStepGroup, setSelectedStepGroup] = useState(null);
     const scale1 = useRef(new Animated.Value(0)).current;
@@ -20,6 +23,7 @@ const Dashboard = ({ navigation }) => {
     const scale3 = useRef(new Animated.Value(0)).current;
     const scale4 = useRef(new Animated.Value(0)).current;
     const navigations = useNavigation();
+    const route = useRoute(); // Initialize useRoute to get current route name
     const playerRef = useRef(null);
     const intervalRef = useRef(null);
     const totalDurationRef = useRef(0);
@@ -73,6 +77,7 @@ const Dashboard = ({ navigation }) => {
 
     const [completedSteps, setCompletedSteps] = useState({});
     const isDarkMode = useColorScheme() === 'dark';
+
 
     const [isLoading, setIsLoading] = useState(true);
     const maxWatchedTimeRef = useRef(0);
@@ -314,6 +319,7 @@ const Dashboard = ({ navigation }) => {
                         try {
                             errorData = await response.json();
                         } catch (parseError) {
+                            console.error("Error parsing fetchCompletedStepsFromBackend error JSON:", parseError);
                         }
                         Alert.alert("API Error", `Failed to get video details: ${errorData.message || response.statusText}`);
                         return null;
@@ -323,7 +329,7 @@ const Dashboard = ({ navigation }) => {
                     setIsVideoLoading(false);
                     if (videoDetails.rows && videoDetails.rows.length >= 4) {
                         setSelectedStepGroup({
-                            stepNumber: 7,
+                            stepNumber: 90, // Changed from 7 to 90 to avoid conflict
                             hindiVideo: videoDetails.rows[2],
                             englishVideo: videoDetails.rows[3],
                         });
@@ -333,7 +339,7 @@ const Dashboard = ({ navigation }) => {
                     }
 
                     setIsModalVisible(true);
-                    setSelectedStep(7);
+                    setSelectedStep(90); // Changed from 7 to 90
                     return videoDetails;
                 } catch (error) {
                     setIsVideoLoading(false);
@@ -343,8 +349,12 @@ const Dashboard = ({ navigation }) => {
             }
 
         const handleIntroductionTwoPress = async () =>{
+            console.log('handleIntroductionTwoPress called.');
             const netInfoState = await NetInfo.fetch();
+            console.log('NetInfo state:', netInfoState);
+
             if (!netInfoState.isInternetReachable) {
+                console.log('No internet connection detected.');
                 Alert.alert(
                     "No Internet Connection",
                     "Please check your internet connection and try again."
@@ -352,12 +362,14 @@ const Dashboard = ({ navigation }) => {
                 return;
             }
             if (!token) {
+                console.log('Authentication token not found.');
                 Alert.alert("Authentication Error", "User not authenticated. Please log in again.");
                 return;
             }
             setIsVideoLoading(true);
             const folderId = "8a15a7910bcb41a897b50111ec4f95d9";
             const DETAILS_ENDPOINT = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
+            console.log('Fetching video details from:', DETAILS_ENDPOINT);
             try {
                 const response = await fetch(
                                     DETAILS_ENDPOINT,
@@ -369,35 +381,41 @@ const Dashboard = ({ navigation }) => {
                                         }
                                     }
                                 );
+                console.log('API response status:', response.status);
                 if (!response.ok) {
                     setIsVideoLoading(false);
                     let errorData = { message: `HTTP Error: ${response.status} ${response.statusText}` };
                     try {
                         errorData = await response.json();
+                        console.log('API Error Data:', errorData);
                     } catch (parseError) {
                         errorData = { message: response.statusText };
+                        console.log('Failed to parse API error response, using status text.');
                     }
                     Alert.alert("API Error", `Failed to get video details: ${errorData.message || response.statusText}`);
                     return null;
                 }
                 const videoDetails = await response.json();
+                console.log('Video details fetched successfully:', videoDetails);
                 setintroductionVideos(videoDetails);
                 setIsVideoLoading(false);
                 if (videoDetails.rows && videoDetails.rows.length >= 4) {
                     setSelectedStepGroup({
-                        stepNumber: 8,
+                        stepNumber: 91, // Changed from 8 to 91 to avoid conflict
                         hindiVideo: videoDetails.rows[0],
                         englishVideo: videoDetails.rows[1],
                     });
                 } else {
+                    console.log('Not enough introduction videos found for Introduction II. Rows:', videoDetails.rows?.length);
                     Alert.alert("Video Data Error", "Not enough introduction videos found for Introduction II.");
                     return null;
                 }
                 setIsModalVisible(true);
-                setSelectedStep(8);
+                setSelectedStep(91); // Changed from 8 to 91
                 return videoDetails;
 
             } catch (error) {
+                console.error('Catch block: An unexpected error occurred during fetch:', error);
                 setIsVideoLoading(false);
                 Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
                 return null;
@@ -550,9 +568,9 @@ const Dashboard = ({ navigation }) => {
             const hindiVideo = knowledgeCuriosityGroupedStepsData.find(g => g.stepNumber === step)?.hindiVideo;
             videoId = hindiVideo?.id;
         }
-        else if (step === 7) {
+        else if (step === 90) { // Changed from 7 to 90
             videoId = introductionVideos.rows[2]?.id;
-        } else if (step === 8) {
+        } else if (step === 91) { // Changed from 8 to 91
             videoId = introductionVideos.rows[0]?.id;
         }
 
@@ -620,9 +638,9 @@ const Dashboard = ({ navigation }) => {
             const englishVideo = knowledgeCuriosityGroupedStepsData.find(g => g.stepNumber === step)?.englishVideo;
             videoId = englishVideo?.id;
         }
-        else if (step === 7) {
+        else if (step === 90) { // Changed from 7 to 90
             videoId = introductionVideos.rows[3]?.id;
-        } else if (step === 8) {
+        } else if (step === 91) { // Changed from 8 to 91
             videoId = introductionVideos.rows[1]?.id;
         }
 
@@ -701,7 +719,7 @@ const Dashboard = ({ navigation }) => {
                             step: step,
                             title: detailsData.title,
                             poster: detailsData.poster,
-                             cameFrom: 'Home',
+                            cameFrom: route.name, // <--- Here's the change: pass the current route name
                         });
                     }
                 } else {
@@ -762,7 +780,7 @@ const Dashboard = ({ navigation }) => {
             return videoDetails;
 
         } catch (error) {
-            setIsVideoLoading(false);
+            setIsLoading(false);
             return { error: true, message: `An unexpected error occurred: ${error.message}` };
         }
     }
@@ -1246,7 +1264,7 @@ const Dashboard = ({ navigation }) => {
             setDropdownVisibleAbletoNarrate(false);
             setDropdownVisibleEmotionsBlance(false);
             setDropdownVisibleFeelingsofOthers(false);
-            setDropdownVisibleKnowledgeandCuriousitydevelopment(false);
+            setDropdownVisibleKnowledgeandCuriositydevelopment(false);
 
             const folderId = "71bfcfe443d245e7983236752c3e9fbb"
             const DETAILS_ENDPOINT = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
@@ -1300,7 +1318,7 @@ const Dashboard = ({ navigation }) => {
             setDropdownVisibleAbletoNarrate(false);
             setDropdownVisibleEmotionsBlance(false);
             setDropdownVisibleFeelingsofOthers(false);
-            setDropdownVisibleKnowledgeandCuriousitydevelopment(false);
+            setDropdownVisibleKnowledgeandCuriositydevelopment(false);
 
             const folderId = "e9db6fc2a5324f3ea1599b406e3d6556"
             const DETAILS_ENDPOINT = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
@@ -1354,7 +1372,7 @@ const Dashboard = ({ navigation }) => {
             setDropdownVisibleAbletoNarrate(false);
             setDropdownVisibleEmotionsBlance(false);
             setDropdownVisibleFeelingsofOthers(false);
-            setDropdownVisibleKnowledgeandCuriousitydevelopment(false);
+            setDropdownVisibleKnowledgeandCuriositydevelopment(false);
 
             const folderId = "190a4f4a8ea940b4b034d0047992913c"
             const DETAILS_ENDPOINT = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
@@ -1408,7 +1426,7 @@ const Dashboard = ({ navigation }) => {
             setDropdownVisibleDiscussionQuestionsAnswers(false);
             setDropdownVisibleEmotionsBlance(false);
             setDropdownVisibleFeelingsofOthers(false);
-            setDropdownVisibleKnowledgeandCuriousitydevelopment(false);
+            setDropdownVisibleKnowledgeandCuriositydevelopment(false);
 
             const folderId = "c9830bc5eed04b18b0cd5919627ad818"
             const DETAILS_ENDPOINT = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
@@ -1462,7 +1480,7 @@ const Dashboard = ({ navigation }) => {
             setDropdownVisibleDiscussionQuestionsAnswers(false);
             setDropdownVisibleAbletoNarrate(false);
             setDropdownVisibleFeelingsofOthers(false);
-            setDropdownVisibleKnowledgeandCuriousitydevelopment(false);
+            setDropdownVisibleKnowledgeandCuriositydevelopment(false);
 
             const folderId = "a27799e2c148438ba450a80d546a9555"
             const DETAILS_ENDPOINT = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
@@ -1516,7 +1534,7 @@ const Dashboard = ({ navigation }) => {
             setDropdownVisibleDiscussionQuestionsAnswers(false);
             setDropdownVisibleAbletoNarrate(false);
             setDropdownVisibleEmotionsBlance(false);
-            setDropdownVisibleKnowledgeandCuriousitydevelopment(false);
+            setDropdownVisibleKnowledgeandCuriositydevelopment(false);
 
             const folderId = "1471bf13c7f6490fb6f98ae846552a87"
             const DETAILS_ENDPOINT = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
@@ -1775,7 +1793,7 @@ const Dashboard = ({ navigation }) => {
             } else {
                 Alert.alert('Error', `Video group for step ${step} not found in Feelings of Others category.`);
             }
-        } else if (isDropdownVisibleKnowledgeandCuriousitydevelopment) {
+        } else if (isDropdownVisibleKnowledgeandCuriositydevelopment) {
             const group = knowledgeCuriosityGroupedStepsData.find(g => g.stepNumber === step);
             if (group && (step === 82 || completedSteps[`step${step - 1}`])) {
                 setSelectedStepGroup(group);
@@ -1785,6 +1803,15 @@ const Dashboard = ({ navigation }) => {
             } else {
                 Alert.alert('Error', `Video group for step ${step} not found in Knowledge & Curiosity Development category.`);
             }
+        }
+        else if (step === 90 || step === 91) { // Added condition for Introduction videos
+             const introGroup = selectedStepGroup; // Use selectedStepGroup directly from introduction handlers
+             if (introGroup) {
+                 setSelectedStepGroup(introGroup);
+                 setIsModalVisible(true);
+             } else {
+                 Alert.alert('Error', `Video group for Introduction step ${step} not found.`);
+             }
         }
     };
 
@@ -3697,12 +3724,38 @@ const styles = StyleSheet.create({
     textOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5,},
     textOverlayTwo: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, flexDirection: 'row', justifyContent: 'space-between',},
     text: { color: '#fff', fontSize: 16, fontWeight: 'bold',textAlign:'center' },
-    bottomNav: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', backgroundColor: '#fff', paddingVertical: 10, bottom: 0, width: '100%', borderTopLeftRadius: 20, borderTopRightRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 5,},
-    navItem: {alignItems: 'center',},
+        bottomNav: {
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            backgroundColor: '#fff',
+            paddingVertical: 10,
+            bottom: 0,
+            width: '100%',
+            shadowColor: '#000',
+            shadowOpacity: 0.2,
+            shadowRadius: 20,
+            elevation: 5,},
+            navItem: {
+            alignItems: 'center',
+            paddingVertical: 5,
+        },
+        navIcon: {
+            width: 24,
+            height: 24,
+            resizeMode: 'contain',
+            marginBottom: 4,
+        },
+   navText: {
+    color: 'gray',
+    fontSize: 10,
+    marginTop: 4,
+    fontWeight: 'bold',
+    },
     inactive: {opacity: 0.5,},
-    navIcon: { width: 25, height: 25, resizeMode: 'contain',},
+
     navTextActive: { color: 'rgba(20, 52, 164, 1)', fontSize: 10, marginTop: 4, fontWeight: 'bold', },
-    navText: { color: 'gray', fontSize: 10, marginTop: 4, fontWeight: 'bold', },
+
     dropdownContent: { borderBottomLeftRadius: 5, borderBottomRightRadius: 5, width: '100%', marginBottom: 10, paddingHorizontal: 0, },
     dropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', },
     imageVideo: { width: 35, height: 35, borderRadius: 5 },
@@ -3749,6 +3802,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
+        margin:0,
     },
     modalHeaderFirst: { flex: 1,position: 'absolute',width: '100%',
         paddingVertical: 0,paddingHorizontal: 10,flexDirection: 'row',

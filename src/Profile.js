@@ -3,8 +3,6 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Dimensions
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import { CommonActions } from '@react-navigation/native'; // Import CommonActions for navigation reset
 
-const screenWidth = Dimensions.get('window').width;
-
 const AppColors = {
     light: {
         background: '#F4F7FC',
@@ -84,21 +82,39 @@ const Profile = ({ navigation }) => {
       }
   };
 
-  const ListItem = ({ iconSource, title, subtitle, onPress, isLast, showArrow = true, titleColor }) => (
-    <TouchableOpacity onPress={onPress} style={styles.listItemWrapper}>
-        <View style={styles.listItemRow}>
-            <View style={styles.listItemMainContent}>
-                <Image source={iconSource} style={[styles.listItemIcon, { tintColor: theme.icon }]} />
-                <View style={styles.listItemTextContainer}>
-                    <Text style={[styles.listItemTitle, { color: titleColor || theme.textPrimary }]}>{title}</Text>
-                    {subtitle && <Text style={[styles.listItemSubtitle, { color: theme.textSecondary }]}>{subtitle}</Text>}
-                </View>
-            </View>
-            {showArrow && <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />}
-        </View>
-        {!isLast && <View style={[styles.separator, { backgroundColor: theme.border }]} />}
-    </TouchableOpacity>
-  );
+  /**
+   * ListItem component to display a row with an icon, title, and optional subtitle.
+   * It handles rendering of the subtitle based on whether it's a string or a React element.
+   */
+  const ListItem = ({ iconSource, title, subtitle, onPress, isLast, showArrow = true, titleColor }) => {
+    // Check if the subtitle is already a React element (e.g., a View containing Text)
+    const isSubtitleElement = React.isValidElement(subtitle);
+
+    return (
+      <TouchableOpacity onPress={onPress} style={styles.listItemWrapper}>
+          <View style={styles.listItemRow}>
+              <View style={styles.listItemMainContent}>
+                  {/* Corrected: Use iconSource prop instead of hardcoded '../img/bell.png' */}
+                  <Image source={iconSource} style={[styles.listItemIcon, { tintColor: theme.icon }]} />
+                  <View style={styles.listItemTextContainer}>
+                      <Text style={[styles.listItemTitle, { color: titleColor || theme.textPrimary }]}>{title}</Text>
+                      {subtitle !== null && subtitle !== undefined && ( // Ensure subtitle is not null or undefined
+                          isSubtitleElement ? (
+                              // If subtitle is already an element, render it directly
+                              subtitle
+                          ) : (
+                              // If subtitle is a string (or other primitive), wrap it in a Text component and convert to string
+                              <Text style={[styles.listItemSubtitle, { color: theme.textSecondary }]}>{String(subtitle)}</Text>
+                          )
+                      )}
+                  </View>
+              </View>
+              {showArrow && <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />}
+          </View>
+          {!isLast && <View style={[styles.separator, { backgroundColor: theme.border }]} />}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -114,11 +130,11 @@ const Profile = ({ navigation }) => {
         </View>
 
         {/* User Info Card */}
-        <TouchableOpacity 
+        <TouchableOpacity
             style={[
-                styles.card, 
-                { 
-                    backgroundColor: theme.card, 
+                styles.card,
+                {
+                    backgroundColor: theme.card,
                     flexDirection: 'row', // Added
                     alignItems: 'center', // Added
                     justifyContent: 'space-between' // Added
@@ -130,24 +146,24 @@ const Profile = ({ navigation }) => {
                     <Text style={[styles.avatarText, { color: theme.avatarText }]}>AB</Text>
                 </View>
                 <View style={styles.userInfoTextContainer}>
-                    <Text style={[styles.userName, { color: theme.textPrimary }]}>allrounderbaby185033</Text>
-                    <View style={styles.levelBadgeContainer}>
+                    <Text style={[styles.userName, { color: theme.textPrimary }]}>AllrounderBaby (Name)</Text>
+                    {/* <View style={styles.levelBadgeContainer}>
                         <Image source={require('../img/two.png')} style={styles.levelBadgeIcon} />
                         <Text style={[styles.levelBadgeText, { color: theme.textSecondary }]}>Committed Parent</Text>
                         <View style={[styles.levelIndicator, { backgroundColor: theme.levelBadgeBackground }]}>
                             <Text style={[styles.levelIndicatorText, { color: theme.levelBadgeText }]}>L2</Text>
                         </View>
-                    </View>
+                    </View> */}
                 </View>
             </View>
             <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
         </TouchableOpacity>
 
         {/* Parent Info Card */}
-        <TouchableOpacity 
+        <TouchableOpacity
             style={[
-                styles.card, 
-                { 
+                styles.card,
+                {
                     backgroundColor: theme.card,
                     flexDirection: 'row', // Added
                     alignItems: 'center', // Added
@@ -159,14 +175,14 @@ const Profile = ({ navigation }) => {
                 <Image source={require('../img/user.png')} style={[styles.infoIcon, { tintColor: theme.primary }]} />
                 <View style={styles.userInfoTextContainer}> {/* Can be reused if structure is similar */}
                     <Text style={[styles.infoTitle, { color: theme.textPrimary }]}>Parent Name</Text>
-                    <Text style={[styles.infoSubtitle, { color: theme.textSecondary }]}>Girl / Boy</Text>
+                    <Text style={[styles.infoSubtitle, { color: theme.textSecondary }]}>Visionary Parent</Text>
                 </View>
             </View>
             <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
         </TouchableOpacity>
 
         {/* My Referrals Link */}
-        <TouchableOpacity 
+        <TouchableOpacity
             style={[styles.card, { backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
             onPress={() => navigation.navigate('My Referrals')}
         >
@@ -180,35 +196,114 @@ const Profile = ({ navigation }) => {
         {/* Settings Card */}
         <View style={[styles.card, { backgroundColor: theme.card }]}>
           <Text style={[styles.sectionTitle, { color: theme.sectionTitle }]}>Settings</Text>
+          {/* Passed iconSource correctly to ListItem */}
           <ListItem iconSource={require('../img/bell.png')} title="My Notifications" onPress={() => navigation.navigate('My Notifications')} />
-          <ListItem iconSource={require('../img/earningmoney.png')} title="My Earnings" onPress={() => navigation.navigate('My Earnings')} />
-          <ListItem iconSource={require('../img/cart.png')} title="My Orders" onPress={() => navigation.navigate('My Orders')} isLast={true} />
+
+        <ListItem
+            iconSource={require('../img/earningmoney.png')}
+            title="My Earnings"
+            subtitle={
+              <View style={{ alignItems: 'center' }}>
+                <Text
+                  style={[
+                    styles.infoSubtitle,
+                    {
+                      color: theme.textSecondary,
+                      fontSize: 14,
+                      textAlign: 'center',
+                    },
+                  ]}
+                >
+                  Refer more, Earn more !!
+                </Text>
+              </View>
+            }
+            onPress={() => navigation.navigate('My Earnings')}
+          />
+
+      <ListItem
+          iconSource={require('../img/cart.png')}
+          title="My Orders"
+          subtitle={
+            <View style={{ alignItems: 'center' }}>
+              <Text
+                style={[
+                  styles.infoSubtitle,
+                  {
+                    color: theme.textSecondary,
+                    fontSize: 14,
+                    textAlign: 'center',
+                  },
+                ]}
+              >
+                View order history
+              </Text>
+            </View>
+          }
+          onPress={() => navigation.navigate('My Orders')}
+        />
         </View>
 
         {/* Help and Support Card */}
         <View style={[styles.card, { backgroundColor: theme.card }]}>
           <Text style={[styles.sectionTitle, { color: theme.sectionTitle }]}>Help and Support</Text>
-          <ListItem 
-            iconSource={require('../img/help.png')} 
-            title="Get Help" 
-            subtitle="Chat With Support" 
-            onPress={() => navigation.navigate('Get Help')} 
-            isLast={true}
-          />
+       <ListItem
+          iconSource={require('../img/help.png')}
+          title="Get Help"
+          subtitle={
+            <View style={{ alignItems: 'center' }}>
+              <Text
+                style={[
+                  styles.infoSubtitle,
+                  {
+                    color: theme.textSecondary,
+                    fontSize: 14,
+                    textAlign: 'center',
+                  },
+                ]}
+              >
+                Chat With Support
+              </Text>
+            </View>
+          }
+          onPress={() => navigation.navigate('Get Help')}
+          isLast={true}
+        />
         </View>
-        
+
         {/* Other Links Card */}
         <View style={[styles.card, { backgroundColor: theme.card }]}>
-          <ListItem iconSource={require('../img/starfive.png')} title="Rate us 5 stars on the store" onPress={() => navigation.navigate('Rate us 5 stars on the store')} />
+         <ListItem
+            iconSource={require('../img/starfive.png')}
+            title="Rate us 5 stars on the store"
+            subtitle={
+              <View style={{ alignItems: 'center' }}>
+                <Text
+                  style={[
+                    styles.infoSubtitle,
+                    {
+                      color: theme.textSecondary,
+                      fontSize: 15,
+                    },
+                  ]}
+                >
+                  Encourage users to leave a positive review
+                </Text>
+              </View>
+            }
+            onPress={() => navigation.navigate('Rate us 5 stars on the store')}
+          />
+
+
           <ListItem iconSource={require('../img/pr.png')} title="Terms of Service" onPress={() => navigation.navigate('Terms of Service')} />
           <ListItem iconSource={require('../img/tm.png')} title="Privacy Policy" onPress={() => navigation.navigate('Privacy Policy')} />
           <ListItem iconSource={require('../img/infoV.png')} title="App Version" onPress={() => navigation.navigate('App Version')} isLast={true} />
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
             style={[styles.logoutButton, { backgroundColor: isDarkMode ? theme.danger : theme.danger }]}
-            onPress={handleLogout} 
+            onPress={handleLogout}
         >
             <Image source={require('../img/logoutbtn.png')} style={[styles.logoutIcon, { tintColor: isDarkMode ? AppColors.dark.textPrimary : AppColors.light.card }]} />
             <Text style={[styles.logoutText, { color: isDarkMode ? AppColors.dark.textPrimary : AppColors.light.card }]}>Logout</Text>
@@ -224,7 +319,7 @@ const Profile = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Cashback for Feedback')}>
             <Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-            <Text style={[styles.navText, { color: theme.bottomNavInactiveTint, textAlign: 'center' }]}>Cashback</Text>
+            <Text style={[styles.navText, { color: theme.bottomNavInactiveTint, textAlign: 'center' }]}>Cashback for Feedback</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Refer and Earn')}>
             <Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
@@ -238,11 +333,11 @@ const Profile = ({ navigation }) => {
     </View>
   );
 };
- 
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContentContainer: {
-    paddingBottom: 80,
+    paddingBottom: 0,
     paddingHorizontal: 15,
   },
   header: {
@@ -351,8 +446,14 @@ const styles = StyleSheet.create({
     marginRight: 10, // Space before the arrow in the card
   },
   infoIcon: { // Icon for Parent Name
-      width: 40, 
+      width: 40,
       height: 40,
+      marginRight: 15,
+  },
+    infoIcons: {
+      width: 20,
+      height: 20,
+      marginLeft: 10,
       marginRight: 15,
   },
   infoTitle: { // Parent Name
@@ -364,12 +465,13 @@ const styles = StyleSheet.create({
   infoSubtitle: { // Girl / Boy
       fontSize: 13,
       fontFamily: 'Lexend-VariableFont_wght',
+      marginLeft: '10%',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 10,
-    paddingHorizontal: 5, 
+    paddingHorizontal: 5,
     fontFamily: 'Lexend-VariableFont_wght',
   },
   // ListItem styles
@@ -381,13 +483,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
-    paddingHorizontal: 5, // Inner padding for items within cards if needed
+    paddingHorizontal: 5,
   },
-  listItemMainContent: { // Container for icon and text
+  listItemMainContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1, // Crucial for pushing arrow to the right
-    marginRight: 10, // Space between text content and arrow
+    flex: 1,
+    marginRight: 10,
   },
   listItemIcon: {
     width: 24,
@@ -395,8 +497,8 @@ const styles = StyleSheet.create({
     marginRight: 15,
     resizeMode: 'contain',
   },
-  listItemTextContainer: { // Holds title and subtitle
-    flex: 1, // Allows text to wrap or fill space correctly
+  listItemTextContainer: {
+    flex: 1,
   },
   listItemTitle: {
     fontSize: 15,
@@ -412,7 +514,7 @@ const styles = StyleSheet.create({
     height: 1,
     // Margin to align with the start of the text in listItemMainContent
     // Considers listItemRow's paddingHorizontal (5) + listItemIcon width (24) + listItemIcon marginRight (15)
-    marginLeft: 5 + 24 + 15, 
+    marginLeft: 5 + 24 + 15,
     marginVertical: 4,
   },
   logoutButton: {
@@ -434,25 +536,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'Lexend-VariableFont_wght',
   },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 8,
-  },
-  navItem: { alignItems: 'center', flex: 1, paddingVertical: 5 },
-  navIcon: { width: 24, height: 24, resizeMode: 'contain', marginBottom: 4 },
-  navText: { fontSize: 10, fontWeight: '500', fontFamily: 'Lexend-VariableFont_wght',},
+    bottomNav: {
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            backgroundColor: '#fff',
+            paddingVertical: 10,
+            bottom: 0,
+            width: '100%',
+            shadowColor: '#000',
+            shadowOpacity: 0.2,
+            shadowRadius: 20,
+            elevation: 5,},
+            navItem: {
+            alignItems: 'center',
+            paddingVertical: 5,
+        },
+        navIcon: {
+            width: 24,
+            height: 24,
+            resizeMode: 'contain',
+            marginBottom: 4,
+        },
+   navText: {
+    color: 'gray',
+    fontSize: 10,
+    marginTop: 4,
+    fontWeight: 'bold',
+    },
   navTextActive: { fontSize: 10, fontWeight: '700', fontFamily: 'Lexend-VariableFont_wght', },
 });
 export default Profile;

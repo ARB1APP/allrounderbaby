@@ -469,7 +469,7 @@ const CashbackforFeedback = ({ navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
             <Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavActiveTint }]} />
-            <Text style={[styles.navText, { color: theme.bottomNavActiveTint, textAlign: 'center' }]}>Cashback for Feedback</Text>
+            <Text style={[styles.navText, { color: theme.bottomNavActiveTint}]}>Cashback for Feedback</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Refer and Earn')}>
             <Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
@@ -641,36 +641,35 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     backgroundColor: theme.borderColor,
     marginHorizontal: 15,
   },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: theme.bottomNavBackground,
-    paddingVertical: Platform.OS === 'ios' ? 15 : 10,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
-    borderTopWidth: 1,
-    borderTopColor: theme.borderColor,
-    shadowColor: theme.bottomNavShadowColor,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: theme.elevation > 0 ? 0.1 : 0,
-    shadowRadius: theme.elevation > 0 ? 4 : 0,
-    elevation: theme.elevation,
-  },
-  navItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  navIcon: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
-    marginBottom: 3,
-  },
-  navText: {
+   bottomNav: { 
+            flexDirection: 'row', 
+            justifyContent: 'space-around', 
+            alignItems: 'center', 
+            backgroundColor: '#fff', 
+            paddingVertical: 10,
+            bottom: 0, 
+            width: '100%', 
+            shadowColor: '#000',
+            shadowOpacity: 0.2,
+            shadowRadius: 20, 
+            elevation: 5,},
+            navItem: { 
+            alignItems: 'center', 
+            paddingVertical: 5,
+        },
+        navIcon: { 
+            width: 24,
+            height: 24,
+            resizeMode: 'contain',
+            marginBottom: 4,
+        },
+   navText: { 
+    color: 'gray', 
     fontSize: 10,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
+    marginTop: 4, 
+    fontWeight: 'bold',
+    },
+
   // Remaining styles (modal, loading, duration etc.) are kept as they might be used elsewhere
   modalLikeContainer: {
     position: 'absolute',
