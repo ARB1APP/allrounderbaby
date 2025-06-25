@@ -132,7 +132,6 @@ const styles = StyleSheet.create({
         width: '100%',
         marginTop: 0,
         borderBottomRightRadius: 150,
-        //borderBottomLeftRadius: 150,
     },
     startAppText: {
         marginTop: 50,

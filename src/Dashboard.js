@@ -1,13 +1,13 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Modal, Alert, BackHandler, StatusBar, ActivityIndicator,Pressable, useColorScheme, Platform } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native'; // Import useRoute
+import { useNavigation, useRoute } from '@react-navigation/native'; 
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import NetInfo from '@react-native-community/netinfo';
 import { VdoPlayerView } from 'vdocipher-rn-bridge';
 import { interval } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_KEY, API_BASE_URL } from '@env'; // Import API_BASE_URL from environment variables
+import { API_KEY, API_BASE_URL } from '@env'; 
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = Dimensions.get('window').width;
@@ -23,7 +23,7 @@ const Dashboard = ({ navigation }) => {
     const scale3 = useRef(new Animated.Value(0)).current;
     const scale4 = useRef(new Animated.Value(0)).current;
     const navigations = useNavigation();
-    const route = useRoute(); // Initialize useRoute to get current route name
+    const route = useRoute();
     const playerRef = useRef(null);
     const intervalRef = useRef(null);
     const totalDurationRef = useRef(0);
@@ -329,7 +329,7 @@ const Dashboard = ({ navigation }) => {
                     setIsVideoLoading(false);
                     if (videoDetails.rows && videoDetails.rows.length >= 4) {
                         setSelectedStepGroup({
-                            stepNumber: 90, // Changed from 7 to 90 to avoid conflict
+                            stepNumber: 90, 
                             hindiVideo: videoDetails.rows[2],
                             englishVideo: videoDetails.rows[3],
                         });
@@ -339,7 +339,7 @@ const Dashboard = ({ navigation }) => {
                     }
 
                     setIsModalVisible(true);
-                    setSelectedStep(90); // Changed from 7 to 90
+                    setSelectedStep(90); 
                     return videoDetails;
                 } catch (error) {
                     setIsVideoLoading(false);
@@ -401,7 +401,7 @@ const Dashboard = ({ navigation }) => {
                 setIsVideoLoading(false);
                 if (videoDetails.rows && videoDetails.rows.length >= 4) {
                     setSelectedStepGroup({
-                        stepNumber: 91, // Changed from 8 to 91 to avoid conflict
+                        stepNumber: 91, 
                         hindiVideo: videoDetails.rows[0],
                         englishVideo: videoDetails.rows[1],
                     });
@@ -411,7 +411,7 @@ const Dashboard = ({ navigation }) => {
                     return null;
                 }
                 setIsModalVisible(true);
-                setSelectedStep(91); // Changed from 8 to 91
+                setSelectedStep(91); 
                 return videoDetails;
 
             } catch (error) {
@@ -568,9 +568,9 @@ const Dashboard = ({ navigation }) => {
             const hindiVideo = knowledgeCuriosityGroupedStepsData.find(g => g.stepNumber === step)?.hindiVideo;
             videoId = hindiVideo?.id;
         }
-        else if (step === 90) { // Changed from 7 to 90
+        else if (step === 90) { 
             videoId = introductionVideos.rows[2]?.id;
-        } else if (step === 91) { // Changed from 8 to 91
+        } else if (step === 91) { 
             videoId = introductionVideos.rows[0]?.id;
         }
 
@@ -638,9 +638,9 @@ const Dashboard = ({ navigation }) => {
             const englishVideo = knowledgeCuriosityGroupedStepsData.find(g => g.stepNumber === step)?.englishVideo;
             videoId = englishVideo?.id;
         }
-        else if (step === 90) { // Changed from 7 to 90
+        else if (step === 90) { 
             videoId = introductionVideos.rows[3]?.id;
-        } else if (step === 91) { // Changed from 8 to 91
+        } else if (step === 91) { 
             videoId = introductionVideos.rows[1]?.id;
         }
 
@@ -719,7 +719,7 @@ const Dashboard = ({ navigation }) => {
                             step: step,
                             title: detailsData.title,
                             poster: detailsData.poster,
-                            cameFrom: route.name, // <--- Here's the change: pass the current route name
+                            cameFrom: route.name, 
                         });
                     }
                 } else {

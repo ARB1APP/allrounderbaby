@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Added useEffect for BackHandler
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,26 +12,24 @@ import {
   Share,
   Platform,
   Pressable,
-  StatusBar, // Added StatusBar
-  BackHandler, // Added BackHandler
+  StatusBar,
+  BackHandler,
 } from 'react-native';
-// Removed: import { Colors } from 'react-native/Libraries/NewAppScreen'; // Not needed with custom theming
 
-// --- Theme Colors ---
 const lightThemeColors = {
-  screenBackground: '#F4F6F8', // Softer white
+  screenBackground: '#F4F6F8',
   cardBackground: '#FFFFFF',
   modalBackground: '#FFFFFF',
-  textPrimary: '#1A202C',    // Darker primary text
-  textSecondary: '#4A5568',  // Softer secondary text
-  textMuted: '#718096',      // For less important text
-  textSuccess: '#38A169',    // Success green for code
-  primaryAction: 'rgba(20, 52, 164, 1)', // Your original primary
+  textPrimary: '#1A202C',
+  textSecondary: '#4A5568',
+  textMuted: '#718096',
+  textSuccess: '#38A169',
+  primaryAction: 'rgba(20, 52, 164, 1)',
   primaryActionText: '#FFFFFF',
-  secondaryActionBorder: '#CBD5E0', // Border for secondary buttons
+  secondaryActionBorder: '#CBD5E0',
   secondaryActionText: '#2D3748',
   linkColor: 'rgba(20, 52, 164, 1)',
-  borderColor: '#E2E8F0',      // General border color
+  borderColor: '#E2E8F0',
   iconColor: '#4A5568',
   bottomNavBackground: '#FFFFFF',
   bottomNavActiveTint: 'rgba(20, 52, 164, 1)',
@@ -39,7 +37,7 @@ const lightThemeColors = {
   bottomNavShadowColor: '#000000',
   radioButtonBorder: '#CBD5E0',
   radioButtonSelectedBackground: 'rgba(20, 52, 164, 1)',
-  modalButtonShareBackground: '#4CAF50', // Your green
+  modalButtonShareBackground: '#4CAF50',
   modalButtonShareText: '#FFFFFF',
   modalButtonCloseBackground: '#E2E8F0',
   modalButtonCloseText: '#2D3748',
@@ -49,54 +47,51 @@ const lightThemeColors = {
 };
 
 const darkThemeColors = {
-  screenBackground: '#1A202C', // Dark blue-gray
+  screenBackground: '#1A202C',
   cardBackground: '#2D3748',
   modalBackground: '#2D3748',
   textPrimary: '#E2E8F0',
   textSecondary: '#A0AEC0',
   textMuted: '#718096',
-  textSuccess: '#68D391',    // Lighter green for dark mode
-  primaryAction: 'rgba(40, 72, 184, 1)', // Slightly brighter primary for dark
+  textSuccess: '#68D391',
+  primaryAction: 'rgba(40, 72, 184, 1)',
   primaryActionText: '#E2E8F0',
   secondaryActionBorder: '#4A5568',
   secondaryActionText: '#CBD5E0',
-  linkColor: '#63B3ED',        // Lighter blue for links
+  linkColor: '#63B3ED',
   borderColor: '#4A5568',
   iconColor: '#A0AEC0',
   bottomNavBackground: '#2D3748',
   bottomNavActiveTint: '#63B3ED',
   bottomNavInactiveTint: '#718096',
-  bottomNavShadowColor: '#000000', // Less visible, border preferred
+  bottomNavShadowColor: '#000000',
   radioButtonBorder: '#4A5568',
   radioButtonSelectedBackground: '#63B3ED',
-  modalButtonShareBackground: '#38A169', // Darker green
+  modalButtonShareBackground: '#38A169',
   modalButtonShareText: '#E2E8F0',
   modalButtonCloseBackground: '#4A5568',
   modalButtonCloseText: '#E2E8F0',
   overlayBackground: 'rgba(0,0,0,0.7)',
   statusBarContent: 'light-content',
-  elevation: 0, // Prefer borders in dark mode
+  elevation: 0,
 };
 
-// --- Dynamic Styles ---
 const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
-  // --- Main Container & ScrollView ---
   container: {
     flex: 1,
     backgroundColor: theme.screenBackground,
   },
   scrollViewContent: {
     flexGrow: 1,
-    paddingBottom: 20, // Space for content, nav bar handled separately
+    paddingBottom: 20,
   },
-  // --- Typography ---
   titleText: {
-    fontSize: 17, // Slightly smaller for balance
+    fontSize: 17,
     textAlign: 'center',
     marginHorizontal: 0,
     marginTop: 0,
     marginBottom: 0,
-    fontWeight: '600', // Semi-bold
+    fontWeight: '600',
     color: theme.textPrimary,
     lineHeight: 24,
   },
@@ -135,7 +130,6 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     height: 24,
     tintColor: theme.iconColor,
   },
-  // --- Buttons ---
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -149,7 +143,7 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 5,
-    elevation: theme.elevation / 2, // Subtle shadow
+    elevation: theme.elevation / 2,
     shadowColor: theme.bottomNavShadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -181,7 +175,6 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     color: theme.textMuted,
     marginBottom: 20,
   },
-  // --- Content Text ---
   contentParagraph: {
     marginHorizontal: 20,
     fontSize: 15,
@@ -205,8 +198,8 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     marginBottom: 8,
   },
   boldText: {
-    fontWeight: '600', // Use semi-bold for emphasis
-    color: theme.textPrimary, // Make bold text stand out more
+    fontWeight: '600',
+    color: theme.textPrimary,
   },
   linkButton: {
     alignSelf: 'flex-end',
@@ -220,14 +213,13 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  // --- Video Links Section ---
   videoLinksContainer: {
     marginHorizontal: 20,
     marginTop: 20,
-    marginBottom: 30, // More space before bottom nav
+    marginBottom: 30,
     backgroundColor: theme.cardBackground,
     borderRadius: 10,
-    borderWidth: theme.elevation === 0 ? 1 : 0, // Border for dark mode if no elevation
+    borderWidth: theme.elevation === 0 ? 1 : 0,
     borderColor: theme.borderColor,
     elevation: theme.elevation,
     shadowColor: theme.bottomNavShadowColor,
@@ -249,7 +241,6 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
   videoIcon: {
     width: 28,
     height: 28,
-   // tintColor: theme.primaryAction, // Use primary color for icons
     marginRight: 12,
   },
   videoTitle: {
@@ -268,17 +259,15 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     marginHorizontal: 15,
   },
 
-  // --- Bottom Navigation ---
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: theme.bottomNavBackground,
-    paddingVertical: Platform.OS === 'ios' ? 15 : 10, // Adjust padding for notch
-    paddingBottom: Platform.OS === 'ios' ? 25 : 10, // Extra padding for home indicator
+    paddingVertical: Platform.OS === 'ios' ? 15 : 10,
+    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
     borderTopWidth: 1,
     borderTopColor: theme.borderColor,
-    // Shadow for light mode, border handled by borderTopWidth for dark
     shadowColor: theme.bottomNavShadowColor,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: theme.elevation > 0 ? 0.1 : 0,
@@ -300,13 +289,12 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  // --- Modal Styles (can be a separate StyleSheet if very large) ---
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: theme.overlayBackground,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000, // Ensure it's on top
+    zIndex: 1000,
   },
   modalView: {
     backgroundColor: theme.modalBackground,
@@ -315,7 +303,7 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     width: '90%',
     maxWidth: 380,
     alignItems: 'center',
-    elevation: 10, // Modal should always have some elevation/shadow
+    elevation: 10,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -335,7 +323,7 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     flex: 1,
   },
   modalCloseButton: {
-    padding: 5, // Make touch target larger
+    padding: 5,
   },
   modalCloseIcon: {
     fontSize: 26,
@@ -356,7 +344,7 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
   radioButtonRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8, // Increased padding for touchability
+    paddingVertical: 8,
   },
   radioButtonOuter: {
     height: 24,
@@ -390,7 +378,6 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     marginHorizontal: 5,
-    // elevation for buttons inside modal (subtle)
     elevation: 2,
     shadowColor: theme.bottomNavShadowColor,
     shadowOffset: { width: 0, height: 1 },
@@ -403,13 +390,13 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
   },
   importantDetailsBox: {
     marginHorizontal: 20,
-    marginTop: 0, 
+    marginTop: 0,
     padding: 15,
-    backgroundColor: theme.cardBackground, 
+    backgroundColor: theme.cardBackground,
     borderRadius: 8,
     borderWidth: theme.elevation === 0 ? 1 : 0,
     borderColor: theme.borderColor,
-    elevation: theme.elevation / 2, 
+    elevation: theme.elevation / 2,
     shadowColor: theme.bottomNavShadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -426,23 +413,17 @@ const ReferAndEarnConditions = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-        // console.log('Hardware back press detected on Conditions screen');
         if (navigation.canGoBack()) {
-            // console.log('Navigating back to Refer and Earn');
-            navigation.navigate('Refer and Earn'); // Explicitly navigate back
+            navigation.navigate('Refer and Earn');
         } else {
-            // console.log('Cannot go back, potentially stay or navigate to Home');
-            // This case should ideally not happen if this screen is pushed onto a stack
         }
-        return true; // Prevent default back action
+        return true;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     return () => {
-        // console.log('Removing back handler from Conditions screen');
         backHandler.remove();
-        // StatusBar.setHidden(false); // Only if it was explicitly hidden
     };
   }, [navigation]);
  
@@ -456,7 +437,6 @@ const ReferAndEarnConditions = ({ navigation }) => {
         </View>
 
   <View style={styles.sectionDivider} />
-        {/* <Text style={styles.lastUpdatedText}>Last updated: 21st April, 2025</Text> */}
 
         <View style={styles.importantDetailsBox}>
 
@@ -536,7 +516,6 @@ const ReferAndEarnConditions = ({ navigation }) => {
               <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>📌 Tax Information</Text>
                 <Text style={styles.listItem}><Text style={styles.boldText}>For Indian Residents:</Text></Text>
             <Text style={styles.listItem}>
-                {/* Corrected duplicate text and improved clarity */}
                 🔹 Referral income is typically processed within <Text style={styles.boldText}>1 to 60 days,</Text> subject to transaction volume and verification.
             </Text>
             <Text style={styles.listItem}>

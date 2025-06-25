@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Dimensions, useColorScheme } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
-import { CommonActions } from '@react-navigation/native'; // Import CommonActions for navigation reset
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CommonActions } from '@react-navigation/native';
 
 const AppColors = {
     light: {
@@ -57,18 +57,12 @@ const Profile = ({ navigation }) => {
   const isDarkMode = useColorScheme() === 'dark';
   const theme = isDarkMode ? AppColors.dark : AppColors.light;
 
-  /**
-   * Handles the logout process.
-   * Clears user authentication data from AsyncStorage and navigates to the Login screen.
-   */
   const handleLogout = async () => {
       try {
-          // Clear user-specific data from AsyncStorage
           await AsyncStorage.removeItem('token');
           await AsyncStorage.removeItem('userId');
           console.log('User session data cleared from AsyncStorage.');
 
-          // Reset the navigation stack to only include the 'Login' screen
           navigation.dispatch(
               CommonActions.reset({
                   index: 0,
@@ -77,33 +71,23 @@ const Profile = ({ navigation }) => {
           );
       } catch (error) {
           console.error('Error during logout process:', error);
-          // In a real application, you might want to show a user-friendly alert here
-          // For example: Alert.alert("Logout Failed", "Could not clear session data. Please try again.");
       }
   };
 
-  /**
-   * ListItem component to display a row with an icon, title, and optional subtitle.
-   * It handles rendering of the subtitle based on whether it's a string or a React element.
-   */
   const ListItem = ({ iconSource, title, subtitle, onPress, isLast, showArrow = true, titleColor }) => {
-    // Check if the subtitle is already a React element (e.g., a View containing Text)
     const isSubtitleElement = React.isValidElement(subtitle);
 
     return (
       <TouchableOpacity onPress={onPress} style={styles.listItemWrapper}>
           <View style={styles.listItemRow}>
               <View style={styles.listItemMainContent}>
-                  {/* Corrected: Use iconSource prop instead of hardcoded '../img/bell.png' */}
                   <Image source={iconSource} style={[styles.listItemIcon, { tintColor: theme.icon }]} />
                   <View style={styles.listItemTextContainer}>
                       <Text style={[styles.listItemTitle, { color: titleColor || theme.textPrimary }]}>{title}</Text>
-                      {subtitle !== null && subtitle !== undefined && ( // Ensure subtitle is not null or undefined
+                      {subtitle !== null && subtitle !== undefined && (
                           isSubtitleElement ? (
-                              // If subtitle is already an element, render it directly
                               subtitle
                           ) : (
-                              // If subtitle is a string (or other primitive), wrap it in a Text component and convert to string
                               <Text style={[styles.listItemSubtitle, { color: theme.textSecondary }]}>{String(subtitle)}</Text>
                           )
                       )}
@@ -119,7 +103,6 @@ const Profile = ({ navigation }) => {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContentContainer}>
-        {/* Profile Header */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>My Profile</Text>
           <TouchableOpacity style={[styles.pointButton, { backgroundColor: theme.pointsBackground }]}>
@@ -129,15 +112,14 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* User Info Card */}
         <TouchableOpacity
             style={[
                 styles.card,
                 {
                     backgroundColor: theme.card,
-                    flexDirection: 'row', // Added
-                    alignItems: 'center', // Added
-                    justifyContent: 'space-between' // Added
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
                 }
             ]}
         >
@@ -147,33 +129,25 @@ const Profile = ({ navigation }) => {
                 </View>
                 <View style={styles.userInfoTextContainer}>
                     <Text style={[styles.userName, { color: theme.textPrimary }]}>AllrounderBaby (Name)</Text>
-                    {/* <View style={styles.levelBadgeContainer}>
-                        <Image source={require('../img/two.png')} style={styles.levelBadgeIcon} />
-                        <Text style={[styles.levelBadgeText, { color: theme.textSecondary }]}>Committed Parent</Text>
-                        <View style={[styles.levelIndicator, { backgroundColor: theme.levelBadgeBackground }]}>
-                            <Text style={[styles.levelIndicatorText, { color: theme.levelBadgeText }]}>L2</Text>
-                        </View>
-                    </View> */}
                 </View>
             </View>
             <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
         </TouchableOpacity>
 
-        {/* Parent Info Card */}
         <TouchableOpacity
             style={[
                 styles.card,
                 {
                     backgroundColor: theme.card,
-                    flexDirection: 'row', // Added
-                    alignItems: 'center', // Added
-                    justifyContent: 'space-between' // Added
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
                 }
             ]}
         >
-            <View style={styles.parentInfoDetailContainer}> {/* Changed from userInfoContainer to avoid style conflicts if any, or ensure userInfoContainer is generic enough */}
+            <View style={styles.parentInfoDetailContainer}>
                 <Image source={require('../img/user.png')} style={[styles.infoIcon, { tintColor: theme.primary }]} />
-                <View style={styles.userInfoTextContainer}> {/* Can be reused if structure is similar */}
+                <View style={styles.userInfoTextContainer}>
                     <Text style={[styles.infoTitle, { color: theme.textPrimary }]}>Parent Name</Text>
                     <Text style={[styles.infoSubtitle, { color: theme.textSecondary }]}>Visionary Parent</Text>
                 </View>
@@ -181,7 +155,6 @@ const Profile = ({ navigation }) => {
             <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
         </TouchableOpacity>
 
-        {/* My Referrals Link */}
         <TouchableOpacity
             style={[styles.card, { backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
             onPress={() => navigation.navigate('My Referrals')}
@@ -193,10 +166,8 @@ const Profile = ({ navigation }) => {
             <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
         </TouchableOpacity>
 
-        {/* Settings Card */}
         <View style={[styles.card, { backgroundColor: theme.card }]}>
           <Text style={[styles.sectionTitle, { color: theme.sectionTitle }]}>Settings</Text>
-          {/* Passed iconSource correctly to ListItem */}
           <ListItem iconSource={require('../img/bell.png')} title="My Notifications" onPress={() => navigation.navigate('My Notifications')} />
 
         <ListItem
@@ -244,7 +215,6 @@ const Profile = ({ navigation }) => {
         />
         </View>
 
-        {/* Help and Support Card */}
         <View style={[styles.card, { backgroundColor: theme.card }]}>
           <Text style={[styles.sectionTitle, { color: theme.sectionTitle }]}>Help and Support</Text>
        <ListItem
@@ -271,7 +241,6 @@ const Profile = ({ navigation }) => {
         />
         </View>
 
-        {/* Other Links Card */}
         <View style={[styles.card, { backgroundColor: theme.card }]}>
          <ListItem
             iconSource={require('../img/starfive.png')}
@@ -300,7 +269,6 @@ const Profile = ({ navigation }) => {
           <ListItem iconSource={require('../img/infoV.png')} title="App Version" onPress={() => navigation.navigate('App Version')} isLast={true} />
         </View>
 
-        {/* Logout Button */}
         <TouchableOpacity
             style={[styles.logoutButton, { backgroundColor: isDarkMode ? theme.danger : theme.danger }]}
             onPress={handleLogout}
@@ -311,7 +279,6 @@ const Profile = ({ navigation }) => {
 
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <View style={[styles.bottomNav, { backgroundColor: theme.bottomNavBackground, borderTopColor: theme.border }]}>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
             <Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
@@ -379,12 +346,11 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  // User Info specific container (left part of the card)
   userInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1, // Allow it to take space if the card is a row
-    marginRight: 10, // Space before the arrow in the card
+    flex: 1,
+    marginRight: 10,
   },
   avatar: {
     width: 50,
@@ -399,8 +365,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Lexend-VariableFont_wght',
   },
-  userInfoTextContainer: { // Contains username/level or parent name/gender
-    flex: 1, // Allows text to take available space
+  userInfoTextContainer: {
+    flex: 1,
   },
   userName: {
     fontSize: 18,
@@ -438,14 +404,13 @@ const styles = StyleSheet.create({
     height: 20,
     resizeMode: 'contain',
   },
-  // Parent Info specific container (left part of the card)
   parentInfoDetailContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1, // Allow it to take space if the card is a row
-    marginRight: 10, // Space before the arrow in the card
+    flex: 1,
+    marginRight: 10,
   },
-  infoIcon: { // Icon for Parent Name
+  infoIcon: {
       width: 40,
       height: 40,
       marginRight: 15,
@@ -456,13 +421,13 @@ const styles = StyleSheet.create({
       marginLeft: 10,
       marginRight: 15,
   },
-  infoTitle: { // Parent Name
+  infoTitle: {
       fontSize: 16,
       fontWeight: '600',
       marginBottom: 2,
       fontFamily: 'Lexend-VariableFont_wght',
   },
-  infoSubtitle: { // Girl / Boy
+  infoSubtitle: {
       fontSize: 13,
       fontFamily: 'Lexend-VariableFont_wght',
       marginLeft: '10%',
@@ -474,9 +439,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     fontFamily: 'Lexend-VariableFont_wght',
   },
-  // ListItem styles
   listItemWrapper: {
-    // No specific padding here, padding will be on listItemRow
   },
   listItemRow: {
     flexDirection: 'row',
@@ -512,8 +475,6 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    // Margin to align with the start of the text in listItemMainContent
-    // Considers listItemRow's paddingHorizontal (5) + listItemIcon width (24) + listItemIcon marginRight (15)
     marginLeft: 5 + 24 + 15,
     marginVertical: 4,
   },

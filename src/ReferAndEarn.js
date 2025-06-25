@@ -276,39 +276,6 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     backgroundColor: theme.borderColor,
     marginHorizontal: 15,
   },
-
-  // bottomNav: {
-  //   flexDirection: 'row',
-  //   justifyContent: 'space-around',
-  //   alignItems: 'center',
-  //   paddingVertical: 10,
-  //   borderTopWidth: 1,
-  //   position: 'absolute',
-  //   bottom: 0,
-  //   left: 0,
-  //   right: 0,
-  //   shadowColor: '#000',
-  //   shadowOffset: { width: 0, height: -2 },
-  //   shadowOpacity: 0.1,
-  //   shadowRadius: 4,
-  //   elevation: 8,
-  // },
-  // navItem: {
-  //   alignItems: 'center',
-  //   paddingVertical: 5,
-  // },
-  // // navIcon: {
-  // //   width: 24,
-  // //   height: 24,
-  // //   resizeMode: 'contain',
-  // //   marginBottom: 3,
-  // // },
-  // navIcon: { 
-  //   width: 24, 
-  //   height: 24,
-  //   resizeMode: 'contain', 
-  //   marginBottom: 4,
-  // },
     bottomNav: { 
             flexDirection: 'row', 
             justifyContent: 'space-around', 
@@ -459,8 +426,8 @@ const ReferAndEarn = ({ navigation }) => {
   const styles = createReferAndEarnStyles(theme);
   const isDarkMode = useColorScheme() === 'dark';
 
-  // Make code mutable
-  const [code, setCode] = useState("Loading..."); // Initial state for code
+
+  const [code, setCode] = useState("Loading..."); 
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [selectedAge, setSelectedAge] = useState(null);
 
@@ -481,16 +448,15 @@ const ReferAndEarn = ({ navigation }) => {
       const storedUserId = await AsyncStorage.getItem('userId');
       setUserID(storedUserId);
       setToken(storedToken);
-      // Once token and userId are loaded, fetch user details and videos
       if (storedToken && storedUserId) {
         handleRefrealcode(storedToken, storedUserId);
       } else {
         console.warn("Authentication: Token or User ID not found in AsyncStorage.");
-        setCode("Login Req."); // Indicate that login is required
+        setCode("Login Req."); 
       }
     };
     loadUserData();
-  }, []); // Run once on component mount
+  }, []); 
 
   useEffect(() => {
     if (token) {
@@ -552,7 +518,6 @@ const ReferAndEarn = ({ navigation }) => {
       Alert.alert("Please select", "Please select a child's age group before sharing.");
       return;
     }
-    // Use the dynamically loaded code
     let shareMessage = `My referral code is: ${code}. Use it on AllrounderBaby.com for a 10% discount!`;
     shareMessage += ` (Age group: ${selectedAge} years)`;
     shareMessage += ` #AllrounderBaby #ReferAndEarn`;
@@ -661,8 +626,7 @@ const ReferAndEarn = ({ navigation }) => {
     } catch (error) {
       return { error: true, message: `An unexpected error occurred: ${error.message}` };
     } finally {
-      // It's important to set isLoading to false here if this function controls global video loading
-      // setIsVideoLoading(false); // Only if vdoCipher_api is the sole source of video loading.
+      // setIsVideoLoading(false); 
     }
   };
 
