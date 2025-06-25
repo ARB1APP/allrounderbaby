@@ -42,7 +42,7 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
   scrollViewContent: {
     flexGrow: 1,
     paddingBottom: 30, 
-    marginTop: 10,
+    marginTop: 5,
   },
   // --- Typography & Structure ---
   headerTitle: {
@@ -59,7 +59,7 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
     height: 1,
     backgroundColor: theme.borderColor,
     marginHorizontal: 20,
-    marginVertical: 15, // Consistent spacing for dividers
+    marginVertical: 15,
   },
   introParagraph: {
     marginHorizontal: 20,
@@ -127,9 +127,9 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
   }, 
   sectionlogo:{
     width: '100%',
-    alignItems: 'center',       // horizontally center the image
-    justifyContent: 'center',   // vertically center (optional)
-    marginVertical: 10,         // spacing (optional)
+    alignItems: 'center',   // horizontally center the image
+    justifyContent: 'center', // vertically center (optional)
+    marginVertical: 10, // spacing (optional)
   },
   Titlelogo : {
     marginTop: 2,
@@ -340,11 +340,11 @@ const AboutUs = ({ navigation }) => {
                 styles.TitleText,
                 { color: isDarkMode ? '#fff' : '#1434a4' }
             ]}>
-                Innovation & Science-Driven
+                Innovation & Science-Driven Excellence 
            </Text>
         </View>
         <Text style={styles.introParagraph}>
-            We integrate the latest research in child psychology, neuroscience, and education to create the best resources for families.s
+            We integrate the latest research in child psychology, neuroscience, and education to create the best resources for families.
         </Text>
     </View>
            <View style={[
@@ -464,7 +464,11 @@ const AboutUs = ({ navigation }) => {
             "Every great company starts with a powerful WHY, and ours is simple: Parents deserve happiness. Children deserve the best."
         </Text>
         <Text style={styles.introParagraph}>
-            AllrounderBaby.com was founded on the belief that every child is a bright spark of happiness, intelligence, and potential—but only if given the right environment and opportunities. Our founder, Shubha Nayak, a visionary leader in modern parenting, saw a world where parents were overwhelmed with conflicting advice, struggling to find the best ways to nurture their little ones. Our team knew there had to be a better way—one that not only empowered parents but also made the journey joyful and stress-free.
+            AllrounderBaby.com was founded on the belief that every child is a bright spark of happiness,
+             intelligence, and potential—but only if given the right environment and opportunities. 
+             Our founder, Shubha Nayak, a visionary leader in modern parenting, saw a world where parents were overwhelmed with conflicting advice, 
+             struggling to find the best ways to nurture their little ones. Our team knew there had to be a better way—one that not only 
+             empowered parents but also made the journey joyful and stress-free.
         </Text>
         <Text style={styles.introParagraph}>
             That’s why SarvaShine Allrounder Baby Solutions Private Limited was born—to bring clarity, confidence, and happiness back into parenting. We blend science, culture, and real-world experience into practical, easy-to-follow, and cheerful programs that make a real difference in children's lives.
@@ -490,12 +494,6 @@ const AboutUs = ({ navigation }) => {
             Let’s raise joyful, confident, curious, and compassionate children—together. 🎉✨
         </Text>
 </View>
-
-
-
-
-
-      
       </ScrollView>
     </View>
   );

@@ -42,18 +42,18 @@ const lightThemeColors = {
 const darkThemeColors = {
   screenBackground: '#121212',
   cardBackground: '#1E1E1E',
-  cardBorder: '#3A3A3A', // Use border for cards in dark mode
+  cardBorder: '#3A3A3A',
   textPrimary: '#E0E0E0',
   textSecondary: '#A0A0A0',
   textPlaceholder: '#888888',
-  statusCompletedBackground: '#2E7D32', // Slightly darker green for dark mode
+  statusCompletedBackground: '#2E7D32',
   statusCompletedText: '#E0E0E0',
-  statusPendingBackground: '#FF8F00', // Slightly darker orange for dark mode
+  statusPendingBackground: '#FF8F00',
   statusPendingText: '#E0E0E0',
-  shadowColor: '#000000', // Shadows less prominent
+  shadowColor: '#000000',
   shadowOpacity: 0.3,
   shadowRadius: 4,
-  elevation: 0, // Prefer borders
+  elevation: 0,
   statusBarContent: 'light-content',
 
   // Bottom Nav (if used)
@@ -64,7 +64,6 @@ const darkThemeColors = {
   inactiveNavText: '#888888',
 };
 
-// --- Dynamic Styles ---
 const createMyReferralsStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
@@ -72,7 +71,7 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
   },
   scrollContainer: {
      flexGrow: 1,
-     paddingBottom: 20, // Adjusted if no bottom nav
+     paddingBottom: 20,
      paddingHorizontal: 15,
   },
   title: {
@@ -172,10 +171,10 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
-    overflow: 'hidden', // Ensures borderRadius clips background
+    overflow: 'hidden',
     textAlign: 'center',
   },
-  statusCompleted: { // Only color, background is applied to the Text component itself
+  statusCompleted: {
       color: theme.statusCompletedText,
       backgroundColor: theme.statusCompletedBackground,
   },
@@ -188,17 +187,17 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
       color: theme.textSecondary,
       marginTop: 5,
   },
-  // --- Bottom Nav Styles (Kept for consistency if added later) ---
+ 
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: theme.bottomNavBackground, // Themed
+    backgroundColor: theme.bottomNavBackground,
     paddingVertical: 10,
     width: '100%',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    // shadow/border for bottom nav would be themed similarly to cards
+
   },
   navItem: { alignItems: 'center', flex: 1, },
   navIcon: { width: 25, height: 25, resizeMode: 'contain', },
@@ -207,7 +206,7 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
   navTextActive: { color: theme.activeNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
   navText: { color: theme.inactiveNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
 });
-// --- End of Styles ---
+
 
 
 const MyReferrals = ({ navigation }) => {

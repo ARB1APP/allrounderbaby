@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 const lightThemeColors = {
   screenBackground: '#F0F2F5',
@@ -249,14 +250,65 @@ const MyEarnings = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [bankDetails, setBankDetails] = useState(null); // Renamed userDetails to bankDetails for clarity
 
-  // New states for earning details
-  const [totalEarnings, setTotalEarnings] = useState('0.00');
+  // States for earning details
+  const [totalEarnings, setTotalEarnings] = useState('0.00'); // Grand total
   const [referralCount, setReferralCount] = useState(0);
-  const [earningsPerReferral, setEarningsPerReferral] = useState(0); // This might need to be dynamically set based on API or logic
-  const [feedbackEarnings, setFeedbackEarnings] = useState('0.00'); // This might need to be dynamically set based on API or logic
+  const [earningsPerReferral, setEarningsPerReferral] = useState(0);
+  const [feedbackEarnings, setFeedbackEarnings] = useState('0.00');
 
   const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
 
+useFocusEffect(
+  React.useCallback(() => {
+      const loadAllData = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem('token');
+        const storedUserId = await AsyncStorage.getItem('userId');
+
+        if (storedToken && storedUserId) {
+          setUserID(storedUserId);
+          setToken(storedToken);
+          handleBankDetails(storedToken, storedUserId);
+          handleEarningDetails(storedToken, storedUserId);
+          handleFeedbackEarnings(storedToken, storedUserId);
+        }
+      } catch (error) {
+        console.error("Failed to load data from storage", error);
+      }
+    };
+
+    loadAllData();
+
+  }, []) 
+);
+
+  // useEffect(() => {
+  //   const loadAllData = async () => {
+  //     try {
+
+  //       const storedToken = await AsyncStorage.getItem('token');
+  //       const storedUserId = await AsyncStorage.getItem('userId');
+  //       setUserID(storedUserId);
+  //       setToken(storedToken);
+  //       handleBankDetails(storedToken, storedUserId),
+  //       handleEarningDetails(storedToken, storedUserId),
+  //       handleFeedbackEarnings(storedToken, storedUserId)
+       
+  //     } catch (error) {
+  //       console.error("Error loading all user data from AsyncStorage or APIs:", error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+  //   loadAllData();
+  // }, [token, userId]); // Dependencies for initial load
+
+  // New useEffect to calculate totalEarnings when its components change
+  useEffect(() => {
+      // Ensure numerical values for calculation
+      const calculatedTotal = (referralCount * earningsPerReferral) + parseFloat(feedbackEarnings || '0');
+      setTotalEarnings(calculatedTotal.toFixed(2));
+  }, [referralCount, earningsPerReferral, feedbackEarnings]);
 
   const handleBankDetails = async (token, userId) => {
     if (!userId || !token) {
@@ -266,7 +318,6 @@ const MyEarnings = ({ navigation }) => {
 
     const DETAILS_ENDPOINT = `${url}BankDetails/BankTransaction_Get_BY_UserID?UserID=${userId}`;
     console.log(`handleBankDetails: Attempting to fetch from: ${DETAILS_ENDPOINT}`);
-    // setIsLoading(true); // Loading starts in loadAllData
 
     try {
         const response = await fetch(DETAILS_ENDPOINT, {
@@ -297,28 +348,14 @@ const MyEarnings = ({ navigation }) => {
 
         if (Array.isArray(jsonResponse) && jsonResponse.length > 0 && jsonResponse[0].data) {
             setBankDetails(jsonResponse[0].data);
-            // This part assumes 'referal_Code' might still be present or needed for 'code' state,
-            // even though the API endpoint is now for BankDetails.
-            // Keeping the existing logic for referal_Code for now.
-            // Based on your logs, 'referal_Code' is not directly in jsonResponse[0].
-            // It might come from another user details API or be part of the 'data' object if available.
-            // For now, removing this specific code setting from handleBankDetails to avoid confusion.
-            // if (jsonResponse[0].referal_Code) {
-            //     setCode(jsonResponse[0].referal_Code);
-            //     console.log("handleBankDetails: Referral code successfully set:", jsonResponse[0].referal_Code);
-            // } else {
-            //     if (code === "Login Req." || code === "") setCode("N/A"); // Fallback if no code is found
-            // }
         } else {
             console.log("handleBankDetails: Bank data not found or format is invalid (missing 'data' property or empty array).");
             Alert.alert("Data Error", "Bank data not found or format is invalid.");
-            // if (code === "Login Req." || code === "") setCode("N/A"); // Avoid setting code here if it's from earnings
         }
 
     } catch (error) {
         console.error("handleBankDetails: Network or unexpected error:", error);
         Alert.alert("Network Error", `An unexpected error occurred during bank details fetch: ${error.message}`);
-        // if (code === "Login Req." || code === "") setCode("Error"); // Avoid setting code here if it's from earnings
     } finally {
         // setIsLoading(false); // Managed by loadAllData
     }
@@ -333,7 +370,6 @@ const MyEarnings = ({ navigation }) => {
 
     const DETAILS_ENDPOINT = `${url}ReferralTransaction/ReferralTransactionList_Get_ByID?ReferralCodeFromUserID=${userId}`;
     console.log(`handleEarningDetails: Attempting to fetch from: ${DETAILS_ENDPOINT}`);
-    // setIsLoading(true); // Loading starts in loadAllData
 
     try {
         const response = await fetch(DETAILS_ENDPOINT, {
@@ -362,68 +398,94 @@ const MyEarnings = ({ navigation }) => {
         const jsonResponse = await response.json();
         console.log("handleEarningDetails: Parsed JSON response for earning details:", jsonResponse);
 
-        // Corrected condition: jsonResponse is an object, and jsonResponse.data is the array
         if (jsonResponse && Array.isArray(jsonResponse.data) && jsonResponse.data.length > 0) {
             const referralTransactions = jsonResponse.data;
 
-            // Calculate total earnings by summing amounts
-            const sumTotalEarnings = referralTransactions.reduce((sum, item) => sum + (item.amount || 0), 0);
-            setTotalEarnings(sumTotalEarnings.toFixed(2));
-
-            // Calculate referral count (number of items in the data array)
             setReferralCount(referralTransactions.length);
 
-            // Set earnings per referral based on the first item's amount, or 0 if no transactions
-            if (referralTransactions.length > 0 && referralTransactions[0].amount) {
-                setEarningsPerReferral(referralTransactions[0].amount);
-            } else {
-                setEarningsPerReferral(0);
+            let firstReferralAmount = 0;
+            if (referralTransactions.length > 0 && typeof referralTransactions[0].amount === 'number') {
+                firstReferralAmount = referralTransactions[0].amount;
             }
-            // Feedback earnings is not present in this data structure, it remains '0.00' or needs another API.
-            setFeedbackEarnings('0.00');
+            setEarningsPerReferral(firstReferralAmount);
 
-            // Try to set referral code from the first item in the data array, if available
             if (referralTransactions.length > 0 && referralTransactions[0].referralCodeName) {
                 setCode(referralTransactions[0].referralCodeName);
                 console.log("handleEarningDetails: Referral code successfully set from earning details:", referralTransactions[0].referralCodeName);
             } else {
                 console.log("handleEarningDetails: 'referralCodeName' property not found in earning details response 'data' object item, or is null/empty.");
-                // Preserve existing 'code' if it's not "Login Req." or empty, otherwise set to "N/A"
                 if (code === "Login Req." || code === "") setCode("N/A");
             }
 
         } else if (jsonResponse && jsonResponse.data && !Array.isArray(jsonResponse.data)) {
           console.warn("handleEarningDetails: Response contains a 'data' property, but it's not an array. Please verify API response structure for earning details.");
           Alert.alert("Data Format Warning", "Earning data format unexpected.");
-          // Reset values if data format is unexpected
-          setTotalEarnings('0.00');
           setReferralCount(0);
           setEarningsPerReferral(0);
-          setFeedbackEarnings('0.00');
           if (code === "Login Req." || code === "") setCode("N/A");
         } else {
             console.log("handleEarningDetails: Earning data not found or format is invalid (missing 'data' property or empty array).");
             Alert.alert("Data Error", "Earning data not found or format is invalid.");
-            // Reset values if no data
-            setTotalEarnings('0.00');
             setReferralCount(0);
             setEarningsPerReferral(0);
-            setFeedbackEarnings('0.00');
             if (code === "Login Req." || code === "") setCode("N/A");
         }
 
     } catch (error) {
         console.error("handleEarningDetails: Network or unexpected error:", error);
         Alert.alert("Network Error", `An unexpected error occurred during earning details fetch: ${error.message}`);
-        // Reset values on network error
-        setTotalEarnings('0.00');
         setReferralCount(0);
         setEarningsPerReferral(0);
-        setFeedbackEarnings('0.00');
         if (code === "Login Req." || code === "") setCode("Error");
     } finally {
         // setIsLoading(false); // Managed by loadAllData
     }
+  };
+
+  const handleFeedbackEarnings = async (currentToken, currentUserId) => {
+      if (!currentUserId || !currentToken) {
+          console.log("handleFeedbackEarnings: Token or User ID not available. Skipping API call.");
+          return;
+      }
+
+      const FEEDBACK_ENDPOINT = `${url}MyProfile/cashback-processed?userId=${currentUserId}`;
+      console.log(`handleFeedbackEarnings: Attempting to fetch from: ${FEEDBACK_ENDPOINT}`);
+
+      try {
+          const response = await fetch(FEEDBACK_ENDPOINT, {
+              method: 'GET',
+              headers: {
+                  'Authorization': `Bearer ${currentToken}`,
+                  'Accept': 'application/json'
+              }
+          });
+
+          console.log(`handleFeedbackEarnings: API Response Status: ${response.status} ${response.statusText}`);
+
+          if (!response.ok) {
+              const errorData = await response.text();
+             setFeedbackEarnings('0.00'); 
+              return;
+          }
+
+          const jsonResponse = await response.json();
+          console.log("handleFeedbackEarnings: Parsed JSON response for feedback details:", jsonResponse);
+          if (jsonResponse.code === 200) {
+              setFeedbackEarnings('1000.00'); 
+              console.log("handleFeedbackEarnings: Feedback earnings set to 1000 based on code 200.");
+          } else if (jsonResponse.code === 404) {
+              setFeedbackEarnings('0.00'); 
+              console.log("handleFeedbackEarnings: Feedback earnings set to 0 based on code 404.");
+          } else {
+              console.log("handleFeedbackEarnings: Unexpected response code for feedback earnings. Defaulting to 0.");
+              setFeedbackEarnings('0.00');
+          }
+
+      } catch (error) {
+          console.error("handleFeedbackEarnings: Network or unexpected error:", error);
+          Alert.alert("Network Error", `An unexpected error occurred during feedback fetch: ${error.message}`);
+          setFeedbackEarnings('0.00');
+      }
   };
 
   useEffect(() => {
@@ -445,31 +507,6 @@ const MyEarnings = ({ navigation }) => {
     };
   }, [navigation]);
 
-  useEffect(() => {
-    const loadAllData = async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem('token');
-        const storedUserId = await AsyncStorage.getItem('userId');
-        setUserID(storedUserId);
-        setToken(storedToken);
-        if (storedToken && storedUserId) {
-          setIsLoading(true);
-          await Promise.all([
-            handleBankDetails(storedToken, storedUserId),
-            handleEarningDetails(storedToken, storedUserId)
-          ]);
-        } else {
-          console.warn("Authentication: Token or User ID not found in AsyncStorage.");
-          setCode("Login Req.");
-        }
-      } catch (error) {
-        console.error("Error loading all user data from AsyncStorage or APIs:", error);
-      } finally {
-        setIsLoading(false); // Ensure loading is false after all attempts (success or failure)
-      }
-    };
-    loadAllData();
-  }, [token, userId]); // Dependency array to re-run if token/userId changes
 
   return (
     <KeyboardAvoidingView
@@ -570,15 +607,6 @@ const MyEarnings = ({ navigation }) => {
                     editable={false}
                     value={bankDetails?.paymentMethod || ''}
                   />
-                </View>
-                <View style={styles.bankBox}>
-                    <Text style={styles.bankLinkedLabel}>Referral Code</Text>
-                    <TextInput
-                        style={styles.disabledInput}
-                        value={code}
-                        editable={false}
-                        placeholderTextColor={theme.inputPlaceholderText}
-                    />
                 </View>
               </View>
             </>
