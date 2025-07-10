@@ -149,81 +149,6 @@ const Dashboard = ({ navigation }) => {
             ).start();
         };
 
-    const fetchCompletedStepsFromBackend = async (currentUserId, currentToken) => {
-        setIsLoading(true);
-        try {
-            const response = await fetch(`${url}UserProgress/GetCompletedStepsByUserId?userId=${currentUserId}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${currentToken}`,
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                let errorData = { message: `HTTP Error: ${response.status} ${response.statusText}` };
-                try {
-                    errorData = await response.json();
-                } catch (parseError) {
-                    console.error("Error parsing fetchCompletedStepsFromBackend error JSON:", parseError);
-                }
-                Alert.alert("Error", `Failed to load progress: ${errorData.message || response.statusText}`);
-                setCompletedSteps({});
-            } else {
-                const data = await response.json();
-                if (data && data.completedSteps) {
-                    try {
-                        setCompletedSteps(JSON.parse(data.completedSteps));
-                    } catch (e) {
-                        console.error("Failed to parse completedSteps from backend:", e);
-                        setCompletedSteps(data.completedSteps);
-                    }
-                } else {
-                    setCompletedSteps({});
-                }
-            }
-        } catch (error) {
-            Alert.alert("Network Error", `Could not retrieve saved progress: ${error.message}`);
-            setCompletedSteps({});
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const saveCompletedStepsToBackend = async (updatedCompletedSteps) => {
-        if (!userId || !token) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`${url}UserProgress/SaveCompletedSteps`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    completedSteps: JSON.stringify(updatedCompletedSteps)
-                }),
-            });
-
-            if (!response.ok) {
-                let errorData = { message: `HTTP Error: ${response.status} ${response.statusText}` };
-                try {
-                    errorData = await response.json();
-                } catch (parseError) {
-                    console.error("Error parsing saveCompletedStepsToBackend error JSON:", parseError);
-                }
-                Alert.alert("Error", `Failed to save progress: ${errorData.message || response.statusText}`);
-            } else {
-            }
-        } catch (error) {
-            Alert.alert("Network Error", `Could not save progress: ${error.message}`);
-        }
-    };
-
         useEffect(() => {
             const loadUserDataAndProgress = async () => {
                 const storedToken = await AsyncStorage.getItem('token');
@@ -606,7 +531,7 @@ const Dashboard = ({ navigation }) => {
             videoId = englishVideo?.id;
         } else if (step >= 35 && step <= 38) {
             const englishVideo = truthGroupedStepsData.find(g => g.stepNumber === step)?.englishVideo;
-            videoId = englishVideo?.id;
+            videoId = englishId?.id;
         } else if (step >= 39 && step <= 44) {
             const englishVideo = setBoundariesGroupedStepsData.find(g => g.stepNumber === step)?.englishVideo;
             videoId = englishVideo?.id;
@@ -707,7 +632,6 @@ const Dashboard = ({ navigation }) => {
                         setOtpData(data);
                         setCompletedSteps(prev => {
                             const newCompletedSteps = { ...prev, [`step${step}`]: true};
-                            saveCompletedStepsToBackend(newCompletedSteps);
                             return newCompletedSteps;
                         });
 
@@ -716,7 +640,6 @@ const Dashboard = ({ navigation }) => {
                             otp: data.otp,
                             playbackInfo: data.playbackInfo,
                             language: language,
-                            step: step,
                             title: detailsData.title,
                             poster: detailsData.poster,
                             cameFrom: route.name, 
@@ -1804,8 +1727,8 @@ const Dashboard = ({ navigation }) => {
                 Alert.alert('Error', `Video group for step ${step} not found in Knowledge & Curiosity Development category.`);
             }
         }
-        else if (step === 90 || step === 91) { // Added condition for Introduction videos
-             const introGroup = selectedStepGroup; // Use selectedStepGroup directly from introduction handlers
+        else if (step === 90 || step === 91) {
+             const introGroup = selectedStepGroup;
              if (introGroup) {
                  setSelectedStepGroup(introGroup);
                  setIsModalVisible(true);
@@ -3575,7 +3498,7 @@ const Dashboard = ({ navigation }) => {
                                                     </View>
                                                 </Animated.View>
                                             </TouchableOpacity>
-                                            {isDropdownVisibleKnowledgeandCuriousitydevelopment && (
+                                            {isDropdownVisibleKnowledgeandCuriositydevelopment && (
                                                 <View style={styles.dropdownContent}>
                                                     {knowledgeCuriosityGroupedStepsData.map((group) => {
                                                         const { stepNumber, displayStepNumber, hindiVideo, englishVideo } = group;
