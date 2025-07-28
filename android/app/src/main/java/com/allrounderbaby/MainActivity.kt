@@ -7,7 +7,7 @@ package com.allrounderbaby
 import android.os.Build
 import android.widget.Toast 
 import android.os.Bundle
-import android.view.WindowManager 
+// Removed: import android.view.WindowManager 
 import androidx.annotation.RequiresApi 
 
 import com.facebook.react.ReactActivity
@@ -30,15 +30,10 @@ class MainActivity : ReactActivity() {
     override fun createReactActivityDelegate(): ReactActivityDelegate =
         DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
+        // Removed: FLAG_SECURE which was blocking screenshots/screen recording
     }
-
 
     // @RequiresApi(Build.VERSION_CODES.O)
     // fun enterPiPMode() { ... }
