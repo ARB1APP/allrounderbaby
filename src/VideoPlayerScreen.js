@@ -4,9 +4,10 @@ import {
   Text,
   View,
   ActivityIndicator,
+  BackHandler,
   useColorScheme,
   StatusBar,
-  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { VdoPlayerView } from 'vdocipher-rn-bridge';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -14,7 +15,7 @@ import { Colors } from 'react-native/Libraries/NewAppScreen';
 import Orientation from 'react-native-orientation-locker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SAVE_PROGRESS_INTERVAL = 5000;
+const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
 
 const VideoPlayerScreen = () => {
   const route = useRoute();
@@ -22,280 +23,643 @@ const VideoPlayerScreen = () => {
 
   const {
     id: videoId,
+    title,
     otp,
     playbackInfo,
-    returnToScreen,
+    language,
+    step,
+    cameFrom,
+    length: videoLengthFromParams
   } = route.params || {};
+
+  console.log('VideoPlayerScreen Mounted. Params:', {
+    videoId,
+    title,
+    otp: !!otp,
+    playbackInfo: !!playbackInfo,
+    language,
+    step,
+    cameFrom,
+    videoLengthFromParams
+  });
 
   const isDarkMode = useColorScheme() === 'dark';
 
   const playerRef = useRef(null);
+  const progressRef = useRef(0);
   const totalDurationRef = useRef(0);
-  const hasSavedOnExit = useRef(false);
+  const targetSeekPositionRef = useRef(0);
+  const isSeekingRef = useRef(false);
+  const hasShownLimitAlertRef = useRef(false);
+  const initialSeekAttemptedRef = useRef(false);
+  const saveProgressTimeoutRef = useRef(null);
 
-  const progressRef = useRef({
-    currentPosition: 0,
-    lastSavedPosition: 0,
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalViews, setTotalViews] = useState(0);
+  const [isViewLimitReached, setIsViewLimitReached] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
-  const STORAGE_KEY = `video_progress_${videoId}`;
-
-  const [playerState, setPlayerState] = useState({
-    phase: 'loading',
-    seekTime: 0,
-  });
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalTitle, setModalTitle] = useState('');
-  const [modalMessage, setModalMessage] = useState('');
-  const [modalOnPress, setModalOnPress] = useState(() => () => {});
-
-  React.useLayoutEffect(() => {
-    if (navigation && route.params?.title) {
-      navigation.setOptions({ title: route.params.title });
+  const saveProgress = useCallback(async (currentTimeMs, isFinalSave = false) => {
+    console.log(`saveProgress called: currentTimeMs=${currentTimeMs}, isFinalSave=${isFinalSave}, isViewLimitReached=${isViewLimitReached}`);
+    if (isViewLimitReached) {
+      console.warn("Save progress skipped: View limit already reached.");
+      return;
     }
-  }, [navigation, route.params?.title]);
-
-  const showCustomModal = useCallback((title, message, onPressCallback) => {
-    setModalTitle(title);
-    setModalMessage(message);
-    setModalOnPress(() => onPressCallback);
-    setModalVisible(true);
-  }, []);
-
-  const hideCustomModal = useCallback(() => {
-    setModalVisible(false);
-  }, []);
-
-  const getErrorMessage = useCallback((err) => {
-    if (!err) return 'Unknown error';
-    if (typeof err === 'string') return err;
-    if (typeof err.errorDescription === 'string') return err.errorDescription;
-    if (typeof err.message === 'string') return err.message;
-    try {
-      return JSON.stringify(err);
-    } catch {
-      return 'Unknown error';
-    }
-  }, []);
-
-  const saveProgress = useCallback(async (isFinalSave = false) => {
-    console.log("---");
-    console.log("Attempting to save progress. isFinalSave:", isFinalSave);
-
-    const currentTime = progressRef.current.currentPosition || 0;
-    
-    console.log("Guard clause check -> videoId:", videoId);
     if (!videoId) {
-        console.error("SAVE FAILED: Exiting because videoId is missing.");
-        console.log("---");
-        return;
-    }
-    
-    console.log("Guard clause check -> currentTime:", currentTime);
-    if (currentTime <= 0 && !isFinalSave) {
-        console.warn("SAVE SKIPPED: Exiting because currentTime is 0 and this is not a final save.");
-        console.log("---");
-        return;
+      console.warn("Save progress skipped: videoId is missing.");
+      return;
     }
 
     try {
-        const currentSeconds = Math.floor(currentTime);
-        await AsyncStorage.setItem(STORAGE_KEY, currentSeconds.toString());
-        progressRef.current.lastSavedPosition = currentSeconds;
-        console.log(`💾 Saved progress for ${videoId}: ${currentSeconds}s to AsyncStorage`);
-        console.log("---");
+      const [storedToken, userIdString] = await Promise.all([
+        AsyncStorage.getItem('token'),
+        AsyncStorage.getItem('userId')
+      ]);
 
-    } catch (e) {
-        console.error("SAVE FAILED: Error saving to AsyncStorage.", e);
-        console.log("---");
-    }
-  }, [videoId, STORAGE_KEY]);
+      const storedUserId = userIdString ? parseInt(userIdString, 10) : null;
 
-  const handleExit = useCallback(async (isFinished = false) => {
-    if (hasSavedOnExit.current) {
+      if (!storedToken || !storedUserId) {
+        console.error("Save progress failed: Authentication token or User ID not found in AsyncStorage.");
         return;
-    }
-    hasSavedOnExit.current = true;
-
-    await saveProgress(isFinished);
-
-    Orientation.lockToPortrait();
-
-    if (returnToScreen) {
-      navigation.navigate(returnToScreen);
-    } else if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  }, [navigation, saveProgress, returnToScreen]);
-
-  const onPlayerReady = useCallback(() => {
-    console.log(`👍 Player is ready.`);
-    setPlayerState(currentState => ({ ...currentState, phase: 'playing' }));
-  }, []);
-
-  const onLoaded = useCallback(({ duration }) => {
-    totalDurationRef.current = duration;
-    console.log(`Video Loaded. Duration: ${duration}s`);
-  }, []);
-
-  const onProgress = useCallback((e) => {
-    if (progressRef.current) {
-      progressRef.current.currentPosition = e.currentTime / 1000;
-    }
-  }, []);
-
-  const onError = useCallback((errorSource, errorDescription) => {
-    console.error(`VdoPlayer Error (${errorSource}):`, errorDescription);
-    setPlayerState({ phase: 'error', seekTime: 0 });
-    const errorMessage = getErrorMessage({ errorDescription });
-    showCustomModal(
-      "Video Playback Error",
-      errorMessage || `An unexpected error occurred during playback.`,
-      () => {
-        hideCustomModal();
-        handleExit(false);
       }
-    );
-  }, [showCustomModal, hideCustomModal, handleExit, getErrorMessage]);
+      console.log(`Save progress: Retrieved token (present: ${!!storedToken}), userId=${storedUserId}`);
 
-  const onMediaEnded = useCallback(() => {
-    console.log("Video playback ended.");
-    AsyncStorage.removeItem(STORAGE_KEY).catch(e => console.error("Failed to clear progress on end:", e));
-    handleExit(true);
-  }, [handleExit, STORAGE_KEY]);
+      const currentTimeSeconds = Math.floor(currentTimeMs / 1000);
+
+      if (currentTimeSeconds <= 0 && !isFinalSave) {
+        console.log("Save progress skipped: current time is 0 and not a final save.");
+        return;
+      }
+
+      const finalTotalDurationSeconds =
+        totalDurationRef.current > 0
+          ? Math.floor(totalDurationRef.current / 1000)
+          : (typeof videoLengthFromParams === 'number' && !isNaN(videoLengthFromParams)
+            ? videoLengthFromParams
+            : 0);
+
+      const progressData = {
+        user_id: storedUserId,
+        video_id: videoId,
+        last_watched_timestamp_seconds: currentTimeSeconds,
+        is_finished: isFinalSave,
+        total_duration_seconds: finalTotalDurationSeconds,
+      };
+
+      console.log('--- SaveProgress API Request ---');
+      console.log('URL:', `${url}User/User_Video_Progress_Insert`);
+      console.log('Headers:', { 'Authorization': `Bearer ${storedToken}`, 'Content-Type': 'application/json' });
+      console.log('Body:', JSON.stringify(progressData, null, 2));
+
+      const response = await fetch(`${url}User/User_Video_Progress_Insert`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${storedToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(progressData),
+      });
+
+      const responseText = await response.text();
+      console.log('--- SaveProgress API Response ---');
+      console.log('Status:', response.status);
+      console.log('Body:', responseText);
+
+      if (!response.ok) {
+        console.error("Save progress API failed:", response.status, responseText);
+      } else {
+        console.log("Save progress API successful.");
+      }
+    } catch (err) {
+      console.error("Error during saveProgress:", err);
+    }
+  }, [videoId, url, isViewLimitReached, videoLengthFromParams]);
+
+  const checkViewLimit = useCallback((viewCount) => {
+    const MAX_VIEWS = 3;
+    console.log(`checkViewLimit: Current views = ${viewCount}, Max views = ${MAX_VIEWS}`);
+    if (viewCount >= MAX_VIEWS) {
+      setIsViewLimitReached(true);
+      if (!hasShownLimitAlertRef.current) {
+        hasShownLimitAlertRef.current = true;
+        setTimeout(() => {
+          Alert.alert(
+            "View Limit Reached",
+            `You have watched this video ${MAX_VIEWS} times. You will be redirected.`,
+            [{ text: "OK", onPress: () => navigation.goBack() }],
+            { cancelable: false }
+          );
+          console.log('View limit alert shown.');
+        }, 100);
+      }
+      return true;
+    }
+    return false;
+  }, [navigation]);
+
+  const fetchLastWatchedPosition = useCallback(async () => {
+    console.log('fetchLastWatchedPosition called.');
+    if (!videoId) {
+      console.warn("fetchLastWatchedPosition skipped: videoId is missing.");
+      return 0;
+    }
+
+    try {
+      const [storedToken, userIdString] = await Promise.all([
+        AsyncStorage.getItem('token'),
+        AsyncStorage.getItem('userId')
+      ]);
+
+      if (!storedToken || !userIdString) {
+        console.error("Fetch progress failed: Authentication token or User ID not found in AsyncStorage.");
+        return 0;
+      }
+      const storedUserId = parseInt(userIdString, 10);
+      console.log(`Fetch progress: Retrieved token (present: ${!!storedToken}), userId=${storedUserId}`);
+
+      const params = { userId: storedUserId, videoId: videoId };
+      const queryString = new URLSearchParams(params).toString();
+      const requestUrl = `${url}User/User_Video_Progress_Select_All_DATA?${queryString}`;
+
+      console.log('--- FetchLastWatchedPosition API Request ---');
+      console.log('URL:', requestUrl);
+      console.log('Headers:', { 'Authorization': `Bearer ${storedToken}`, 'Accept': 'application/json' });
+
+      const response = await fetch(requestUrl, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${storedToken}`, 'Accept': 'application/json' },
+      });
+
+      const responseText = await response.text();
+      console.log('--- FetchLastWatchedPosition API Response ---');
+      console.log('Status:', response.status);
+      console.log('Body:', responseText);
+
+      if (!response.ok) {
+        console.error(`Fetch progress API failed: Status=${response.status}, Body=${responseText}`);
+        throw new Error(`API Error fetching progress: ${response.status}`);
+      }
+
+      const data = JSON.parse(responseText);
+      console.log('FetchLastWatchedPosition API Response (Parsed):', data);
+
+      let lastWatched = 0;
+      if (Array.isArray(data) && data.length > 0) {
+        const views = data[0].total_views || 0;
+        const lastWatchedFromApi = data[0].last_watched_timestamp_seconds || 0;
+        const isCompleted = data[0].is_finished || false;
+
+        console.log(`Received from API: total_views=${views}, last_watched_timestamp_seconds=${lastWatchedFromApi}, is_finished=${isCompleted}`);
+
+        setTotalViews(views);
+
+        if (checkViewLimit(views)) {
+          console.log(`View limit reached for videoId: ${videoId}. Aborting playback.`);
+          return -1;
+        }
+
+        if (isCompleted) {
+          console.log('Video was previously marked as finished, starting from 0.');
+          lastWatched = 0;
+        } else {
+          lastWatched = lastWatchedFromApi;
+        }
+      } else {
+        console.log('No progress data found for this video. Starting from 0.');
+        lastWatched = 0;
+      }
+
+      console.log(`fetchLastWatchedPosition returning: ${lastWatched} seconds.`);
+      return lastWatched;
+    } catch (error) {
+      console.error("Error fetching last watched position:", error);
+      setError("Could not retrieve video progress.");
+      return 0;
+    }
+  }, [videoId, url, checkViewLimit]);
 
   useFocusEffect(
     useCallback(() => {
-      let isMounted = true;
-      console.log(`\n--- ✨ Screen Focused for Video: ${videoId} ---`);
-
-      hasSavedOnExit.current = false;
-      setPlayerState({ phase: 'loading', seekTime: 0 });
-      progressRef.current = { currentPosition: 0, lastSavedPosition: 0 };
+      console.log('--- useFocusEffect: Component Focused ---');
+      setIsLoading(true);
+      setError(null);
+      progressRef.current = 0;
       totalDurationRef.current = 0;
+      setIsPlayerReady(false);
+      targetSeekPositionRef.current = 0;
+      setTotalViews(0);
+      setIsViewLimitReached(false);
+      isSeekingRef.current = false;
+      hasShownLimitAlertRef.current = false;
+      initialSeekAttemptedRef.current = false;
 
-      const loadAndPrepare = async () => {
-        if (!videoId) {
-          showCustomModal('Error', 'Video information is missing.', () => navigation.goBack());
-          return;
-        }
+      if (saveProgressTimeoutRef.current) {
+        clearTimeout(saveProgressTimeoutRef.current);
+        saveProgressTimeoutRef.current = null;
+        console.log('useFocusEffect: Cleared existing save progress timeout.');
+      }
+
+      const initializePlayerAndFetchProgress = async () => {
+        console.log('initializePlayerAndFetchProgress: Starting...');
         try {
-          const value = await AsyncStorage.getItem(STORAGE_KEY);
-          const seconds = value ? parseInt(value, 10) : 0;
-          
-          if (isMounted) {
-            console.log(`📼 Loaded last position from AsyncStorage: ${seconds}s`);
-            progressRef.current.lastSavedPosition = seconds;
-            
-            setPlayerState({ phase: 'ready', seekTime: seconds });
+          const lastPositionSeconds = await fetchLastWatchedPosition();
+          console.log(`initializePlayerAndFetchProgress: fetchLastWatchedPosition returned: ${lastPositionSeconds}s`);
+
+          if (lastPositionSeconds === -1) {
+            setIsLoading(false);
+            console.log('initializePlayerAndFetchProgress: View limit reached, stopping initialization.');
+            return;
           }
-        } catch (e) {
-          console.warn('Failed to load progress from AsyncStorage:', e);
-          if (isMounted) {
-            setPlayerState({ phase: 'ready', seekTime: 0 });
+
+          if (lastPositionSeconds > 0) {
+            targetSeekPositionRef.current = lastPositionSeconds;
+            console.log(`initializePlayerAndFetchProgress: Target seek position set to ${lastPositionSeconds}s.`);
+          } else {
+            console.log('initializePlayerAndFetchProgress: No seek needed (lastPosition is 0).');
           }
+        } catch (err) {
+          setError("Could not load video details.");
+          setIsLoading(false);
+          console.error('initializePlayerAndFetchProgress: Error during initialization flow:', err);
         }
       };
-      
-      loadAndPrepare();
-      
-      const saveInterval = setInterval(() => {
-        if (!isMounted) return;
-        
-        const currentPosition = Math.floor(progressRef.current.currentPosition);
-        const lastSaved = Math.floor(progressRef.current.lastSavedPosition);
-        
-        if (currentPosition > lastSaved + 1) {
-          AsyncStorage.setItem(STORAGE_KEY, currentPosition.toString());
-          progressRef.current.lastSavedPosition = currentPosition;
-          console.log(`💾 Saved progress for ${videoId}: ${currentPosition}s (interval)`);
-        }
-      }, SAVE_PROGRESS_INTERVAL);
-      
+      initializePlayerAndFetchProgress();
+
       return () => {
-        isMounted = false;
-        clearInterval(saveInterval);
-        console.log(`--- 🚪 Screen Unfocused for Video: ${videoId} ---`);
+        console.log('--- useFocusEffect Cleanup: Component Unfocused/Unmounting ---');
+        if (saveProgressTimeoutRef.current) {
+          clearTimeout(saveProgressTimeoutRef.current);
+          saveProgressTimeoutRef.current = null;
+          console.log('Cleanup: Cleared save progress timeout.');
+        }
+
+        const lastKnownTime = progressRef.current;
+        if (lastKnownTime > 0 && !isViewLimitReached) {
+          console.log("Cleanup: Attempting final progress save for:", lastKnownTime);
+          saveProgress(lastKnownTime, false)
+            .then(() => console.log('Cleanup: Final progress save completed.'))
+            .catch(e => console.error('Cleanup: Error saving final progress:', e));
+        } else {
+          console.log(`Cleanup: Skipping final save. lastKnownTime=${lastKnownTime}, isViewLimitReached=${isViewLimitReached}`);
+        }
+
+        if (playerRef.current) {
+          try {
+            console.log('Cleanup: Attempting to pause and release VdoPlayerView.');
+            if (typeof playerRef.current.pause === 'function') {
+              playerRef.current.pause();
+            }
+            if (typeof playerRef.current.release === 'function') {
+              playerRef.current.release();
+            }
+          } catch (e) {
+            console.error('Cleanup: Error pausing or releasing VdoPlayerView:', e);
+          } finally {
+            playerRef.current = null;
+            console.log('Cleanup: playerRef.current set to null.');
+          }
+        } else {
+          console.warn('Cleanup: playerRef.current is null. Skipping pause/release.');
+        }
       };
-    }, [videoId, STORAGE_KEY, navigation, showCustomModal])
+    }, [fetchLastWatchedPosition, saveProgress, isViewLimitReached, navigation])
   );
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-      e.preventDefault(); 
+    if (totalViews > 0 || isViewLimitReached) {
+      console.log(`useEffect [totalViews]: Checking view limit with totalViews=${totalViews}`);
+      checkViewLimit(totalViews);
+    }
+  }, [totalViews, checkViewLimit, isViewLimitReached]);
 
-      handleExit(false);
-    });
+  useEffect(() => {
+    console.log(`useEffect [isPlayerReady, targetSeekPositionRef.current]: isPlayerReady=${isPlayerReady}, targetSeekPosition=${targetSeekPositionRef.current}, initialSeekAttempted=${initialSeekAttemptedRef.current}`);
 
-    return unsubscribe;
-  }, [navigation, handleExit]);
+    if (isPlayerReady && targetSeekPositionRef.current > 0 && !initialSeekAttemptedRef.current) {
+      initialSeekAttemptedRef.current = true;
+      isSeekingRef.current = true;
 
-  const isLoading = playerState.phase === 'loading';
-  const showPlayer = playerState.phase === 'ready' || playerState.phase === 'playing';
-  const shouldPlay = playerState.phase === 'playing';
+      if (playerRef.current && typeof playerRef.current.seek === 'function') {
+        const seekTimeMs = targetSeekPositionRef.current * 1000;
+        console.log(`useEffect [seek trigger]: Attempting to seek to ${seekTimeMs}ms (target: ${targetSeekPositionRef.current}s).`);
+        playerRef.current.seek(seekTimeMs);
 
-  if (!videoId || !otp || !playbackInfo) {
+        setTimeout(() => {
+          if (playerRef.current && typeof playerRef.current.play === 'function') {
+            playerRef.current.play();
+            console.log('useEffect [seek trigger]: Player resumed after seek with delay.');
+          } else {
+            console.warn('useEffect [seek trigger]: playerRef.current or play function not available after seek delay. Player state might be unexpected.');
+          }
+        }, 500);
+      } else {
+        console.warn("useEffect [seek trigger]: playerRef.current.seek is not a function or playerRef.current is null. Cannot perform initial seek.");
+        isSeekingRef.current = false;
+        setIsLoading(false);
+      }
+    } else if (isPlayerReady && targetSeekPositionRef.current === 0 && !initialSeekAttemptedRef.current) {
+        initialSeekAttemptedRef.current = true;
+        setIsLoading(false);
+        console.log('useEffect [seek trigger]: Player ready, no seek needed (starting from 0), hiding loading.');
+    }
+  }, [isPlayerReady, targetSeekPositionRef.current, initialSeekAttemptedRef.current]);
+
+  const handleLoaded = useCallback(({ duration }) => {
+    console.log(`VdoPlayerView handleLoaded: Player reported duration=${duration}ms.`);
+    if (typeof duration === 'number' && !isNaN(duration) && duration > 0) {
+      totalDurationRef.current = duration;
+      console.log(`handleLoaded: totalDurationRef.current set to ${totalDurationRef.current}ms.`);
+    } else {
+      totalDurationRef.current = 0;
+      console.warn('handleLoaded: Player reported invalid or zero duration. This will be saved as 0 in API.');
+    }
+
+    if (isViewLimitReached) {
+      setIsLoading(false);
+      console.log('handleLoaded: View limit already reached, hiding loading.');
+      return;
+    }
+    console.log('handleLoaded: Video metadata loaded.');
+  }, [isViewLimitReached]);
+
+  const onProgress = useCallback((progress) => {
+    if (!progress || typeof progress.currentTime !== 'number' || isViewLimitReached) {
+      return;
+    }
+
+    const currentProgressSeconds = Math.floor(progress.currentTime / 1000);
+    const targetSeekSeconds = targetSeekPositionRef.current;
+    const seekToleranceSeconds = 3;
+
+    if (isSeekingRef.current && targetSeekSeconds > 0 && currentProgressSeconds < (targetSeekSeconds - seekToleranceSeconds)) {
+       console.log(`onProgress: Skipping save - currently seeking. currentProgress=${currentProgressSeconds}s, targetSeek=${targetSeekSeconds}s`);
+      return;
+    }
+
+    if (isSeekingRef.current && currentProgressSeconds >= (targetSeekSeconds - seekToleranceSeconds)) {
+      isSeekingRef.current = false;
+      targetSeekPositionRef.current = 0;
+      console.log(`onProgress: Seek operation completed around ${currentProgressSeconds}s. Clearing targetSeekPositionRef.`);
+    }
+
+    progressRef.current = progress.currentTime;
+
+    if (saveProgressTimeoutRef.current) {
+      clearTimeout(saveProgressTimeoutRef.current);
+      saveProgressTimeoutRef.current = null;
+    }
+    saveProgressTimeoutRef.current = setTimeout(() => {
+      console.log(`onProgress: Debounced saveProgress triggered for ${progress.currentTime}ms.`);
+      saveProgress(progress.currentTime);
+    }, 10000);
+  }, [isViewLimitReached, saveProgress]);
+
+  const backAction = useCallback(async () => {
+    console.log('backAction: Hardware back button pressed.');
+    if (saveProgressTimeoutRef.current) {
+      clearTimeout(saveProgressTimeoutRef.current);
+      saveProgressTimeoutRef.current = null;
+      console.log('backAction: Cleared save progress timeout.');
+    }
+
+    if (!isViewLimitReached) {
+      const lastKnownTime = progressRef.current;
+      if (lastKnownTime > 0) {
+        console.log("backAction: Saving final progress before navigating back:", lastKnownTime);
+        await saveProgress(lastKnownTime, false);
+      }
+    } else {
+      console.log("backAction: Skipping final save due to view limit being reached.");
+    }
+
+    Orientation.lockToPortrait();
+
+    console.log('backAction: Navigating. Came from:', cameFrom);
+    if (cameFrom === 'Dashboard') {
+      navigation.navigate('Home');
+    } else if (cameFrom) {
+      navigation.navigate(cameFrom);
+    } else {
+      navigation.goBack();
+    }
+    return true;
+  }, [navigation, saveProgress, isViewLimitReached, cameFrom]);
+
+  const handleEnded = useCallback(() => {
+    console.log('handleEnded: Media Ended.');
+    if (saveProgressTimeoutRef.current) {
+      clearTimeout(saveProgressTimeoutRef.current);
+      saveProgressTimeoutRef.current = null;
+      console.log('handleEnded: Cleared save progress timeout.');
+    }
+
+    if (!isViewLimitReached) {
+      console.log("handleEnded: Saving final progress (video finished).");
+      saveProgress(progressRef.current, true)
+        .then(() => console.log('handleEnded: Final progress save completed.'))
+        .catch(e => console.error('handleEnded: Error saving final progress:', e));
+    } else {
+      console.log("handleEnded: Skipping final save due to view limit being reached.");
+    }
+
+    console.log('handleEnded: Navigating back. Came from:', cameFrom);
+    if (cameFrom === 'Dashboard') {
+      navigation.navigate('Home');
+    } else if (cameFrom) {
+      navigation.navigate(cameFrom);
+    } else {
+      navigation.goBack();
+    }
+  }, [saveProgress, navigation, cameFrom, isViewLimitReached]);
+
+  const handleInitFailure = useCallback((err) => {
+    console.error('VdoPlayerView Initialization Failure:', err);
+    setIsLoading(false);
+    const errorMessage = err.errorDescription || "Video initialization failed. Please try again.";
+    setError(errorMessage);
+    Alert.alert("Video Error", errorMessage,
+      [{
+        text: "OK",
+        onPress: () => {
+          console.log('handleInitFailure: Navigating back. Came from:', cameFrom);
+          if (cameFrom === 'Dashboard') {
+            navigation.navigate('Home');
+          } else if (cameFrom) {
+            navigation.navigate(cameFrom);
+          } else {
+            navigation.goBack();
+          }
+        }
+      }],
+      { cancelable: false }
+    );
+  }, [navigation, cameFrom]);
+
+  const handleLoadError = useCallback(({ errorDescription }) => {
+    console.error('VdoPlayerView Load Error:', errorDescription);
+    setIsLoading(false);
+    const errorMessage = errorDescription || "Video failed to load. Please try again.";
+    setError(errorMessage);
+    Alert.alert("Video Error", errorMessage,
+      [{
+        text: "OK",
+        onPress: () => {
+          console.log('handleLoadError: Navigating back. Came from:', cameFrom);
+          if (cameFrom === 'Dashboard') {
+            navigation.navigate('Home');
+          } else if (cameFrom) {
+            navigation.navigate(cameFrom);
+          } else {
+            navigation.goBack();
+          }
+        }
+      }],
+      { cancelable: false }
+    );
+  }, [navigation, cameFrom]);
+
+  const handleError = useCallback(({ errorDescription }) => {
+    console.error('VdoPlayerView Playback Error:', errorDescription);
+    setIsLoading(false);
+    if (saveProgressTimeoutRef.current) {
+      clearTimeout(saveProgressTimeoutRef.current);
+      saveProgressTimeoutRef.current = null;
+      console.log('handleError: Cleared save progress timeout.');
+    }
+    const errorMessage = errorDescription || "An unknown playback error occurred. Please try again.";
+    setError(errorMessage);
+    Alert.alert("Video Error", errorMessage,
+      [{
+        text: "OK",
+        onPress: () => {
+          console.log('handleError: Navigating back. Came from:', cameFrom);
+          if (cameFrom === 'Dashboard') {
+            navigation.navigate('Home');
+          } else if (cameFrom) {
+            navigation.navigate(cameFrom);
+          } else {
+            navigation.goBack();
+          }
+        }
+      }],
+      { cancelable: false }
+    );
+  }, [navigation, cameFrom]);
+
+  const handleInitializationSuccess = useCallback(() => {
+    console.log('VdoPlayerView handleInitializationSuccess: Player reports ready.');
+    setIsPlayerReady(true);
+  }, []);
+
+  const onPlaybackStateChanged = useCallback((state) => {
+    console.log('VdoPlayerView onPlaybackStateChanged:', state);
+  }, []);
+
+  useEffect(() => {
+    console.log('BackHandler useEffect: Adding hardwareBackPress listener.');
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => {
+      console.log('BackHandler useEffect cleanup: Removing listener.');
+      backHandler.remove();
+      if (saveProgressTimeoutRef.current) {
+        clearTimeout(saveProgressTimeoutRef.current);
+        saveProgressTimeoutRef.current = null;
+        console.log('BackHandler cleanup: Cleared save progress timeout.');
+      }
+    };
+  }, [backAction]);
+
+
+  if (!otp || !playbackInfo) {
     return (
       <View style={[styles.container, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter, justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>Video details are missing. Please go back and try again.</Text>
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={isDarkMode ? Colors.darker : Colors.lighter} />
+        <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
+         The video details (OTP or playback information) are missing. Please back up and try restarting.
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter, justifyContent: 'center', alignItems: 'center' }]}>
       <StatusBar barStyle='light-content' backgroundColor='black' />
 
-      {showPlayer && (
+     
+
+      {error && !isLoading ? (
+        <View style={[styles.errorContainer, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
+          <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
+            error: {error}
+          </Text>
+        </View>
+      ) : (
         <VdoPlayerView
           ref={playerRef}
           style={styles.player}
-          embedInfo={{ otp, playbackInfo, id: videoId }}
-          playWhenReady={shouldPlay}
-          seek={playerState.seekTime * 1000}
-          onInitializationSuccess={onPlayerReady}
-          onInitializationFailure={(err) => onError("Initialization", err.errorDescription)}
-          onLoading={() => {
-            if (playerState.phase === 'loading') {
+          embedInfo={{
+            otp: otp,
+            playbackInfo: playbackInfo,
+            id: videoId,
+          }}
+          onInitializationSuccess={handleInitializationSuccess}
+          onInitializationFailure={handleInitFailure}
+          onLoading={() => { setIsLoading(true); console.log('VdoPlayerView onLoading event: Setting isLoading to true.'); }}
+          onLoaded={handleLoaded}
+          onProgress={onProgress}
+          onLoadError={handleLoadError}
+          onError={handleError}
+          onPlaybackStateChanged={onPlaybackStateChanged}
+          onPlaybackComplete={() => {
+            console.log('VdoPlayerView onPlaybackComplete.');
+            if (!isViewLimitReached) {
+              saveProgress(progressRef.current, true);
             }
           }}
-          onLoaded={onLoaded}
-          onProgress={onProgress}
-          onLoadError={(err) => onError("Load", err.errorDescription)}
-          onError={(err) => onError("Playback", err.errorDescription)}
-          onMediaEnded={onMediaEnded}
+          onTracksChanged={(args) => console.log('VdoPlayerView tracks changed:', args)}
+          onPlaybackSpeedChanged={(speed) => console.log('VdoPlayerView speed changed to', speed)}
+          onMediaEnded={handleEnded}
         />
-      )}
-
-      {isLoading && <ActivityIndicator style={StyleSheet.absoluteFill} size="large" color="#FFFFFF" />}
-
-      {modalVisible && (
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
-            <Text style={[styles.modalTitle, { color: isDarkMode ? Colors.light : Colors.dark }]}>{modalTitle}</Text>
-            <Text style={[styles.modalMessage, { color: isDarkMode ? Colors.light : Colors.dark }]}>{modalMessage}</Text>
-            <TouchableOpacity style={[styles.modalButton, { backgroundColor: isDarkMode ? '#6200EE' : '#03DAC6' }]} onPress={modalOnPress}>
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
-  player: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000' },
-  errorText: { fontSize: 16, textAlign: 'center', padding: 20 },
-  modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
-  modalContainer: { width: '80%', padding: 20, borderRadius: 10, alignItems: 'center', elevation: 5 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
-  modalMessage: { fontSize: 16, textAlign: 'center', marginBottom: 20 },
-  modalButton: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 5 },
-  modalButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  player: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#000',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    zIndex: 10,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });
 
 export default VideoPlayerScreen;

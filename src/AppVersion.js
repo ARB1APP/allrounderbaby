@@ -17,11 +17,11 @@ const AppVersion = ({ navigation }) => {
       console.log('Hardware back press detected');
       if (navigation.canGoBack()) {
         console.log('Navigating back');
-        navigation.goBack(); 
+        navigation.navigate('My Profile');
       } else {
         console.log('Cannot go back, staying on screen or navigating to Home');
       }
-      return true; 
+      return true;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -32,9 +32,9 @@ const AppVersion = ({ navigation }) => {
     return () => {
       console.log('Removing back handler');
       backHandler.remove();
-      StatusBar.setHidden(false); 
+      StatusBar.setHidden(false);
     };
-  }, [navigation]); 
+  }, [navigation]);
 
   return (
     <View style={[styles.container, backgroundStyle]}>
