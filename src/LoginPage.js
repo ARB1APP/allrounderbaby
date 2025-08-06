@@ -248,7 +248,7 @@ const LoginPage = ({ navigation }) => {
                             { transform: [{ translateX: usernamePosition }] }, { color: isDarkMode ? Colors.white : Colors.black }
                         ]}
                     >
-                        Username
+                        Login ID
                     </Animated.Text>
                     <Animated.View
                         style={[
@@ -297,8 +297,12 @@ const LoginPage = ({ navigation }) => {
                                 checkBoxColor= {isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)'}/>
                             <Text style={[ styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>
                                 By logging in, you agree to company’s{' '}
-                                <Text style={styles.linkUnderline}>Terms and Conditions</Text> and{' '}
-                                <Text style={styles.linkUnderline}>Privacy Policy</Text>
+                                <Text  style={[ styles.linkUnderline, 
+                                                { color: isDarkMode ? '#2754f7ff' : '#1434A4' } 
+                                                ]}>Terms and Conditions</Text> and{' '}
+                                <Text style={[ styles.linkUnderline, 
+                                                { color: isDarkMode ? '#2754f7ff' : '#1434A4' } 
+                                                ]}>Privacy Policy</Text>
                             </Text>
                         </Animated.View>
                         <Animated.View style={[styles.checkboxContainerSecond, { transform: [{ translateX: rememberMePosition }] }]}>
@@ -441,7 +445,6 @@ const styles = StyleSheet.create({
     },
     linkUnderline: {
         textDecorationLine: 'underline',
-        color: '#1434A4',
         fontWeight:'bold',
     },
     otpLink: {

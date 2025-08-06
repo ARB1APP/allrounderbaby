@@ -432,120 +432,113 @@ const ReferAndEarnConditions = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-             <View style={[styles.importantDetailsBox, { marginTop: 10 }]}>
-        <Text style={styles.titleText}>🎉 Refer & Earn – Get ₹3,000 / $30 / €30 + Your Friend Gets 10% Off! 🎉</Text>
-        </View>
+
 
   <View style={styles.sectionDivider} />
 
-        <View style={styles.importantDetailsBox}>
 
-        <Text style={styles.contentParagraph}>
-           We appreciate you sharing <Text style={styles.boldText}>AllrounderBaby.com</Text> 💖.
-          with others! 💖 Please read the <Text style={styles.boldText}>detailed process and terms</Text> to understand how your referral rewards work.
-        </Text>
-        </View>
-
-            <View style={[styles.importantDetailsBox, { marginTop: 20 }]}>
-
-        <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>🔄 How to Refer & Earn?</Text>
-            <Text style={styles.listItem}>
-                <Text style={styles.boldText}>🟠 1️⃣ Invite Your Friends & Share Your Referral Code 📩</Text>
-            </Text>
-          <Text style={styles.listItem}>
-                <Text style={styles.boldText}>🔗 Find & copy</Text> your referral code from the <Text style={styles.boldText}>Refer & Earn</Text> section of the app.
-            </Text>
-          <Text style={styles.listItem}>
-                <Text style={styles.boldText}>📢 Share it</Text> with your friends, family, and fellow parents via <Text style={styles.boldText}>WhatsApp, Email, or Social Media.</Text>
-          </Text>
-         <Text style={styles.listItem}>
-                <Text style={styles.boldText}>🟡 2️⃣ Your Friend Joins & Unlocks Benefits 🎓</Text>
-            </Text>
-              <Text style={styles.listItem}>
-                💳 They must <Text style={styles.boldText}>purchase the program using your unique referral code</Text> and will receive <Text style={styles.boldText}>10% OFF!</Text>
-            </Text>
-            <Text style={styles.listItem}>
-                ✅ A referral is <Text style={styles.boldText}>valid only if payment is successful –</Text> No discounts, refunds, or cancellations beyond the 10% referral discount.
-            </Text>
-         <Text style={styles.listItem}>
-                <Text style={styles.boldText}>🟢 3️⃣ Your Earnings – ₹3,000 / $30 / €30 💰🎉</Text>
-            </Text>
-            <Text style={styles.listItem}>
-                🎁 Once your friend’s payment is verified, <Text style={styles.boldText}>your referral reward is processed.</Text>
-            </Text>
-            <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✅ You earn every time</Text> someone uses your code to make a purchase!
-            </Text>
-</View>
         <View style={styles.sectionDivider} />
 
+        <View style={styles.importantDetailsBox}>
+
+           <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Processing & Bank Details</Text>
+
+         <Text style={styles.listItem}>
+               <Text style={styles.boldText}>✔️</Text>  
+               ️ Update your bank details after logging in to our website—this account will be used for your earning payout.
+            </Text>
+
+            <Text style={styles.listItem}>
+               <Text style={styles.boldText}>✔️</Text>  
+               ️  Cashback is processed within 1 to 60 days depending on transaction volume and verification time.
+            </Text>
+        </View>
+
+         <View style={styles.sectionDivider} />
             <View style={styles.importantDetailsBox}>
 
-       <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>💳 Payment Processing & Bank Details</Text>
-        <Text style={styles.listItem}>
-            🔹 Your reward will be credited to the <Text style={styles.boldText}>same bank account used for your initial program payment.</Text>
-        </Text>
-        <Text style={styles.listItem}>🔹 Need to change it? Visit our website to update your account details.</Text>
-            <Text style={styles.listItem}>
-                🔹 Payments are processed within <Text style={styles.boldText}>1 to 60 days,</Text> depending on transaction volume and verification time.
-            </Text>
-</View>
-         <View style={styles.sectionDivider} />
-        <View style={styles.importantDetailsBox}>
+                  <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
+                    International Payments & Charges
+                   </Text>
 
-              <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>🌍 International Payments & Charges</Text>
-              <Text style={styles.listItem}>
-                🔹 For rewards in <Text style={styles.boldText}>USD or EUR or any other currency,</Text> currency conversion & transaction fees may apply.
+                <Text style={styles.listItem}>
+               <Text style={styles.boldText}>✔️</Text>  
+               ️ For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
             </Text>
+
             <Text style={styles.listItem}>
-                🔹 The final amount depends on real-time exchange rates and deductions from banks/payment providers.
+               <Text style={styles.boldText}>✔️</Text>  
+               ️   The final amount credited depends on your bank’s deductions and exchange rates.
             </Text>
-      </View>
+          </View>
 
       <View style={styles.sectionDivider} />
-        <View style={styles.importantDetailsBox}>
-
-             <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>📑 Annual Earnings & PAN Requirement (India Only)</Text>
-              <Text style={styles.listItem}>
-                🔹 Payouts may be withheld until PAN is submitted for tax compliance.
-            </Text>
-      </View>
+       
          <View style={styles.sectionDivider} />
         <View style={styles.importantDetailsBox}>
 
-              <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>📌 Tax Information</Text>
-                <Text style={styles.listItem}><Text style={styles.boldText}>For Indian Residents:</Text></Text>
-            <Text style={styles.listItem}>
-                🔹 Referral income is typically processed within <Text style={styles.boldText}>1 to 60 days,</Text> subject to transaction volume and verification.
+              <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
+                   Tax & Compliance
+                </Text>
+
+           <Text style={styles.listItem}>
+               <Text style={styles.boldText}>✔️</Text>  
+               ️ Referral income is considered commission income and is subject to Indian tax laws.
             </Text>
+
             <Text style={styles.listItem}>
-                🔹 <Text style={styles.boldText}>TDS (Tax Deducted at Source)</Text> may apply. Payouts are made post-tax deduction.
+               <Text style={styles.boldText}>✔️</Text>  
+               ️   Payouts may be withheld until PAN details are submitted to ensure tax compliance.
             </Text>
-              <Text style={styles.listItem}><Text style={styles.boldText}>🌎 For International Referrals:</Text></Text>
-            <Text style={styles.listItem}>
-                🔹 You are responsible for reporting your referral income as per your local tax laws.
+
+          <Text style={styles.listItem}>
+               <Text style={styles.boldText}>✔️</Text>  
+               ️   A TDS (Tax Deducted at Source) of 5% has been deducted under Section 194H of the Income Tax Act, 
+                  1961. Payouts are made after tax deduction. 
+                  You may claim credit for this TDS when filing your income tax return
+                    {'\n'}{'\n'}
             </Text>
-            <Text style={styles.listItem}>
-                🔹 We do not deduct or file international taxes on your behalf.
-            </Text>
+
            
+
+        <Text  style={styles.boldText}>For International Users:   {'\n'}</Text>
+
+          <Text style={styles.listItem}>
+               <Text style={styles.boldText}>✔️ </Text>  
+                  You are responsible for reporting your referral income according to your local tax laws.
+            </Text>
+
+       <Text style={styles.listItem}>
+               <Text style={styles.boldText}>✔️ </Text>  
+                 We do not deduct or file international taxes on your behalf.
+            </Text>
+            
       </View>
 
       <View style={styles.sectionDivider} />
         <View style={styles.importantDetailsBox}>
 
-              <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>📝 Good to Know</Text>
-              <Text style={styles.listItem}>
-                🔹 Refer to our <Text style={styles.boldText}>Terms of Use</Text> and <Text style={styles.boldText}>Privacy Policy</Text> for full program details.
-            </Text>
+              <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Important Notes
+           </Text>
+
             <Text style={styles.listItem}>
-                🔹 <Text style={styles.boldText}>AllrounderBaby.com</Text> does not offer tax advice. Please consult a professional for personalized guidance.
+               <Text style={styles.boldText}>✔️ </Text>  
+                 AllrounderBaby does not offer tax advice. Please consult your tax advisor.
             </Text>
+
+            <Text style={styles.listItem}>
+               <Text style={styles.boldText}>✔️ </Text>  
+                  By receiving referral earnings, you agree to our Terms of Use and Privacy Policy.
+            </Text>
+
+            
       </View>
        <View style={styles.sectionDivider} />
         <View style={styles.importantDetailsBox}>
           <Text style={[styles.listItem, { textAlign: 'center' }]}>
-                <Text style={styles.boldText}>📲  Ready to start earning? Head to the “Refer & Earn” section in your app and share your code now!  🚀</Text>
+                <Text style={styles.boldText}>
+                  Science says children grow better with good friends—earn ₹3,000 / $30 by referring your child’s friends’ parents, and they get 10% OFF!
+                  </Text>
             </Text>
         </View>
       </ScrollView>
