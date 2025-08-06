@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
 import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme } from 'react-native';
-import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions } from '@react-navigation/native'; // Import CommonActions
+import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Your screen components - I'm assuming these are all available.
 import SplashScreen from './SplashScreen';
 import MainApp from './MainApp';
 import LoginPage from './src/LoginPage';
@@ -31,14 +32,14 @@ import MyReferrals from './src/MyReferrals';
 import SaveActivities from './src/SaveActivities';
 import Medals from './src/Medals';
 import StarTracker from './src/StarTracker';
-import Trails from './src/Trails';
 import NextGoal from './src/NextGoal';
 import AboutUs from './src/AboutUs';
 import CashbackforFeedbackConditions from './src/CashbackforFeedbackConditions';
+import Trails from './src/Trails';
+
 
 const Drawer = createDrawerNavigator();
 
-// --- THEME DEFINITIONS (No changes needed here) ---
 const LightThemeColors = {
     background: '#FFFFFF',
     text: '#000000',
@@ -52,11 +53,11 @@ const LightThemeColors = {
     drawerContentBackground: '#FFFFFF',
     drawerBorderColor: '#CCCCCC',
     drawerFooterText: '#000000',
-    drawerItemActiveBackground: '#e0e0e0',
+    drawerItemActiveBackground: 'rgba(20, 52, 164, 1)',
     drawerItemInactiveBackground: '#FFFFFF',
-    drawerItemActiveLabelTint: '#000000',
+    drawerItemActiveLabelTint: '#FFFFFF',
     drawerItemInactiveLabelTint: '#000000',
-    drawerItemActiveIconTint: '#000000',
+    drawerItemActiveIconTint: '#FFFFFF',
     drawerItemInactiveIconTint: '#000000',
     safeAreaBackground: '#FFFFFF',
 };
@@ -73,7 +74,7 @@ const DarkThemeColors = {
     drawerContentBackground: '#1E1E1E',
     drawerBorderColor: '#3A3A3A',
     drawerFooterText: '#A0A0A0',
-    drawerItemActiveBackground: 'rgba(20, 52, 164, 0.7)',
+    drawerItemActiveBackground: '#007BFF',
     drawerItemInactiveBackground: '#1E1E1E',
     drawerItemActiveLabelTint: '#FFFFFF',
     drawerItemInactiveLabelTint: '#E0E0E0',
@@ -84,7 +85,7 @@ const DarkThemeColors = {
 const AppLightTheme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, ...LightThemeColors } };
 const AppDarkTheme = { ...DarkTheme, colors: { ...DarkTheme.colors, ...DarkThemeColors } };
 
-// --- STYLESHEET (No changes needed here) ---
+// Define the styles outside the component to avoid re-creating them on every render
 const createAppStyles = (theme) => StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: theme.safeAreaBackground },
     drawerContentScrollView: { backgroundColor: theme.drawerContentBackground },
@@ -97,35 +98,50 @@ const createAppStyles = (theme) => StyleSheet.create({
     footerText: { fontSize: 12, color: theme.drawerFooterText, fontFamily: 'Lexend-VariableFont_wght' },
 });
 
+// Move the drawer items array outside the component to prevent re-creation on every render
+const drawerItems = [
+    { key: "home", label: "Home", navigateTo: "Home", icon: require('./img/home.png'), iconSize: { width: 24, height: 24 } },
+    { key: "profile", label: "My Profile", navigateTo: "My Profile", icon: require('./img/proflie.png'), iconSize: { width: 24, height: 24 } },
+    { key: "about", label: "About Us", navigateTo: "About Us", icon: require('./img/about.png'), iconSize: { width: 22, height: 22 } },
+    { key: "terms", label: "Terms of Service", navigateTo: "Terms of Service", icon: require('./img/pr.png'), iconSize: { width: 24, height: 24 } },
+    { key: "privacy", label: "Privacy Policy", navigateTo: "Privacy Policy", icon: require('./img/tm.png'), iconSize: { width: 23, height: 23 } },
+    { key: "rate", label: "Update App / Rate us", navigateTo: "Rate us / Update App", icon: require('./img/upadate.png'), iconSize: { width: 20, height: 20 } },
+    { key: "version", label: "Version info", navigateTo: "App Version", icon: require('./img/info.png'), iconSize: { width: 24, height: 24 } },
+    // These two items both navigate to the 'Get Help' screen
+    { key: "feedback", label: "Feedback", navigateTo: "Get Help", icon: require('./img/feedback.png'), iconSize: { width: 26, height: 26 } },
+    { key: "contact", label: "Contact us", navigateTo: "Get Help", icon: require('./img/call.png'), iconSize: { width: 22, height: 22 } },
+    { key: "logout", label: "Logout", navigateTo: "Login", icon: require('./img/logout.png'), iconSize: { width: 22, height: 22 } },
+];
 
-// --- FIXED CustomDrawerContent ---
-const CustomDrawerContent = (props) => {
+
+// A helper function to determine which drawer item should be focused, handling the case of multiple items pointing to the same screen
+const isDrawerItemFocused = (item, props) => {
+    const { state } = props;
+    const currentRoute = state.routes[state.index];
+    
+    // Check if the current screen name matches the item's navigateTo property
+    if (currentRoute.name === item.navigateTo) {
+        // This is the special case where multiple drawer items (Feedback, Contact us)
+        // point to the same screen ("Get Help").
+        // To correctly highlight only one, we check if the navigation params match the item's label.
+        if (item.navigateTo === 'Get Help') {
+            return currentRoute.params?.source === item.label;
+        }
+        // For all other unique screens, a simple name match is sufficient.
+        return true;
+    }
+    return false;
+};
+
+const CustomDrawerContent = memo((props) => {
     const { theme } = props;
-    const styles = createAppStyles(theme);
+    
+    // Memoize the styles to prevent re-creation on every render
+    const styles = useMemo(() => createAppStyles(theme), [theme]);
 
-    // **FIX 1:** The `navigateTo` values now point to the correct, non-duplicate screen names.
-    // The labels are unchanged, so the user sees the same menu.
-    const drawerItems = [
-        { label: "Home", navigateTo: "Home", icon: require('./img/home.png'), iconSize: { width: 24, height: 24 } },
-        { label: "About Us", navigateTo: "About Us", icon: require('./img/about.png'), iconSize: { width: 22, height: 22 } },
-        { label: "Terms of Service", navigateTo: "Terms of Service", icon: require('./img/pr.png'), iconSize: { width: 24, height: 24 } },
-        { label: "Privacy Policy", navigateTo: "Privacy Policy", icon: require('./img/tm.png'), iconSize: { width: 23, height: 23 } },
-        { label: "Update App / Rate us", navigateTo: "Rate us / Update App", icon: require('./img/upadate.png'), iconSize: { width: 20, height: 20 } },
-        { label: "Version info", navigateTo: "App Version", icon: require('./img/info.png'), iconSize: { width: 24, height: 24 } },
-        // These two items now correctly point to the "Get Help" screen
-        { label: "Feedback", navigateTo: "Get Help", icon: require('./img/feedback.png'), iconSize: { width: 26, height: 26 } },
-        { label: "Contact us", navigateTo: "Get Help", icon: require('./img/call.png'), iconSize: { width: 22, height: 22 } },
-        { label: "Logout", navigateTo: "Login", icon: require('./img/logout.png'), iconSize: { width: 22, height: 22 } }, // navigateTo is now just for reference
-    ];
-
-    // **FIX 2:** Implemented proper logout logic.
     const handleLogout = async () => {
-        // TODO: Add your code here to clear the user's token or data from AsyncStorage.
-        // For example:
-        // await AsyncStorage.removeItem('user_token');
-        // await AsyncStorage.removeItem('user_profile');
-
-        // This resets the navigation stack, so the user can't go back.
+        // In a real app, you would clear AsyncStorage data here as well.
+        // await AsyncStorage.clear();
         props.navigation.dispatch(
             CommonActions.reset({
                 index: 0,
@@ -133,44 +149,49 @@ const CustomDrawerContent = (props) => {
             })
         );
     };
-
+    
     return (
         <DrawerContentScrollView {...props} style={styles.drawerContentScrollView} contentContainerStyle={{ flex: 1 }}>
             <View style={styles.headerContainer}>
                 <Image source={require('./img/loginlogo.png')} style={styles.logo} />
             </View>
+            
             <View style={styles.drawerItemsContainer}>
-                {drawerItems.map((item, index) => (
+                {drawerItems.map((item) => (
                     <DrawerItem
-                        key={index}
+                        key={item.key} // Use the unique key for better performance
                         label={item.label}
-                        // Use the handleLogout function for the "Logout" item
-                        onPress={() => item.label === 'Logout' ? handleLogout() : props.navigation.navigate(item.navigateTo)}
+                        onPress={() => 
+                            item.label === 'Logout' ? 
+                            handleLogout() : 
+                            // Pass the item's label as a source parameter to handle the focused state correctly
+                            props.navigation.navigate(item.navigateTo, { source: item.label })
+                        }
                         style={styles.drawerItem}
-                        labelStyle={[styles.drawerItemLabel, { color: theme.drawerItemInactiveLabelTint }]}
+                        focused={isDrawerItemFocused(item, props)}
                         activeBackgroundColor={theme.drawerItemActiveBackground}
                         inactiveBackgroundColor={theme.drawerItemInactiveBackground}
-                        activeTintColor={theme.drawerItemActiveLabelTint}
-                        inactiveTintColor={theme.drawerItemInactiveLabelTint}
-                        icon={({ focused }) => (
+                        labelStyle={[styles.drawerItemLabel, { color: isDrawerItemFocused(item, props) ? theme.drawerItemActiveLabelTint : theme.drawerItemInactiveLabelTint }]}
+                        icon={() => (
                             <Image
                                 source={item.icon}
                                 style={{
                                     width: item.iconSize.width,
                                     height: item.iconSize.height,
-                                    tintColor: focused ? theme.drawerItemActiveIconTint : theme.drawerItemInactiveIconTint,
+                                    tintColor: isDrawerItemFocused(item, props) ? theme.drawerItemActiveIconTint : theme.drawerItemInactiveIconTint,
                                 }}
                             />
                         )}
                     />
                 ))}
             </View>
+            
             <View style={styles.footerContainer}>
                 <Text style={styles.footerText}>Copyright 2025. All Rights Reserved.</Text>
             </View>
         </DrawerContentScrollView>
     );
-};
+});
 
 const App = () => {
     const [isFirstTime, setIsFirstTime] = useState(null);
@@ -186,7 +207,7 @@ const App = () => {
                 setIsFirstTime(value === null);
             } catch (error) {
                 console.error('AsyncStorage error:', error);
-                setIsFirstTime(false); // Default to not first time on error
+                setIsFirstTime(false);
             }
         };
         checkFirstTime();
@@ -205,56 +226,48 @@ const App = () => {
         headerStyle: { backgroundColor: theme.headerBackground, borderBottomColor: theme.headerBorderColor },
         headerTintColor: theme.headerTintColor,
     });
-
-    // **FIX 1:** Removed all duplicate screen registrations.
-    const renderDrawerNavigator = () => (
+    
+    // Memoize the renderDrawerNavigator function with useCallback
+    const renderDrawerNavigator = useCallback(() => (
         <Drawer.Navigator
             drawerContent={(props) => <CustomDrawerContent {...props} theme={currentThemeColors} />}
             screenOptions={getHeaderOptions(currentThemeColors)}
         >
-            {/* Core screens */}
-            <Drawer.Screen name="MainApp" component={MainApp} options={{ headerShown: false, swipeEnabled: false }} />
-            <Drawer.Screen name="Login" component={LoginPage} options={{ headerShown: false, swipeEnabled: false }} />
-            <Drawer.Screen name="Home" component={Dashboard} />
-            <Drawer.Screen name="My Profile" component={Profile} />
-
-            {/* Screens accessible from drawer and other parts of the app */}
-            <Drawer.Screen name="About Us" component={AboutUs} options={{ headerShown: true, swipeEnabled: true }} />
-            <Drawer.Screen name="Cashback for Feedback" component={ChasCashbackforFeedback} />
-            <Drawer.Screen name="Refer and Earn" component={ReferAndEarn} />
-            <Drawer.Screen name="VideoPlayerScreen" component={VideoPlayerScreen} />
-            <Drawer.Screen name="Refer and Earn conditiions" component={ReferAndEarnConditions} />
-            <Drawer.Screen name="Referral History" component={ReferralHistory} />
-            <Drawer.Screen name="My Orders" component={MyOrders} />
-            <Drawer.Screen name="My Earnings" component={MyEarnings} />
-            <Drawer.Screen name="App Version" component={AppVersion} />
-            <Drawer.Screen name="Privacy Policy" component={PrivacyPolicy} />
-            <Drawer.Screen name="Terms of Service" component={TermsofService} />
-            <Drawer.Screen name="Community" component={Community} />
-            <Drawer.Screen name="FAQ" component={FAQ} />
-            <Drawer.Screen name="Restore Purchases" component={RestorePurchases} />
-            <Drawer.Screen name="Photo Permission" component={PhotoPermission} />
-            <Drawer.Screen name="My Notifications" component={MyNotifications} />
-            <Drawer.Screen name="Progress Snapshots" component={ProgressSnapshots} />
-            <Drawer.Screen name="My Referrals" component={MyReferrals} />
-            <Drawer.Screen name="Save Activities" component={SaveActivities} />
-            <Drawer.Screen name="Medals" component={Medals} />
-            <Drawer.Screen name="Star Tracker" component={StarTracker} />
-            <Drawer.Screen name="Trails" component={Trails} />
-            <Drawer.Screen name="Next Goal" component={NextGoal} />
-            <Drawer.Screen name="Cashback for Feedback Conditions" component={CashbackforFeedbackConditions} />
-
-            {/* Consolidated Screens for the Drawer */}
-            <Drawer.Screen name="Rate us / Update App" component={RateStarsStore} />
-            <Drawer.Screen name="Get Help" component={GetHelp} />
-
-            {/* DELETED the duplicate screens: "Rate us 5 stars on the store" and "Contact us / Feedback" */}
+            <Drawer.Screen name="MainApp" component={MainApp} options={{ headerShown: false, swipeEnabled: false, unmountOnBlur: true }} />
+            <Drawer.Screen name="Login" component={LoginPage} options={{ headerShown: false, swipeEnabled: false, unmountOnBlur: true }} />
+            <Drawer.Screen name="Home" component={Dashboard} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="My Profile" component={Profile} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="About Us" component={AboutUs} options={{ headerShown: true, swipeEnabled: true, unmountOnBlur: true }} />
+            <Drawer.Screen name="Cashback for Feedback" component={ChasCashbackforFeedback} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Refer and Earn" component={ReferAndEarn} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="VideoPlayerScreen" component={VideoPlayerScreen} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Refer and Earn conditiions" component={ReferAndEarnConditions} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Referral History" component={ReferralHistory} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="My Orders" component={MyOrders} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="My Earnings" component={MyEarnings} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="App Version" component={AppVersion} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Privacy Policy" component={PrivacyPolicy} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Terms of Service" component={TermsofService} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Community" component={Community} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="FAQ" component={FAQ} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Restore Purchases" component={RestorePurchases} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Photo Permission" component={PhotoPermission} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="My Notifications" component={MyNotifications} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Progress Snapshots" component={ProgressSnapshots} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="My Referrals" component={MyReferrals} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Save Activities" component={SaveActivities} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Medals" component={Medals} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Star Tracker" component={StarTracker} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Trails" component={Trails} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Next Goal" component={NextGoal} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Cashback for Feedback Conditions" component={CashbackforFeedbackConditions} options={{ unmountOnBlur: true }} />
+            
+            <Drawer.Screen name="Rate us / Update App" component={RateStarsStore} options={{ unmountOnBlur: true }} />
+            <Drawer.Screen name="Get Help" component={GetHelp} options={{ unmountOnBlur: true }} />
         </Drawer.Navigator>
-    );
+    ), [currentThemeColors]);
 
-    // **FIX 3:** While checking AsyncStorage, return a blank view to prevent UI flicker.
     if (isFirstTime === null) {
-        // This shows a simple blank screen matching the theme, preventing a flash of content.
         return <View style={{ flex: 1, backgroundColor: currentThemeColors.background }} />;
     }
 

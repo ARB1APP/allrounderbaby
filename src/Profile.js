@@ -105,14 +105,14 @@ const Profile = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContentContainer}>
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>My Profile</Text>
-          <TouchableOpacity style={[styles.pointButton, { backgroundColor: theme.pointsBackground }]}>
+          {/* <TouchableOpacity style={[styles.pointButton, { backgroundColor: theme.pointsBackground }]}>
             <Image source={require('../img/pointBtn.png')} style={[styles.pointButtonIcon
             ]} />
             <Text style={[styles.pointButtonText, { color: theme.pointsText }]}>0</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
             style={[
                 styles.card,
                 {
@@ -132,9 +132,9 @@ const Profile = ({ navigation }) => {
                 </View>
             </View>
             <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
             style={[
                 styles.card,
                 {
@@ -153,7 +153,7 @@ const Profile = ({ navigation }) => {
                 </View>
             </View>
             <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
             style={[styles.card, { backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}

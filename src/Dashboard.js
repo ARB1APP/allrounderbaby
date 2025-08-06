@@ -144,6 +144,8 @@ const Dashboard = ({ navigation }) => {
     const route = useRoute();
     const isDarkMode = useColorScheme() === 'dark';
     const backgroundStyle = { backgroundColor: isDarkMode ? '#2a3144' : Colors.white };
+     const textColorModal = { color: isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)' }
+     const textColorModalPara = { color: isDarkMode ? Colors.white : '#2a3144' }
 
     const groupVideosByApiStep = (videoApiResponse) => {
         const groups = {};
@@ -358,6 +360,8 @@ const Dashboard = ({ navigation }) => {
         } finally {
             setIsVideoLoading(false);
         }
+           
+        console.log('Video ID:', videoId);
     };
 
     const handleIntroductionPress = async (introType) => {
@@ -435,7 +439,7 @@ const Dashboard = ({ navigation }) => {
                 {isAdvancedLevelDropdownVisible && (<LevelModal levelName="Advanced Level" onClose={handleCloseModal} isDarkMode={isDarkMode}>{advancedKeys.map(key => { const config = masterConfig[key]; if (!config) return null; return (<React.Fragment key={key}><CategoryButton image={config.image} title={config.name} onPress={() => handleCategoryPress(key)} isOpen={openCategory === key} />{openCategory === key && <VideoStepList groups={config.finalGroupedData} completedSteps={completedSteps} onStepPress={handleDropdownItemClick} isDarkMode={isDarkMode} />}</React.Fragment>);})}</LevelModal>)}
             </View>
 
-            {isModalVisible && selectedStepGroup && (<View style={styles.modalLikeContainer}><Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}><View style={styles.modalContentMainDiv}><Text style={styles.modalTitle}>Select Language</Text><TouchableOpacity onPress={closeLanguageModal}><Text style={styles.modalContentClose}>✕</Text></TouchableOpacity></View><View style={styles.borderLine} /><Text style={styles.modalText}>In which language would you like to watch this video?</Text><View style={styles.modalButtons}><TouchableOpacity style={[styles.modalButton, !selectedStepGroup.hindiVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.hindiVideo.id, selectedStepGroup.stepNumber, 'hindi')} disabled={!selectedStepGroup.hindiVideo}><Text style={styles.modalButtonText}>Hindi</Text></TouchableOpacity><TouchableOpacity style={[styles.modalButton, !selectedStepGroup.englishVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.englishVideo.id, selectedStepGroup.stepNumber, 'english')} disabled={!selectedStepGroup.englishVideo}><Text style={styles.modalButtonText}>English</Text></TouchableOpacity></View></Pressable></View>)}
+            {isModalVisible && selectedStepGroup && (<View style={styles.modalLikeContainer}><Pressable style={[styles.modalContent, backgroundStyle]} onPress={(e) => e.stopPropagation()}><View style={styles.modalContentMainDiv}><Text style={[styles.modalTitle, textColorModal]}>Select Language</Text><TouchableOpacity onPress={closeLanguageModal}><Text style={[styles.modalContentClose, textColorModalPara]}>✕</Text></TouchableOpacity></View><View style={styles.borderLine} /><Text style={[styles.modalText, textColorModalPara]}>In which language would you like to watch this video?</Text><View style={styles.modalButtons}><TouchableOpacity style={[styles.modalButton, !selectedStepGroup.hindiVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.hindiVideo.id, selectedStepGroup.stepNumber, 'hindi')} disabled={!selectedStepGroup.hindiVideo}><Text style={styles.modalButtonText}>Hindi</Text></TouchableOpacity><TouchableOpacity style={[styles.modalButton, !selectedStepGroup.englishVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.englishVideo.id, selectedStepGroup.stepNumber, 'english')} disabled={!selectedStepGroup.englishVideo}><Text style={styles.modalButtonText}>English</Text></TouchableOpacity></View></Pressable></View>)}
             <View style={[styles.bottomNav, backgroundStyle]}><TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}><Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: isDarkMode ? '#60b5f6' : 'rgba(20, 52, 164, 1)' }]} /><Text style={[styles.navTextActive, { color: isDarkMode ? '#60b5f6' : '#1434a4' }]}>Home</Text></TouchableOpacity><TouchableOpacity style={[styles.navItem, styles.inactive]} onPress={() => navigation.navigate('Cashback for Feedback')}><Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: 'gray' }]} /><Text style={styles.navText}>Cashback for Feedback</Text></TouchableOpacity><TouchableOpacity style={[styles.navItem, styles.inactive]} onPress={() => navigation.navigate('Refer and Earn')}><Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: 'gray' }]} /><Text style={styles.navText}>Refer & Earn</Text></TouchableOpacity><TouchableOpacity style={[styles.navItem, styles.inactive]} onPress={() => navigation.navigate('My Profile')}><Image source={require('../img/proflie.png')} style={[styles.navIcon, { tintColor: 'gray' }]} /><Text style={styles.navText}>My Profile</Text></TouchableOpacity></View>
             {isVideoLoading && (<View style={styles.modalLikeContainer}><ActivityIndicator size="large" color="#FFFFFF" /><Text style={styles.loadingText}>Loading...</Text></View>)}
         </View>

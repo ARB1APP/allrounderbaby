@@ -79,7 +79,7 @@ const createMyOrdersStyles = (theme) => StyleSheet.create({
   },
   transactionsSection: {
     marginHorizontal: 15,
-    marginTop: 20,
+    marginTop: 40,
     marginBottom: 20,
     backgroundColor: theme.cardBackground,
     borderRadius: 10,
@@ -292,12 +292,12 @@ const MyOrders = ({ navigation }) => {
                  returnKeyType="done"
               />
             </View>
-            <View style={styles.bankBox}>
+            {/* <View style={styles.bankBox}>
               <Text style={styles.bankLinkedLabel}>Invoice Download Option</Text>
               <TouchableOpacity style={styles.downloadButton}>
                  <Text style={styles.downloadButtonText}>Download Invoice</Text>
               </TouchableOpacity>
-            </View>
+            </View> */}
 
           </View>
         </ScrollView>

@@ -185,7 +185,7 @@ const AboutUs = ({ navigation }) => {
          <Text style={[
                 styles.sectionHeader,
                 { color: isDarkMode ? '#fff' : '#1434a4' }
-            ]}>Who We Are</Text>
+            ]}>About us</Text>
         <Text style={styles.introParagraph}>
             At SarvaShine Allrounder Baby Solutions Private Limited, also known as AllrounderBaby.com, we are redefining the way parents nurture their little ones.
         </Text>

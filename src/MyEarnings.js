@@ -24,11 +24,12 @@ const lightThemeColors = {
   cardBorder: 'transparent',
   textPrimary: '#000000',
   textSecondary: '#333333',
-  textMuted: '#888888',
+  textMuted: '#000',
   amountColor: '#000000',
   buttonBackground: 'rgba(20, 52, 164, 1)',
   buttonTextColor: '#ffffff',
   inputBackground: '#ffffff',
+  newbg: '#fff',
   inputBorderColor: '#ced4da',
   inputText: '#333333',
   inputPlaceholderText: '#999999',
@@ -55,7 +56,8 @@ const darkThemeColors = {
   cardBorder: '#3A3A3A',
   textPrimary: '#E0E0E0',
   textSecondary: '#B0B0B0',
-  textMuted: '#777777',
+  textMuted: '#fff',
+   newbg: '#777777',
   amountColor: '#E0E0E0',
   buttonBackground: 'rgba(30, 62, 174, 1)',
   buttonTextColor: '#FFFFFF',
@@ -111,7 +113,6 @@ const createMyEarningsStyles = (theme) => StyleSheet.create({
   label: {
     fontSize: 16,
     color: theme.textMuted,
-    textAlign: 'center',
     marginBottom: 2,
   },
   samillTitle:{
@@ -143,7 +144,7 @@ const createMyEarningsStyles = (theme) => StyleSheet.create({
   coinsTodayYesterday: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 25,
+    marginTop: 20,
     gap: 15,
   },
   eranDetail:{
@@ -159,7 +160,7 @@ const createMyEarningsStyles = (theme) => StyleSheet.create({
   },
   coinsLabel: {
     fontSize: 11,
-    color: theme.textMuted,
+    color: theme.amountColor,
     textAlign: 'center',
     lineHeight: 15,
   },
@@ -499,21 +500,92 @@ useFocusEffect(
             <>
               <View style={styles.card}>
                 <Text style={styles.label}>Total Earnings (INR/USD/EUR)</Text>
-                <Text style={styles.samillTitle}>Your Savings !</Text>
-                <Text style={styles.amount}>{totalEarnings}</Text>
                 <View style={styles.coinsTodayYesterday}>
-                  <View style={styles.eranDetail}>
-                    <Text style={styles.coinsValue}>
-                      {referralCount} X {earningsPerReferral}
-                    </Text>
-                    <Text style={styles.coinsLabel}>Total no. of Referrals X Earnings from each Referral (Refer more ! Earn more !)</Text>
+                <View style={styles.eranDetail}>
+                   <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5, color: theme.textPrimary,}}>INR</Text>
+                <View style={{
+                  backgroundColor: theme.newbg,
+                  padding: 15,
+                  borderRadius: 10,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                  elevation: 5, 
+                }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold',color: theme.textPrimary, }}>0 x 0</Text>
+                  <Text style={[styles.coinsLabel, { textAlign: 'center', marginTop: 5 }]}>
+                    Total no. of Referrals X Earnings from each Referral {"\n"}(Refer more! Earn more!)
+                  </Text>
+                </View>
                   </View>
                   <View style={styles.eranDetail}>
-                    <Text style={styles.coinsValue}>{feedbackEarnings}</Text>
-                    <Text style={styles.coinsLabel}>Earnings from Feedback (Earn now ! Submit on website!)</Text>
+                      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5,color: theme.textPrimary, }}>USD</Text>
+                 <View style={{
+                  backgroundColor: theme.newbg,
+                  padding: 15,
+                  borderRadius: 10,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                  elevation: 5, 
+                }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold',color: theme.textPrimary, }}>0 x 0</Text>
+                  <Text style={[styles.coinsLabel, { textAlign: 'center', marginTop: 5 }]}>
+                    Total no. of Referrals X Earnings from each Referral {"\n"}(Refer more! Earn more!)
+                  </Text>
+                </View>
                   </View>
                 </View>
-                <Text style={styles.minWithdrawalText}>Minimum 3000 is required for withdrawal</Text>
+                
+                <Text style={[styles.label, { marginTop: 20 }]}>Reward from Feedback</Text>
+                <View style={styles.coinsTodayYesterday}>
+                <View style={styles.eranDetail}>
+                   <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5,color: theme.textPrimary, }}>INR</Text>
+                <View style={{
+                  backgroundColor: theme.newbg,
+                  padding: 15,
+                  borderRadius: 10,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                  elevation: 5, 
+                }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold',color: theme.textPrimary, }}>0 x 0</Text>
+                  <Text style={[styles.coinsLabel, { textAlign: 'center', marginTop: 5 }]}>
+                    Earnings from Feedback (Earn now ! Submit on website)
+                  </Text>
+                </View>
+                  </View>
+                  <View style={styles.eranDetail}>
+                      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5,color: theme.textPrimary, }}>USD</Text>
+                 <View style={{
+                  backgroundColor: theme.newbg,
+                  padding: 15,
+                  borderRadius: 10,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                  elevation: 5, 
+                }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold',color: theme.textPrimary, }}>0 x 0</Text>
+                  <Text style={[styles.coinsLabel, { textAlign: 'center', marginTop: 5 }]}>
+                     Earnings from Feedback (Earn now ! Submit on website)
+                  </Text>
+                </View>
+                  </View>
+                </View>
               </View>
 
               <View style={styles.transactionsSection}>

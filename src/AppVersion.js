@@ -60,7 +60,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     padding: 0,
     borderRadius: 20, 
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   logo: {
     width: 250, 
@@ -68,11 +67,6 @@ const styles = StyleSheet.create({
     resizeMode: 'cover', 
     marginBottom: 15,
     borderRadius: 50, 
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 5 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 10,
-    // elevation: 5,
   },
   appName: {
     fontSize: 28, 
