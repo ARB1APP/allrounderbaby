@@ -589,69 +589,83 @@ useFocusEffect(
               </View>
 
               <View style={styles.transactionsSection}>
-                <Text style={styles.bankLinked}>Current Linked Bank Account Details</Text>
+                <Text style={styles.bankLinked}>Linked Bank Details</Text>
                 <View style={styles.bankBox}>
-                  <Text style={styles.bankLinkedLabel}>Beneficiary Name</Text>
+                  <Text style={styles.bankLinkedLabel}>Payment Method</Text>
                   <TextInput
                     style={styles.disabledInput}
-                    placeholder="Enter Beneficiary Name"
+                    autoCapitalize="characters"
+                    editable={false}
+                  />
+                </View>
+                <View style={styles.bankBox}>
+                  <Text style={styles.bankLinkedLabel}>Name as per bank account</Text>
+                  <TextInput
+                    style={styles.disabledInput}
                     placeholderTextColor={theme.inputPlaceholderText}
                     editable={false}
-                    value={bankDetails?.beneficiaryName || ''}
                   />
                 </View>
                 <View style={styles.bankBox}>
                   <Text style={styles.bankLinkedLabel}>Bank Name</Text>
                   <TextInput
                     style={styles.disabledInput}
-                    placeholder="Enter Bank Name"
                     placeholderTextColor={theme.inputPlaceholderText}
                     editable={false}
-                    value={bankDetails?.bankName || ''}
                   />
                 </View>
                 <View style={styles.bankBox}>
                   <Text style={styles.bankLinkedLabel}>Account Number</Text>
                   <TextInput
                     style={styles.disabledInput}
-                    placeholder="Enter Account Number"
                     placeholderTextColor={theme.inputPlaceholderText}
                     keyboardType="numeric"
                     editable={false}
-                    value={bankDetails?.accountNumber || ''}
                   />
                 </View>
                 <View style={styles.bankBox}>
                   <Text style={styles.bankLinkedLabel}>IFSC/SWIFT Code</Text>
                   <TextInput
                     style={styles.disabledInput}
-                    placeholder="Enter IFSC/SWIFT Code"
                     placeholderTextColor={theme.inputPlaceholderText}
                     autoCapitalize="characters"
                     editable={false}
-                    value={bankDetails?.ifsC_SWIFTCode || ''}
                   />
                 </View>
                 <View style={styles.bankBox}>
-                  <Text style={styles.bankLinkedLabel}>PAN Number</Text>
+                  <Text style={styles.bankLinkedLabel}>Bank country</Text>
                   <TextInput
                     style={styles.disabledInput}
-                    placeholder="Enter PAN Number"
                     placeholderTextColor={theme.inputPlaceholderText}
                     autoCapitalize="characters"
                     editable={false}
-                    value={bankDetails?.paN_no || ''}
+                  />
+                </View>
+                 <View style={styles.bankBox}>
+                  <Text style={styles.bankLinkedLabel}>Currency to Recieve</Text>
+                  <TextInput
+                    style={styles.disabledInput}
+                    placeholderTextColor={theme.inputPlaceholderText}
+                    autoCapitalize="characters"
+                    editable={false}
+                  />
+                </View>
+                   <View style={styles.bankBox}>
+                  <Text style={styles.bankLinkedLabel}>Purpose</Text>
+                  <TextInput
+                    style={styles.disabledInput}
+                    placeholderTextColor={theme.inputPlaceholderText}
+                    autoCapitalize="characters"
+                    editable={false}
                   />
                 </View>
                 <View style={styles.bankBox}>
-                  <Text style={styles.bankLinkedLabel}>Payment Method</Text>
+                  <Text style={styles.bankLinkedLabel}>Permanent Account Num (PAN)</Text>
                   <TextInput
                     style={styles.disabledInput}
-                    placeholder="Enter Withdraw Amount"
                     placeholderTextColor={theme.inputPlaceholderText}
                     autoCapitalize="characters"
                     editable={false}
-                    value={bankDetails?.paymentMethod || ''}
                   />
                 </View>
               </View>
