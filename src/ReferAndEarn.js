@@ -529,7 +529,7 @@ const ReferAndEarn = ({ navigation }) => {
               <Text style={styles.introParagraph}>
                 <Text style={styles.Thumbnail}>One video window – full width thumbnail will be provided</Text>
                 {'\n'}{'\n'}
-                <Text>Upon click it will ask Hindi / English</Text>
+                <Text style={styles.emphasisTexts}>Upon click it will ask Hindi / English</Text>
               </Text>
             </Text>
           </TouchableOpacity>
@@ -847,6 +847,10 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
   },
   boldText: {
     fontWeight: '600',
+    color: theme.textPrimary,
+  },
+     emphasisTexts: {
+    fontWeight: '800',
     color: theme.textPrimary,
   },
   linkButton: {

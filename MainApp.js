@@ -4,13 +4,13 @@ import { useIsFocused } from '@react-navigation/native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, Easing } from 'react-native-reanimated';
 import { StatusBar } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
- 
+
 const MainApp = ({ navigation }) => {
     const isDarkMode = useColorScheme() === 'dark';
     const backgroundStyle = {
         backgroundColor: isDarkMode ? '#2a3144' : Colors.lighter,
     };
-    
+
     const isFocused = useIsFocused();
     const welcomeX = useSharedValue(-300);
     const alwaysX = useSharedValue(300);
@@ -18,10 +18,10 @@ const MainApp = ({ navigation }) => {
     const alwaysGlow = useSharedValue(0);
     const imageOpacity = useSharedValue(0);
     const shakeX = useSharedValue(0);
- 
+
     const startEarlyShineOpacity = useSharedValue(0);
     const startEarlyShineTranslateY = useSharedValue(-50);
- 
+
     useEffect(() => {
         if (isFocused) {
             welcomeX.value = -300;
@@ -31,14 +31,14 @@ const MainApp = ({ navigation }) => {
             imageOpacity.value = 0;
             startEarlyShineOpacity.value = 0;
             startEarlyShineTranslateY.value = -50;
- 
+
             welcomeX.value = withTiming(0, { duration: 800 });
             alwaysX.value = withTiming(0, { duration: 800 });
             excitedX.value = withTiming(0, { duration: 800 });
- 
+
             alwaysGlow.value = withDelay(900, withTiming(1, { duration: 800 }));
             imageOpacity.value = withDelay(500, withTiming(1, { duration: 800 }));
- 
+
             shakeX.value = withDelay(
                 1200,
                 withRepeat(
@@ -47,72 +47,72 @@ const MainApp = ({ navigation }) => {
                     true
                 )
             );
- 
+
             startEarlyShineOpacity.value = withDelay(700, withTiming(1, { duration: 1000 }));
             startEarlyShineTranslateY.value = withDelay(700, withTiming(0, { duration: 1000, easing: Easing.out(Easing.exp) }));
         }
     }, [isFocused]);
- 
+
     const welcomeStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: welcomeX.value }],
     }));
-   
+
     const alwaysStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: alwaysX.value }],
         opacity: alwaysGlow.value,
     }));
- 
+
     const excitedStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: excitedX.value }],
     }));
- 
+
     const imageStyle = useAnimatedStyle(() => ({
         opacity: imageOpacity.value,
     }));
- 
+
     const shakeButtonStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: shakeX.value }],
     }));
- 
+
     const startEarlyShineStyle = useAnimatedStyle(() => ({
         opacity: startEarlyShineOpacity.value,
         transform: [{ translateY: startEarlyShineTranslateY.value }],
     }));
- 
+
     const handlePress = () => {
         navigation.navigate('Login');
     };
- 
+
     return (
         <View style={[styles.container, backgroundStyle]}>
-            <StatusBar 
-                barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
-                backgroundColor={backgroundStyle.backgroundColor} 
-                />
+            <StatusBar
+                barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+                backgroundColor={backgroundStyle.backgroundColor}
+            />
             <Animated.Image
                 style={[styles.image, welcomeStyle]}
                 source={require('./img/babyone.jpg')}
             />
             <View style={styles.fullDiv}>
-                <Animated.Text style={[styles.startAppText, startEarlyShineStyle, { color: isDarkMode ? Colors.white : Colors.black } ]}>
-                    Start Early, <Text style={[ styles.highlightText, { color: isDarkMode ? Colors.white : Colors.black } ]} >Shine Always!</Text>
+                <Animated.Text style={[styles.startAppText, startEarlyShineStyle, { color: isDarkMode ? Colors.white : Colors.black }]}>
+                    Start Early, <Text style={[styles.highlightText, { color: isDarkMode ? Colors.white : Colors.black }]} >Shine Always!</Text>
                 </Animated.Text>
-                <Animated.Text style={[styles.excitedLink, excitedStyle, { color: isDarkMode ? Colors.white : Colors.black } ]}>
+                <Animated.Text style={[styles.excitedLink, excitedStyle, { color: isDarkMode ? Colors.white : Colors.black }]}>
                     Excited to begin?
                 </Animated.Text>
-                <Animated.View style={[styles.customButton, shakeButtonStyle, ]}>
+                <Animated.View style={[styles.customButton, shakeButtonStyle,]}>
                     <TouchableOpacity
                         style={styles.customButtonInner}
                         onPress={handlePress}
                     >
-                        <Animated.Text style={[styles.buttonText, ]}>Let's Get Started</Animated.Text>
+                        <Animated.Text style={[styles.buttonText,]}>Let's Get Started</Animated.Text>
                     </TouchableOpacity>
                 </Animated.View>
             </View>
         </View>
     );
 };
- 
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -189,5 +189,4 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
- 
 export default MainApp;

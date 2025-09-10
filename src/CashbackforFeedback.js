@@ -134,6 +134,10 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     fontWeight: '600',
     color: theme.textPrimary,
   },
+   emphasisTexts: {
+    fontWeight: '800',
+    color: theme.textPrimary,
+  },
   importantDetailsBox: {
     marginHorizontal: 20,
     marginTop: 0,
@@ -567,7 +571,7 @@ const CashbackforFeedback = () => {
             <Text style={styles.introParagraph}>
               <Text style={styles.Thumbnail}>One video window – Full width thumbnail will be provided</Text>
               {'\n'}{'\n'}
-              Upon click it will ask Hindi / English
+              <Text style={styles.emphasisTexts}>Upon click it will ask Hindi / English</Text>
             </Text>
           </TouchableOpacity>
         </View>
