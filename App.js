@@ -1,10 +1,8 @@
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme } from 'react-native';
+import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Your screen components - I'm assuming these are all available.
 import SplashScreen from './SplashScreen';
 import MainApp from './MainApp';
 import LoginPage from './src/LoginPage';
@@ -39,6 +37,58 @@ import Trails from './src/Trails';
 
 
 const Drawer = createDrawerNavigator();
+
+const AppColors = {
+    light: {
+        background: '#F4F7FC',
+        card: '#FFFFFF',
+        textPrimary: '#1A232E',
+        textSecondary: '#6A737D',
+        textTertiary: '#8A94A6',
+        primary: 'rgba(20, 52, 164, 1)',
+        accent: '#60b5f6',
+        border: '#E9EEF2',
+        icon: '#495057',
+        danger: '#E40606',
+        dangerText: '#FFFFFF',
+        pointsBackground: 'rgba(20, 52, 164, 0.1)',
+        pointsText: 'rgba(20, 52, 164, 1)',
+        levelBadgeBackground: 'rgba(255, 165, 0, 0.15)',
+        levelBadgeText: '#D97706',
+        avatarBackground: 'rgba(20, 52, 164, 1)',
+        avatarText: '#FFFFFF',
+        bottomNavBackground: '#FFFFFF',
+        bottomNavActiveTint: 'rgba(20, 52, 164, 1)',
+        bottomNavInactiveTint: '#ADB5BD',
+        sectionTitle: '#333B49',
+    },
+    dark: {
+        background: '#1C222B',
+        card: '#2A313C',
+        textPrimary: '#E8EDF2',
+        textSecondary: '#A0AEC0',
+        textTertiary: '#718096',
+        primary: '#60b5f6',
+        accent: '#60b5f6',
+        border: '#3D4450',
+        icon: '#CBD5E0',
+        danger: '#F04F4F',
+        dangerText: '#1C222B',
+        pointsBackground: 'rgba(96, 181, 246, 0.2)',
+        pointsText: '#60b5f6',
+        levelBadgeBackground: 'rgba(251, 211, 141, 0.15)',
+        levelBadgeText: '#FBD38D',
+        avatarBackground: '#60b5f6',
+        avatarText: '#1C222B',
+        bottomNavBackground: '#232A37',
+        bottomNavActiveTint: '#60b5f6',
+        bottomNavInactiveTint: '#718096',
+        sectionTitle: '#C1CAD4',
+    }
+};
+
+const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+
 
 const LightThemeColors = {
     background: '#FFFFFF',
@@ -84,8 +134,6 @@ const DarkThemeColors = {
 };
 const AppLightTheme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, ...LightThemeColors } };
 const AppDarkTheme = { ...DarkTheme, colors: { ...DarkTheme.colors, ...DarkThemeColors } };
-
-// Define the styles outside the component to avoid re-creating them on every render
 const createAppStyles = (theme) => StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: theme.safeAreaBackground },
     drawerContentScrollView: { backgroundColor: theme.drawerContentBackground },
@@ -97,8 +145,6 @@ const createAppStyles = (theme) => StyleSheet.create({
     footerContainer: { marginTop: 'auto', padding: 10, borderTopWidth: 1, borderTopColor: theme.drawerBorderColor, alignItems: 'center', backgroundColor: theme.drawerContentBackground },
     footerText: { fontSize: 12, color: theme.drawerFooterText, fontFamily: 'Lexend-VariableFont_wght' },
 });
-
-// Move the drawer items array outside the component to prevent re-creation on every render
 const drawerItems = [
     { key: "home", label: "Home", navigateTo: "Home", icon: require('./img/home.png'), iconSize: { width: 24, height: 24 } },
     { key: "profile", label: "My Profile", navigateTo: "My Profile", icon: require('./img/proflie.png'), iconSize: { width: 24, height: 24 } },
@@ -107,65 +153,43 @@ const drawerItems = [
     { key: "privacy", label: "Privacy Policy", navigateTo: "Privacy Policy", icon: require('./img/tm.png'), iconSize: { width: 23, height: 23 } },
     { key: "rate", label: "Update App / Rate us", navigateTo: "Rate us / Update App", icon: require('./img/upadate.png'), iconSize: { width: 20, height: 20 } },
     { key: "version", label: "Version info", navigateTo: "App Version", icon: require('./img/info.png'), iconSize: { width: 24, height: 24 } },
-    // These two items both navigate to the 'Get Help' screen
     { key: "feedback", label: "Feedback", navigateTo: "Get Help", icon: require('./img/feedback.png'), iconSize: { width: 26, height: 26 } },
     { key: "contact", label: "Contact us", navigateTo: "Get Help", icon: require('./img/call.png'), iconSize: { width: 22, height: 22 } },
     { key: "logout", label: "Logout", navigateTo: "Login", icon: require('./img/logout.png'), iconSize: { width: 22, height: 22 } },
 ];
 
 
-// A helper function to determine which drawer item should be focused, handling the case of multiple items pointing to the same screen
 const isDrawerItemFocused = (item, props) => {
     const { state } = props;
     const currentRoute = state.routes[state.index];
-    
-    // Check if the current screen name matches the item's navigateTo property
+
     if (currentRoute.name === item.navigateTo) {
-        // This is the special case where multiple drawer items (Feedback, Contact us)
-        // point to the same screen ("Get Help").
-        // To correctly highlight only one, we check if the navigation params match the item's label.
         if (item.navigateTo === 'Get Help') {
             return currentRoute.params?.source === item.label;
         }
-        // For all other unique screens, a simple name match is sufficient.
         return true;
     }
     return false;
 };
 
-const CustomDrawerContent = memo((props) => {
-    const { theme } = props;
-    
-    // Memoize the styles to prevent re-creation on every render
+const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
     const styles = useMemo(() => createAppStyles(theme), [theme]);
 
-    const handleLogout = async () => {
-        // In a real app, you would clear AsyncStorage data here as well.
-        // await AsyncStorage.clear();
-        props.navigation.dispatch(
-            CommonActions.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-            })
-        );
-    };
-    
     return (
         <DrawerContentScrollView {...props} style={styles.drawerContentScrollView} contentContainerStyle={{ flex: 1 }}>
             <View style={styles.headerContainer}>
                 <Image source={require('./img/loginlogo.png')} style={styles.logo} />
             </View>
-            
+
             <View style={styles.drawerItemsContainer}>
                 {drawerItems.map((item) => (
                     <DrawerItem
-                        key={item.key} // Use the unique key for better performance
+                        key={item.key}
                         label={item.label}
-                        onPress={() => 
-                            item.label === 'Logout' ? 
-                            handleLogout() : 
-                            // Pass the item's label as a source parameter to handle the focused state correctly
-                            props.navigation.navigate(item.navigateTo, { source: item.label })
+                        onPress={() =>
+                            item.label === 'Logout' ?
+                                handleLogout() :
+                                props.navigation.navigate(item.navigateTo, { source: item.label })
                         }
                         style={styles.drawerItem}
                         focused={isDrawerItemFocused(item, props)}
@@ -185,7 +209,7 @@ const CustomDrawerContent = memo((props) => {
                     />
                 ))}
             </View>
-            
+
             <View style={styles.footerContainer}>
                 <Text style={styles.footerText}>Copyright 2025. All Rights Reserved.</Text>
             </View>
@@ -222,15 +246,68 @@ const App = () => {
         }
     };
 
+    const clearLocalSessionAndNavigate = useCallback(async (navigation) => {
+        try {
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('userId');
+            await AsyncStorage.removeItem('username');
+            console.log('User session data cleared from AsyncStorage.');
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'Login' }],
+                })
+            );
+        } catch (localError) {
+            console.error('Error clearing local storage:', localError);
+            Alert.alert("Local Session Error", "Failed to clear local session data. Please restart the app.");
+        }
+    }, []);
+
+    const handleGlobalLogout = useCallback(async (navigation) => {
+        try {
+
+            const token = await AsyncStorage.getItem('token');
+            const userId = await AsyncStorage.getItem('userId');
+
+            if (!userId) {
+                console.warn('userId not found in AsyncStorage. Clearing local session anyway.');
+                await clearLocalSessionAndNavigate(navigation);
+                return;
+            }
+            const endpoint = `${url}/Login/LogoutMobileUser?userid=${userId}`;
+            console.log('Error during logout process:', endpoint);
+            const response = await fetch(endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server-side logout failed:', errorText);
+                Alert.alert(
+                    "Logout Warning",
+                    "Failed to log out from the server. Your local session has been cleared. Please try logging in again if you encounter issues."
+                );
+            }
+
+            await clearLocalSessionAndNavigate(navigation);
+
+        } catch (error) {
+            console.error('Error during logout process:', error);
+            Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
+            await clearLocalSessionAndNavigate(navigation);
+        }
+    }, [clearLocalSessionAndNavigate]);
+
     const getHeaderOptions = (theme) => ({
         headerStyle: { backgroundColor: theme.headerBackground, borderBottomColor: theme.headerBorderColor },
         headerTintColor: theme.headerTintColor,
     });
-    
-    // Memoize the renderDrawerNavigator function with useCallback
-    const renderDrawerNavigator = useCallback(() => (
+    const renderDrawerNavigator = useCallback((navigation) => ( // Receive navigation as argument
         <Drawer.Navigator
-            drawerContent={(props) => <CustomDrawerContent {...props} theme={currentThemeColors} />}
+            drawerContent={(props) => <CustomDrawerContent {...props} theme={currentThemeColors} handleLogout={() => handleGlobalLogout(props.navigation)} />} // Pass handleGlobalLogout
             screenOptions={getHeaderOptions(currentThemeColors)}
         >
             <Drawer.Screen name="MainApp" component={MainApp} options={{ headerShown: false, swipeEnabled: false, unmountOnBlur: true }} />
@@ -261,16 +338,13 @@ const App = () => {
             <Drawer.Screen name="Trails" component={Trails} options={{ unmountOnBlur: true }} />
             <Drawer.Screen name="Next Goal" component={NextGoal} options={{ unmountOnBlur: true }} />
             <Drawer.Screen name="Cashback for Feedback Conditions" component={CashbackforFeedbackConditions} options={{ unmountOnBlur: true }} />
-            
             <Drawer.Screen name="Rate us / Update App" component={RateStarsStore} options={{ unmountOnBlur: true }} />
             <Drawer.Screen name="Get Help" component={GetHelp} options={{ unmountOnBlur: true }} />
         </Drawer.Navigator>
-    ), [currentThemeColors]);
-
+    ), [currentThemeColors, handleGlobalLogout]);
     if (isFirstTime === null) {
         return <View style={{ flex: 1, backgroundColor: currentThemeColors.background }} />;
     }
-
     return (
         <SafeAreaView style={styles.safeArea}>
             <NavigationContainer theme={navigationTheme}>

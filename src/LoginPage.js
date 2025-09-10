@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect, useRef } from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, ScrollView, StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, ScrollView, StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, } from 'react-native';
 import CheckBox from 'react-native-check-box';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-import NetInfo from '@react-native-community/netinfo'; 
+import NetInfo from '@react-native-community/netinfo';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 
 const LoginPage = ({ navigation }) => {
@@ -15,11 +15,11 @@ const LoginPage = ({ navigation }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [usernameError, setUsernameError] = useState('');
-    const [passwordError, setPasswordError] = useState(''); 
+    const [passwordError, setPasswordError] = useState('');
     const [termsAccepted, setTermsAccepted] = useState(true);
     const [rememberMe, setRememberMe] = useState(true);
     const [isLoadingCredentials, setIsLoadingCredentials] = useState(true);
-    const [isLoggingIn, setIsLoggingIn] = useState(false); 
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
     const emailTextPosition = useRef(new Animated.Value(-300)).current;
     const usernamePosition = useRef(new Animated.Value(300)).current;
     const passwordPosition = useRef(new Animated.Value(-300)).current;
@@ -35,12 +35,12 @@ const LoginPage = ({ navigation }) => {
     };
     const handlePasswordChange = (text) => {
         setPassword(text);
-        setPasswordError(''); 
+        setPasswordError('');
     };
     const handleTermsChange = () => setTermsAccepted((prev) => !prev);
     const handleRememberMeChange = () => setRememberMe((prev) => !prev);
 
-    const handlePress = async () => { 
+    const handlePress = async () => {
         setIsLoggingIn(true);
         try {
             setUsernameError('');
@@ -52,7 +52,7 @@ const LoginPage = ({ navigation }) => {
                     "No Internet Connection",
                     "Please check your internet connection and try again."
                 );
-                setIsLoggingIn(false); 
+                setIsLoggingIn(false);
                 return;
             }
 
@@ -61,9 +61,9 @@ const LoginPage = ({ navigation }) => {
                 setIsLoggingIn(false);
                 return;
             }
-            if (password === "" || password === null) { 
-                setPasswordError('❗Please enter password.'); 
-                setIsLoggingIn(false); 
+            if (password === "" || password === null) {
+                setPasswordError('❗Please enter password.');
+                setIsLoggingIn(false);
                 return;
             }
             if (!termsAccepted) {
@@ -72,7 +72,7 @@ const LoginPage = ({ navigation }) => {
                 return;
             }
 
-            const API_URL = `${url}Login/LoginUser?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+            const API_URL = `${url}Login/LoginMobileUser?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
             console.log("Attempting to login with URL:", API_URL);
 
             const response = await fetch(API_URL);
@@ -80,15 +80,15 @@ const LoginPage = ({ navigation }) => {
 
             console.log("API Response:", data);
 
-            if (data.code === 200 && data.data != null ) {
+            if (data.code === 200 && data.data != null) {
                 if (rememberMe) {
                     await AsyncStorage.setItem('rememberedUsername', username);
                     await AsyncStorage.setItem('rememberedPassword', password);
-                    await AsyncStorage.setItem('termsAccepted', 'true'); 
-                    await AsyncStorage.setItem('rememberMePreference', 'true'); 
-                   await AsyncStorage.setItem('token', data.data.token);
-                   await AsyncStorage.setItem('userId', data.data.userID.toString());
-                   console.log('userId', data.data.userID);
+                    await AsyncStorage.setItem('termsAccepted', 'true');
+                    await AsyncStorage.setItem('rememberMePreference', 'true');
+                    await AsyncStorage.setItem('token', data.data.token);
+                    await AsyncStorage.setItem('userId', data.data.userID.toString());
+                    console.log('userId', data.data.userID);
                     console.log('token', data.data.token);
                     console.log("Username and preference saved.");
                 } else {
@@ -105,13 +105,13 @@ const LoginPage = ({ navigation }) => {
                     console.warn("navigation prop is not available!");
                 }
             } else {
-                setPasswordError(data.message || '❗Invalid username or password.');   
+                setPasswordError(data.message || '❗Invalid username or password.');
             }
         } catch (error) {
             console.error("Login Error:", error);
             Alert.alert("Login Failed", "An unexpected error occurred. Please try again later.");
         } finally {
-            setIsLoggingIn(false); 
+            setIsLoggingIn(false);
         }
     };
 
@@ -152,7 +152,7 @@ const LoginPage = ({ navigation }) => {
                     setUsername('');
                     setPassword('');
                     setRememberMe(true);
-                    setTermsAccepted(true); 
+                    setTermsAccepted(true);
                 }
 
             } catch (error) {
@@ -170,6 +170,7 @@ const LoginPage = ({ navigation }) => {
     useFocusEffect(
         React.useCallback(() => {
             const handleLogout = async () => {
+
                 if (route.params?.logout) {
                     console.log("Logout action detected in LoginPage. Clearing all stored credentials.");
                     try {
@@ -177,22 +178,22 @@ const LoginPage = ({ navigation }) => {
                         await AsyncStorage.removeItem('rememberedPassword');
                         await AsyncStorage.removeItem('termsAccepted');
                         await AsyncStorage.removeItem('rememberMePreference');
-                        await AsyncStorage.removeItem('token'); 
-                        await AsyncStorage.removeItem('userId'); 
+                        await AsyncStorage.removeItem('token');
+                        await AsyncStorage.removeItem('userId');
 
                         setUsername('');
                         setPassword('');
                         setRememberMe(false);
                         setTermsAccepted(true);
-                        
+
                         Alert.alert("Logged Out", "You have been successfully logged out.");
-                        
+
                         navigation.setParams({ logout: undefined });
                     } catch (error) {
                         console.error("Error during logout credential clearing:", error);
                         Alert.alert("Logout Error", "Failed to clear local credentials during logout.");
                     } finally {
-                        setIsLoadingCredentials(false); 
+                        setIsLoadingCredentials(false);
                     }
                 }
             };
@@ -209,13 +210,13 @@ const LoginPage = ({ navigation }) => {
         return (
             <View style={[styles.outermostContainer, backgroundStyle, styles.loadingContainer]}>
                 <ActivityIndicator size="large" color={isDarkMode ? Colors.white : '#1434A4'} />
-                <Text style={{ color: isDarkMode ? Colors.white : Colors.black, marginTop: 10}}>Loading...</Text>
+                <Text style={{ color: isDarkMode ? Colors.white : Colors.black, marginTop: 10 }}>Loading...</Text>
             </View>
         );
     }
-    
+
     return (
-        <View style={[ styles.outermostContainer, backgroundStyle]}>
+        <View style={[styles.outermostContainer, backgroundStyle]}>
             <StatusBar
                 barStyle={isDarkMode ? 'light-content' : 'dark-content'}
                 backgroundColor={backgroundStyle.backgroundColor}
@@ -236,7 +237,7 @@ const LoginPage = ({ navigation }) => {
                     />
 
                     <Animated.Text
-                        style={[styles.startAppText, { transform: [{ translateX: emailTextPosition }] }, { color: isDarkMode ? Colors.white : Colors.black } ]}
+                        style={[styles.startAppText, { transform: [{ translateX: emailTextPosition }] }, { color: isDarkMode ? Colors.white : Colors.black }]}
                     >
                         Please enter login details below
                     </Animated.Text>
@@ -244,7 +245,7 @@ const LoginPage = ({ navigation }) => {
                     <Animated.Text
                         style={[
                             styles.legend,
-                            usernameError ? styles.errorLegend : null, 
+                            usernameError ? styles.errorLegend : null,
                             { transform: [{ translateX: usernamePosition }] }, { color: isDarkMode ? Colors.white : Colors.black }
                         ]}
                     >
@@ -258,7 +259,7 @@ const LoginPage = ({ navigation }) => {
                         ]}
                     >
                         <TextInput
-                            style={[styles.input, usernameError ? styles.errorTextInput : null ]}
+                            style={[styles.input, usernameError ? styles.errorTextInput : null]}
                             placeholder="Enter your username"
                             placeholderTextColor="#a6a6a6"
                             value={username}
@@ -268,14 +269,14 @@ const LoginPage = ({ navigation }) => {
                             returnKeyType='next'
                         />
                     </Animated.View>
-                    {usernameError !== '' && ( 
+                    {usernameError !== '' && (
                         <Text style={[styles.errorText]}>{usernameError}</Text>
                     )}
 
                     <View style={{ height: 15 }} />
 
-                    <Animated.Text style={[ styles.legend, passwordError ? styles.errorLegend : null, { transform: [{ translateX: passwordPosition }] }, { color: isDarkMode ? Colors.white : Colors.black } ]}>Password</Animated.Text>
-                    <Animated.View style={[ styles.fieldset, passwordError ? styles.errorFieldset : null, { transform: [{ translateX: passwordPosition }] } ]}>
+                    <Animated.Text style={[styles.legend, passwordError ? styles.errorLegend : null, { transform: [{ translateX: passwordPosition }] }, { color: isDarkMode ? Colors.white : Colors.black }]}>Password</Animated.Text>
+                    <Animated.View style={[styles.fieldset, passwordError ? styles.errorFieldset : null, { transform: [{ translateX: passwordPosition }] }]}>
                         <TextInput
                             style={[styles.input, passwordError ? styles.errorTextInput : null]}
                             secureTextEntry
@@ -284,9 +285,9 @@ const LoginPage = ({ navigation }) => {
                             value={password}
                             onChangeText={handlePasswordChange}
                             keyboardAppearance="light"
-                            returnKeyType='done'/>
+                            returnKeyType='done' />
                     </Animated.View>
-                    {passwordError !== '' && ( 
+                    {passwordError !== '' && (
                         <Text style={styles.errorText}>{passwordError}</Text>
                     )}
                     <View style={styles.checkboxesContainer}>
@@ -294,15 +295,15 @@ const LoginPage = ({ navigation }) => {
                             <CheckBox
                                 isChecked={termsAccepted}
                                 onClick={handleTermsChange}
-                                checkBoxColor= {isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)'}/>
-                            <Text style={[ styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>
+                                checkBoxColor={isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)'} />
+                            <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>
                                 By logging in, you agree to company’s{' '}
-                                <Text  style={[ styles.linkUnderline, 
-                                                { color: isDarkMode ? '#2754f7ff' : '#1434A4' } 
-                                                ]}>Terms and Conditions</Text> and{' '}
-                                <Text style={[ styles.linkUnderline, 
-                                                { color: isDarkMode ? '#2754f7ff' : '#1434A4' } 
-                                                ]}>Privacy Policy</Text>
+                                <Text style={[styles.linkUnderline,
+                                { color: isDarkMode ? '#2754f7ff' : '#1434A4' }
+                                ]}>Terms and Conditions</Text> and{' '}
+                                <Text style={[styles.linkUnderline,
+                                { color: isDarkMode ? '#2754f7ff' : '#1434A4' }
+                                ]}>Privacy Policy</Text>
                             </Text>
                         </Animated.View>
                         <Animated.View style={[styles.checkboxContainerSecond, { transform: [{ translateX: rememberMePosition }] }]}>
@@ -311,15 +312,15 @@ const LoginPage = ({ navigation }) => {
                                 onClick={handleRememberMeChange}
                                 checkBoxColor={isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)'}
                             />
-                            <Text style={[ styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>Remember me</Text>
+                            <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>Remember me</Text>
                         </Animated.View>
                     </View>
                     <Animated.View style={styles.shakeContainer}>
-                        <TouchableOpacity 
-                            style={[styles.customButton, isLoggingIn && styles.buttonDisabled]} 
-                            onPress={handlePress} 
+                        <TouchableOpacity
+                            style={[styles.customButton, isLoggingIn && styles.buttonDisabled]}
+                            onPress={handlePress}
                             activeOpacity={0.8}
-                            disabled={isLoggingIn} 
+                            disabled={isLoggingIn}
                         >
                             {isLoggingIn ? (
                                 <ActivityIndicator color="#FFFFFF" />
@@ -328,13 +329,12 @@ const LoginPage = ({ navigation }) => {
                             )}
                         </TouchableOpacity>
                     </Animated.View>
-                    <Text style={[ styles.otpLink, { color: isDarkMode ? Colors.white : Colors.black } ]}>Login through OTP</Text>
+                    <Text style={[styles.otpLink, { color: isDarkMode ? Colors.white : Colors.black }]}>Login through OTP</Text>
                 </ScrollView>
             </KeyboardAvoidingView>
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     outermostContainer: {
         flex: 1,
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         paddingHorizontal: 5,
         marginBottom: 2,
-        
+
     },
     input: {
         height: 45,
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     buttonDisabled: {
-        backgroundColor: '#a9a9a9', 
+        backgroundColor: '#a9a9a9',
         elevation: 0,
         shadowOpacity: 0,
     },
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     },
     linkUnderline: {
         textDecorationLine: 'underline',
-        fontWeight:'bold',
+        fontWeight: 'bold',
     },
     otpLink: {
         marginTop: 20,
@@ -465,14 +465,14 @@ const styles = StyleSheet.create({
     },
     errorLegend: {
         color: '#DC143C',
-        fontWeight:'bold',
+        fontWeight: 'bold',
     },
     errorTextInput: {
         color: '#DC143C',
     },
     errorText: {
         color: '#DC143C',
-        fontWeight:'bold',
+        fontWeight: 'bold',
         marginTop: 5,
         fontSize: 14,
         width: '90%',

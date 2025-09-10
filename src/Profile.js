@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Dimensions, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Dimensions, useColorScheme, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions } from '@react-navigation/native';
 
@@ -52,479 +52,468 @@ const AppColors = {
     }
 };
 
+const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
 
 const Profile = ({ navigation }) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  const theme = isDarkMode ? AppColors.dark : AppColors.light;
+    const isDarkMode = useColorScheme() === 'dark';
+    const theme = isDarkMode ? AppColors.dark : AppColors.light;
 
-  const handleLogout = async () => {
-      try {
-          await AsyncStorage.removeItem('token');
-          await AsyncStorage.removeItem('userId');
-          console.log('User session data cleared from AsyncStorage.');
+    const handleLogout = async () => {
+        try {
+            debugger;
+            const token = await AsyncStorage.getItem('token');
+            const userId = await AsyncStorage.getItem('userId');
 
-          navigation.dispatch(
-              CommonActions.reset({
-                  index: 0,
-                  routes: [{ name: 'Login' }],
-              })
-          );
-      } catch (error) {
-          console.error('Error during logout process:', error);
-      }
-  };
+            if (!userId) {
+                console.warn('userId not found in AsyncStorage. Clearing local session anyway.');
+                await clearLocalSessionAndNavigate();
+                return;
+            }
 
-  const ListItem = ({ iconSource, title, subtitle, onPress, isLast, showArrow = true, titleColor }) => {
-    const isSubtitleElement = React.isValidElement(subtitle);
+            const endpoint = `${url}/Login/LogoutMobileUser?userid=${userId}`;
+            const response = await fetch(endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
 
+            if (!response.ok) {
+
+                const errorText = await response.text();
+                console.error('Server-side logout failed:', errorText);
+                Alert.alert(
+                    "Logout Warning",
+                    "Failed to log out from the server. Your local session has been cleared. Please try logging in again if you encounter issues."
+                );
+            }
+            await clearLocalSessionAndNavigate();
+
+        } catch (error) {
+            console.error('Error during logout process:', error);
+            Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
+            await clearLocalSessionAndNavigate();
+        }
+    };
+
+    const clearLocalSessionAndNavigate = async () => {
+        try {
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('userId');
+            await AsyncStorage.removeItem('username');
+            console.log('User session data cleared from AsyncStorage.');
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'Login' }],
+                })
+            );
+        } catch (localError) {
+            console.error('Error clearing local storage:', localError);
+            Alert.alert("Local Session Error", "Failed to clear local session data. Please restart the app.");
+        }
+    };
+
+    const ListItem = ({ iconSource, title, subtitle, onPress, isLast, showArrow = true, titleColor }) => {
+        const isSubtitleElement = React.isValidElement(subtitle);
+
+        return (
+            <TouchableOpacity onPress={onPress} style={styles.listItemWrapper}>
+                <View style={styles.listItemRow}>
+                    <View style={styles.listItemMainContent}>
+                        <Image source={iconSource} style={[styles.listItemIcon, { tintColor: theme.icon }]} />
+                        <View style={styles.listItemTextContainer}>
+                            <Text style={[styles.listItemTitle, { color: titleColor || theme.textPrimary }]}>{title}</Text>
+                            {subtitle !== null && subtitle !== undefined && (
+                                isSubtitleElement ? (
+                                    subtitle
+                                ) : (
+                                    <Text style={[styles.listItemSubtitle, { color: theme.textSecondary }]}>{String(subtitle)}</Text>
+                                )
+                            )}
+                        </View>
+                    </View>
+                    {showArrow && <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />}
+                </View>
+                {!isLast && <View style={[styles.separator, { backgroundColor: theme.border }]} />}
+            </TouchableOpacity>
+        );
+    };
     return (
-      <TouchableOpacity onPress={onPress} style={styles.listItemWrapper}>
-          <View style={styles.listItemRow}>
-              <View style={styles.listItemMainContent}>
-                  <Image source={iconSource} style={[styles.listItemIcon, { tintColor: theme.icon }]} />
-                  <View style={styles.listItemTextContainer}>
-                      <Text style={[styles.listItemTitle, { color: titleColor || theme.textPrimary }]}>{title}</Text>
-                      {subtitle !== null && subtitle !== undefined && (
-                          isSubtitleElement ? (
-                              subtitle
-                          ) : (
-                              <Text style={[styles.listItemSubtitle, { color: theme.textSecondary }]}>{String(subtitle)}</Text>
-                          )
-                      )}
-                  </View>
-              </View>
-              {showArrow && <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />}
-          </View>
-          {!isLast && <View style={[styles.separator, { backgroundColor: theme.border }]} />}
-      </TouchableOpacity>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
+            <ScrollView contentContainerStyle={styles.scrollContentContainer}>
+                <View style={styles.header}>
+                    <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>My Profile</Text>
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.card, { backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+                    onPress={() => navigation.navigate('My Referrals')}
+                >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Image source={require('../img/three-dots.png')} style={[styles.listItemIcon, { tintColor: theme.icon, marginRight: 15 }]} />
+                        <Text style={[styles.listItemTitle, { color: theme.textPrimary }]}>My Referrals</Text>
+                    </View>
+                    <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
+                </TouchableOpacity>
+
+                <View style={[styles.card, { backgroundColor: theme.card }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.sectionTitle }]}>Settings</Text>
+                    <ListItem iconSource={require('../img/bell.png')} title="My Notifications" onPress={() => navigation.navigate('My Notifications')} />
+
+                    <ListItem
+                        iconSource={require('../img/earningmoney.png')}
+                        title="My Earnings"
+                        subtitle={
+                            <View style={{ alignItems: 'center' }}>
+                                <Text
+                                    style={[
+                                        styles.infoSubtitle,
+                                        {
+                                            color: theme.textSecondary,
+                                            fontSize: 14,
+                                            textAlign: 'center',
+                                        },
+                                    ]}
+                                >
+                                    Refer more, Earn more !!
+                                </Text>
+                            </View>
+                        }
+                        onPress={() => navigation.navigate('My Earnings')}
+                    />
+
+                    <ListItem
+                        iconSource={require('../img/cart.png')}
+                        title="My Orders"
+                        subtitle={
+                            <View style={{ alignItems: 'center' }}>
+                                <Text
+                                    style={[
+                                        styles.infoSubtitle,
+                                        {
+                                            color: theme.textSecondary,
+                                            fontSize: 14,
+                                            textAlign: 'center',
+                                        },
+                                    ]}
+                                >
+                                    View order history
+                                </Text>
+                            </View>
+                        }
+                        onPress={() => navigation.navigate('My Orders')}
+                    />
+                </View>
+
+                <View style={[styles.card, { backgroundColor: theme.card }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.sectionTitle }]}>Help and Support</Text>
+                    <ListItem
+                        iconSource={require('../img/help.png')}
+                        title="Get Help"
+                        subtitle={
+                            <View style={{ alignItems: 'center' }}>
+                                <Text
+                                    style={[
+                                        styles.infoSubtitle,
+                                        {
+                                            color: theme.textSecondary,
+                                            fontSize: 14,
+                                            textAlign: 'center',
+                                        },
+                                    ]}
+                                >
+                                    Chat With Support
+                                </Text>
+                            </View>
+                        }
+                        onPress={() => navigation.navigate('Get Help')}
+                        isLast={true}
+                    />
+                </View>
+
+                <View style={[styles.card, { backgroundColor: theme.card }]}>
+                    <ListItem
+                        iconSource={require('../img/starfive.png')}
+                        title="Rate us 5 stars on the store"
+                        subtitle={
+                            <View style={{ alignItems: 'center' }}>
+                                <Text
+                                    style={[
+                                        styles.infoSubtitle,
+                                        {
+                                            color: theme.textSecondary,
+                                            fontSize: 15,
+                                        },
+                                    ]}
+                                >
+                                    Encourage users to leave a positive review
+                                </Text>
+                            </View>
+                        }
+                        onPress={() => navigation.navigate('Rate us 5 stars on the store')}
+                    />
+                    <ListItem iconSource={require('../img/pr.png')} title="Terms of Service" onPress={() => navigation.navigate('Terms of Service')} />
+                    <ListItem iconSource={require('../img/tm.png')} title="Privacy Policy" onPress={() => navigation.navigate('Privacy Policy')} />
+                    <ListItem iconSource={require('../img/infoV.png')} title="App Version" onPress={() => navigation.navigate('App Version')} isLast={true} />
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.logoutButton, { backgroundColor: isDarkMode ? theme.danger : theme.danger }]}
+                    onPress={handleLogout}
+                >
+                    <Image source={require('../img/logoutbtn.png')} style={[styles.logoutIcon, { tintColor: isDarkMode ? AppColors.dark.textPrimary : AppColors.light.card }]} />
+                    <Text style={[styles.logoutText, { color: isDarkMode ? AppColors.dark.textPrimary : AppColors.light.card }]}>Logout</Text>
+                </TouchableOpacity>
+
+            </ScrollView>
+
+            <View style={[styles.bottomNav, { backgroundColor: theme.bottomNavBackground, borderTopColor: theme.border }]}>
+                <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
+                    <Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
+                    <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Home</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Cashback for Feedback')}>
+                    <Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
+                    <Text style={[styles.navText, { color: theme.bottomNavInactiveTint, textAlign: 'center' }]}>Cashback for Feedback</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Refer and Earn')}>
+                    <Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
+                    <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Refer & Earn</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.navItem}>
+                    <Image source={require('../img/proflie.png')} style={[styles.navIcon, { tintColor: theme.bottomNavActiveTint }]} />
+                    <Text style={[styles.navTextActive, { color: theme.bottomNavActiveTint }]}>My Profile</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
     );
-  };
-
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContentContainer}>
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>My Profile</Text>
-          {/* <TouchableOpacity style={[styles.pointButton, { backgroundColor: theme.pointsBackground }]}>
-            <Image source={require('../img/pointBtn.png')} style={[styles.pointButtonIcon
-            ]} />
-            <Text style={[styles.pointButtonText, { color: theme.pointsText }]}>0</Text>
-          </TouchableOpacity> */}
-        </View>
-
-        {/* <TouchableOpacity
-            style={[
-                styles.card,
-                {
-                    backgroundColor: theme.card,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                }
-            ]}
-        >
-            <View style={styles.userInfoContainer}>
-                <View style={[styles.avatar, { backgroundColor: theme.avatarBackground }]}>
-                    <Text style={[styles.avatarText, { color: theme.avatarText }]}>AB</Text>
-                </View>
-                <View style={styles.userInfoTextContainer}>
-                    <Text style={[styles.userName, { color: theme.textPrimary }]}>AllrounderBaby (Name)</Text>
-                </View>
-            </View>
-            <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
-        </TouchableOpacity> */}
-
-        {/* <TouchableOpacity
-            style={[
-                styles.card,
-                {
-                    backgroundColor: theme.card,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                }
-            ]}
-        >
-            <View style={styles.parentInfoDetailContainer}>
-                <Image source={require('../img/user.png')} style={[styles.infoIcon, { tintColor: theme.primary }]} />
-                <View style={styles.userInfoTextContainer}>
-                    <Text style={[styles.infoTitle, { color: theme.textPrimary }]}>Parent Name</Text>
-                    <Text style={[styles.infoSubtitle, { color: theme.textSecondary }]}>Visionary Parent</Text>
-                </View>
-            </View>
-            <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
-        </TouchableOpacity> */}
-
-        <TouchableOpacity
-            style={[styles.card, { backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
-            onPress={() => navigation.navigate('My Referrals')}
-        >
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                <Image source={require('../img/three-dots.png')} style={[styles.listItemIcon, { tintColor: theme.icon, marginRight: 15 }]} />
-                <Text style={[styles.listItemTitle, { color: theme.textPrimary }]}>My Referrals</Text>
-            </View>
-            <Image source={require('../img/arrowicon.png')} style={[styles.arrowicon, { tintColor: theme.textTertiary }]} />
-        </TouchableOpacity>
-
-        <View style={[styles.card, { backgroundColor: theme.card }]}>
-          <Text style={[styles.sectionTitle, { color: theme.sectionTitle }]}>Settings</Text>
-          <ListItem iconSource={require('../img/bell.png')} title="My Notifications" onPress={() => navigation.navigate('My Notifications')} />
-
-        <ListItem
-            iconSource={require('../img/earningmoney.png')}
-            title="My Earnings"
-            subtitle={
-              <View style={{ alignItems: 'center' }}>
-                <Text
-                  style={[
-                    styles.infoSubtitle,
-                    {
-                      color: theme.textSecondary,
-                      fontSize: 14,
-                      textAlign: 'center',
-                    },
-                  ]}
-                >
-                  Refer more, Earn more !!
-                </Text>
-              </View>
-            }
-            onPress={() => navigation.navigate('My Earnings')}
-          />
-
-      <ListItem
-          iconSource={require('../img/cart.png')}
-          title="My Orders"
-          subtitle={
-            <View style={{ alignItems: 'center' }}>
-              <Text
-                style={[
-                  styles.infoSubtitle,
-                  {
-                    color: theme.textSecondary,
-                    fontSize: 14,
-                    textAlign: 'center',
-                  },
-                ]}
-              >
-                View order history
-              </Text>
-            </View>
-          }
-          onPress={() => navigation.navigate('My Orders')}
-        />
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.card }]}>
-          <Text style={[styles.sectionTitle, { color: theme.sectionTitle }]}>Help and Support</Text>
-       <ListItem
-          iconSource={require('../img/help.png')}
-          title="Get Help"
-          subtitle={
-            <View style={{ alignItems: 'center' }}>
-              <Text
-                style={[
-                  styles.infoSubtitle,
-                  {
-                    color: theme.textSecondary,
-                    fontSize: 14,
-                    textAlign: 'center',
-                  },
-                ]}
-              >
-                Chat With Support
-              </Text>
-            </View>
-          }
-          onPress={() => navigation.navigate('Get Help')}
-          isLast={true}
-        />
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.card }]}>
-         <ListItem
-            iconSource={require('../img/starfive.png')}
-            title="Rate us 5 stars on the store"
-            subtitle={
-              <View style={{ alignItems: 'center' }}>
-                <Text
-                  style={[
-                    styles.infoSubtitle,
-                    {
-                      color: theme.textSecondary,
-                      fontSize: 15,
-                    },
-                  ]}
-                >
-                  Encourage users to leave a positive review
-                </Text>
-              </View>
-            }
-            onPress={() => navigation.navigate('Rate us 5 stars on the store')}
-          />
-
-
-          <ListItem iconSource={require('../img/pr.png')} title="Terms of Service" onPress={() => navigation.navigate('Terms of Service')} />
-          <ListItem iconSource={require('../img/tm.png')} title="Privacy Policy" onPress={() => navigation.navigate('Privacy Policy')} />
-          <ListItem iconSource={require('../img/infoV.png')} title="App Version" onPress={() => navigation.navigate('App Version')} isLast={true} />
-        </View>
-
-        <TouchableOpacity
-            style={[styles.logoutButton, { backgroundColor: isDarkMode ? theme.danger : theme.danger }]}
-            onPress={handleLogout}
-        >
-            <Image source={require('../img/logoutbtn.png')} style={[styles.logoutIcon, { tintColor: isDarkMode ? AppColors.dark.textPrimary : AppColors.light.card }]} />
-            <Text style={[styles.logoutText, { color: isDarkMode ? AppColors.dark.textPrimary : AppColors.light.card }]}>Logout</Text>
-        </TouchableOpacity>
-
-      </ScrollView>
-
-      <View style={[styles.bottomNav, { backgroundColor: theme.bottomNavBackground, borderTopColor: theme.border }]}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
-            <Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-            <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Cashback for Feedback')}>
-            <Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-            <Text style={[styles.navText, { color: theme.bottomNavInactiveTint, textAlign: 'center' }]}>Cashback for Feedback</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Refer and Earn')}>
-            <Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-            <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Refer & Earn</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-            <Image source={require('../img/proflie.png')} style={[styles.navIcon, { tintColor: theme.bottomNavActiveTint }]} />
-            <Text style={[styles.navTextActive, { color: theme.bottomNavActiveTint }]}>My Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scrollContentContainer: {
-    paddingBottom: 0,
-    paddingHorizontal: 15,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 20,
-    marginBottom: 10,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-  pointButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  pointButtonIcon: {
-    width: 18,
-    height: 18,
-    marginRight: 6,
-  },
-  pointButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-  card: {
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  userInfoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 10,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  avatarText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-  userInfoTextContainer: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-  levelBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  levelBadgeIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 5,
-  },
-  levelBadgeText: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginRight: 8,
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-  levelIndicator: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  levelIndicatorText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-  arrowicon: {
-    width: 20,
-    height: 20,
-    resizeMode: 'contain',
-  },
-  parentInfoDetailContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 10,
-  },
-  infoIcon: {
-      width: 40,
-      height: 40,
-      marginRight: 15,
-  },
-    infoIcons: {
-      width: 20,
-      height: 20,
-      marginLeft: 10,
-      marginRight: 15,
-  },
-  infoTitle: {
-      fontSize: 16,
-      fontWeight: '600',
-      marginBottom: 2,
-      fontFamily: 'Lexend-VariableFont_wght',
-  },
-  infoSubtitle: {
-      fontSize: 13,
-      fontFamily: 'Lexend-VariableFont_wght',
-      marginLeft: '10%',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
-    paddingHorizontal: 5,
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-  listItemWrapper: {
-  },
-  listItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 5,
-  },
-  listItemMainContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 10,
-  },
-  listItemIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 15,
-    resizeMode: 'contain',
-  },
-  listItemTextContainer: {
-    flex: 1,
-  },
-  listItemTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-  listItemSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-  separator: {
-    height: 1,
-    marginLeft: 5 + 24 + 15,
-    marginVertical: 4,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 15,
-    borderRadius: 12,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  logoutIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'Lexend-VariableFont_wght',
-  },
-    bottomNav: {
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            alignItems: 'center',
-            backgroundColor: '#fff',
-            paddingVertical: 10,
-            bottom: 0,
-            width: '100%',
-            shadowColor: '#000',
-            shadowOpacity: 0.2,
-            shadowRadius: 20,
-            elevation: 5,},
-            navItem: {
-            alignItems: 'center',
-            paddingVertical: 5,
-        },
-        navIcon: {
-            width: 24,
-            height: 24,
-            resizeMode: 'contain',
-            marginBottom: 4,
-        },
-   navText: {
-    color: 'gray',
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: 'bold',
+    container: { flex: 1 },
+    scrollContentContainer: {
+        paddingBottom: 0,
+        paddingHorizontal: 15,
     },
-  navTextActive: { fontSize: 10, fontWeight: '700', fontFamily: 'Lexend-VariableFont_wght', },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 20,
+        marginBottom: 10,
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    pointButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    pointButtonIcon: {
+        width: 18,
+        height: 18,
+        marginRight: 6,
+    },
+    pointButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    card: {
+        borderRadius: 12,
+        padding: 15,
+        marginBottom: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
+        elevation: 3,
+    },
+    userInfoContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        marginRight: 10,
+    },
+    avatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    avatarText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    userInfoTextContainer: {
+        flex: 1,
+    },
+    userName: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 4,
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    levelBadgeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    levelBadgeIcon: {
+        width: 20,
+        height: 20,
+        marginRight: 5,
+    },
+    levelBadgeText: {
+        fontSize: 13,
+        fontWeight: '500',
+        marginRight: 8,
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    levelIndicator: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 10,
+    },
+    levelIndicatorText: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    arrowicon: {
+        width: 20,
+        height: 20,
+        resizeMode: 'contain',
+    },
+    parentInfoDetailContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        marginRight: 10,
+    },
+    infoIcon: {
+        width: 40,
+        height: 40,
+        marginRight: 15,
+    },
+    infoIcons: {
+        width: 20,
+        height: 20,
+        marginLeft: 10,
+        marginRight: 15,
+    },
+    infoTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 2,
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    infoSubtitle: {
+        fontSize: 13,
+        fontFamily: 'Lexend-VariableFont_wght',
+        marginLeft: '10%',
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 10,
+        paddingHorizontal: 5,
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    listItemWrapper: {},
+    listItemRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 12,
+        paddingHorizontal: 5,
+    },
+    listItemMainContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        marginRight: 10,
+    },
+    listItemIcon: {
+        width: 24,
+        height: 24,
+        marginRight: 15,
+        resizeMode: 'contain',
+    },
+    listItemTextContainer: {
+        flex: 1,
+    },
+    listItemTitle: {
+        fontSize: 15,
+        fontWeight: '500',
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    listItemSubtitle: {
+        fontSize: 12,
+        marginTop: 2,
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    separator: {
+        height: 1,
+        marginLeft: 5 + 24 + 15,
+        marginVertical: 4,
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 15,
+        borderRadius: 12,
+        marginTop: 10,
+        marginBottom: 20,
+    },
+    logoutIcon: {
+        width: 20,
+        height: 20,
+        marginRight: 10,
+    },
+    logoutText: {
+        fontSize: 16,
+        fontWeight: '600',
+        fontFamily: 'Lexend-VariableFont_wght',
+    },
+    bottomNav: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        paddingVertical: 10,
+        bottom: 0,
+        width: '100%',
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowRadius: 20,
+        elevation: 5,
+    },
+    navItem: {
+        alignItems: 'center',
+        paddingVertical: 5,
+    },
+    navIcon: {
+        width: 24,
+        height: 24,
+        resizeMode: 'contain',
+        marginBottom: 4,
+    },
+    navText: {
+        color: 'gray',
+        fontSize: 10,
+        marginTop: 4,
+        fontWeight: 'bold',
+    },
+    navTextActive: { fontSize: 10, fontWeight: '700', fontFamily: 'Lexend-VariableFont_wght', },
 });
 export default Profile;
