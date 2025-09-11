@@ -80,7 +80,7 @@ const LoginPage = ({ navigation }) => {
 
             console.log("API Response:", data);
 
-            if (data.code === 200 && data.data != null) {
+            if (response.ok && data.data != null) {
                 if (rememberMe) {
                     await AsyncStorage.setItem('rememberedUsername', username);
                     await AsyncStorage.setItem('rememberedPassword', password);
@@ -180,11 +180,14 @@ const LoginPage = ({ navigation }) => {
                         await AsyncStorage.removeItem('rememberMePreference');
                         await AsyncStorage.removeItem('token');
                         await AsyncStorage.removeItem('userId');
+                        await AsyncStorage.removeItem('token'); // Ensure token is cleared
+                        await AsyncStorage.removeItem('userId'); // Ensure userId is cleared
 
                         setUsername('');
                         setPassword('');
                         setRememberMe(false);
                         setTermsAccepted(true);
+                        setTermsAccepted(true); // Reset to default
 
                         Alert.alert("Logged Out", "You have been successfully logged out.");
 

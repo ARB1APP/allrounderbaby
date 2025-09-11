@@ -393,6 +393,7 @@ const ReferAndEarn = ({ navigation }) => {
       if (videoId) {
         const detailsData = await vdoCipher_api(videoId);
         if (detailsData && !detailsData.error) {
+          const total_time = detailsData.length || 0;
           const response = await fetch(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
             method: 'POST',
             headers: {
@@ -415,6 +416,7 @@ const ReferAndEarn = ({ navigation }) => {
               language: language,
               title: title,
               poster: poster,
+              total_time: total_time,
               cameFrom: 'Refer and Earn',
             });
             setIsVideoLoading(false);
