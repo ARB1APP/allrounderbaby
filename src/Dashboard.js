@@ -376,7 +376,7 @@ const Dashboard = ({ navigation }) => {
         const group = config.finalGroupedData.find(g => g.stepNumber === stepNumber);
         const firstStepInCategory = config.finalGroupedData[0].stepNumber;
         if (group && (stepNumber === firstStepInCategory || completedSteps[`step${stepNumber - 1}`])) {
-            setSelectedStepGroup(group);
+            setSelectedStepGroup({ ...group, category: openCategory });
             setIsModalVisible(true);
         } else if (group) {
             Alert.alert('Message!', 'Please watch the previous video to unlock this video!');
@@ -385,10 +385,59 @@ const Dashboard = ({ navigation }) => {
         }
     };
 
-    const handleVideo = async (videoId, step, language) => {
+        const handleVideo = async (videoId, step, language) => {
+            console.log(userId,step);
+            if(step != 90 && step != 91)
+        try {
+            const endpoint = `${url}User/User_Watch_Data?id=${userId}&level_step=${step}`;
+            const response = await fetch(endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log("dsvddvd",result);
+                if (result.isSuccess && result.data) {
+                    const totalWatchCount = result.data.reduce((sum, record) => sum + record.is_finished, 0);
+                    if (totalWatchCount >= 4) {
+                        Alert.alert(" You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.");
+                        return;
+                    }
+
+                    const languageRecord = result.data.find(d => d.language.toLowerCase() === language.toLowerCase());
+                    if (languageRecord && languageRecord.is_finished >= 3) {
+                        Alert.alert("Limit Reached", `You have already watched the ${language} video for this step 3 times.`);
+                        return;
+                    }
+                } else if (!result.isSuccess) {
+                    Alert.alert("Error", `Could not verify video watch count: ${result.message}. Please try again.`);
+                    return;
+                }
+            } else {
+                Alert.alert("Error", "Could not connect to the server to verify video watch count. Please check your internet connection and try again.");
+                return;
+            }
+        } catch (error) {
+            console.error("Error fetching user watch data:", error);
+            Alert.alert("Error", "An unexpected error occurred while checking video permissions.");
+            return;
+        }
+
         setIsModalVisible(false);
         setIsVideoLoading(true);
+        let total_time = 0;
         try {
+            // Fetch video details to get the accurate duration (length)
+            const videoDetails = await vdoCipherApi(videoId);
+            if (videoDetails && videoDetails.length) {
+                total_time = videoDetails.length;
+            } else {
+                console.warn(`Could not fetch video duration for videoId: ${videoId}. Defaulting to 0.`);
+            }
+
             const response = await fetch(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
                 method: 'POST',
                 headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -396,8 +445,11 @@ const Dashboard = ({ navigation }) => {
             });
             if (!response.ok) { throw new Error("Video not found or failed to get OTP."); }
             const data = await response.json();
+
             await saveCompletedStep(`step${step}`); // Save the completed step
-            navigation.navigate('VideoPlayerScreen', { id: videoId, otp: data.otp, playbackInfo: data.playbackInfo, language: language, cameFrom: route.name });
+            navigation.navigate('VideoPlayerScreen', { 
+                id: videoId, otp: data.otp, playbackInfo: data.playbackInfo, language: language, cameFrom: route.name, step: step, total_time: total_time 
+            });
         } catch (err) {
             Alert.alert("Error", err.message);
         } finally {
@@ -405,6 +457,32 @@ const Dashboard = ({ navigation }) => {
         }
 
         console.log('Video ID:', videoId);
+    };
+
+    const vdoCipherApi = async (videoId) => {
+        setIsVideoLoading(true);
+        if (!videoId) {
+            Alert.alert("Error", "Missing video ID to get details.");
+            setIsVideoLoading(false);
+            return null;
+        }
+        const DETAILS_ENDPOINT = `${url}Vdocipher/GetVDOCipher_VideosDetails?videoId=${videoId}`;
+        try {
+            const response = await fetch(DETAILS_ENDPOINT, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error("Failed to get video details.");
+            }
+            return await response.json();
+        } catch (error) {
+            Alert.alert("API Error", `An unexpected error occurred: ${error.message}`);
+            return null;
+        }
     };
 
     const handleIntroductionPress = async (introType) => {

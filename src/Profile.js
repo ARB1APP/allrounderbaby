@@ -98,9 +98,15 @@ const Profile = ({ navigation }) => {
 
     const clearLocalSessionAndNavigate = async () => {
         try {
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('userId');
-            await AsyncStorage.removeItem('username');
+            const allKeys = await AsyncStorage.getAllKeys();
+            const keysToKeep = []; // Add any keys you want to preserve across logouts, e.g., 'first_time_opened'
+            const keysToRemove = allKeys.filter(key => !keysToKeep.includes(key));
+
+            if (keysToRemove.length > 0) {
+                await AsyncStorage.multiRemove(keysToRemove);
+            }
+            // For older React Native versions that might not support multiRemove well, you can use clear().
+            // await AsyncStorage.clear();
             console.log('User session data cleared from AsyncStorage.');
             navigation.dispatch(
                 CommonActions.reset({

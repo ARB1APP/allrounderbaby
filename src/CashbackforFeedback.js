@@ -462,6 +462,7 @@ const CashbackforFeedback = () => {
 
       const detailsData = await vdoCipherApi(videoId);
       if (detailsData) {
+        const total_time = detailsData.length || 0;
         const response = await fetch(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
           method: 'POST',
           headers: {
@@ -484,6 +485,7 @@ const CashbackforFeedback = () => {
             language: language,
             title: title,
             poster: poster,
+            total_time: total_time,
             cameFrom: 'Cashback for Feedback',
           });
         }
