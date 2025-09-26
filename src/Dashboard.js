@@ -18,16 +18,16 @@ const formatDuration = (totalSeconds) => {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
-const StepListItem = ({ group, onPress, isCompleted, isDarkMode }) => {
+const StepListItem = ({ group, onPress, isCompleted, isLocked, isDarkMode }) => {
     const { stepNumber, displayStepNumber, hindiVideo, englishVideo } = group;
     if (!hindiVideo && !englishVideo) return null;
 
     const videoToShowDuration = englishVideo || hindiVideo;
     const durationText = videoToShowDuration?.length ? formatDuration(videoToShowDuration.length) : "";
-
+    const itemStyle = isLocked ? styles.lockedDropdownItemBtn : (isCompleted ? styles.completedDropdownItemBtn : styles.dropdownItemBtn);
     return (
         <TouchableOpacity
-            style={[styles.dropdownItemBtn, { backgroundColor: isCompleted ? '#4DB6AC' : 'rgba(20, 52, 164, 0.8)' }]}
+            style={itemStyle}
             onPress={() => onPress(stepNumber)}
         >
             <Image
@@ -52,19 +52,22 @@ const StepListItem = ({ group, onPress, isCompleted, isDarkMode }) => {
     );
 };
 
-const VideoStepList = ({ groups, completedSteps, onStepPress, isDarkMode }) => (
-    <View style={styles.dropdownContent}>
-        {groups.map((group) => (
-            <StepListItem
-                key={`step-group-${group.stepNumber}`}
-                group={group}
-                onPress={onStepPress}
-                isCompleted={completedSteps[`step${group.stepNumber}`] ?? false}
-                isDarkMode={isDarkMode}
-            />
-        ))}
-    </View>
-);
+const VideoStepList = ({ groups, completedSteps, onStepPress, isDarkMode }) => {
+    return (
+        <View style={styles.dropdownContent}>
+            {groups.map((group, index) => {
+                const isFirstStep = index === 0;
+                const previousStep = isFirstStep ? null : groups[index - 1];
+                const isPreviousStepCompleted = isFirstStep || (previousStep && completedSteps[`step${previousStep.stepNumber}`]);
+                const isLocked = !isPreviousStepCompleted;
+
+                return (
+                    <StepListItem key={`step-group-${group.stepNumber}`} group={group} onPress={onStepPress} isCompleted={completedSteps[`step${group.stepNumber}`] ?? false} isLocked={isLocked} isDarkMode={isDarkMode} />
+                );
+            })}
+        </View>
+    );
+};
 
 const LevelModal = ({ levelName, children, onClose, isDarkMode }) => (
     <View style={styles.modalLikeContainer}>
@@ -110,34 +113,58 @@ const Dashboard = ({ navigation }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [activeLevel, setActiveLevel] = useState(null); // 'foundation', 'middle', 'advanced'
     const [selectedStepGroup, setSelectedStepGroup] = useState(null);
+    const [unlockedStepsThreshold, setUnlockedStepsThreshold] = useState(0);
+    const [levelToUnlock, setLevelToUnlock] = useState(null);
 
     const [videoData, setVideoData] = useState({});
 
     const scale1 = useRef(new Animated.Value(0)).current;
     const scale2 = useRef(new Animated.Value(0)).current;
     const scale3 = useRef(new Animated.Value(0)).current;
-    const scale4 = useRef(new Animated.Value(0)).current;
     const handOpacity = useRef(new Animated.Value(0)).current;
     const handPositionX = useRef(new Animated.Value(screenWidth * 0.6)).current;
     const handPositionY = useRef(new Animated.Value(screenHeight * 0.4)).current;
     const handScale = useRef(new Animated.Value(1)).current;
     const opacity = useRef(new Animated.Value(1)).current;
-    const route = useRoute();
     const isDarkMode = useColorScheme() === 'dark';
     const backgroundStyle = { backgroundColor: isDarkMode ? '#2a3144' : Colors.white };
     const textColorModal = { color: isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)' }
     const textColorModalPara = { color: isDarkMode ? Colors.white : '#2a3144' }
 
     const groupVideosByApiStep = (videoApiResponse) => {
+        if (!videoApiResponse?.rows?.length) return [];
+
         const groups = {};
-        videoApiResponse?.rows?.forEach(item => {
+        videoApiResponse.rows.forEach(item => {
             if (!item.title) return;
-            const match = item.title.match(/step\s+(\d+)/i);
-            const apiStepNumber = match ? parseInt(match[1], 10) : null;
+            let apiStepNumber = null;
+            let displayStepNumber = null;
+
+            const stepMatch = item.title.match(/(?:step|stage)\s+(\d+)/i);
+            const closureMatch = item.title.match(/closure/i);
+
+            if (item.title.match(/foundation/i)) {
+                apiStepNumber = 4; displayStepNumber = 'Foundation';
+            } else if (item.title.match(/middle/i)) {
+                apiStepNumber = 5; displayStepNumber = 'Middle';
+            } else if (item.title.match(/advance/i)) {
+                apiStepNumber = 6; displayStepNumber = 'Advance';
+            } else if (closureMatch) {
+                apiStepNumber = 99; displayStepNumber = 'Closure';
+            } else if (stepMatch) {
+                apiStepNumber = parseInt(stepMatch[1], 10);
+                displayStepNumber = apiStepNumber;
+            }
+
             if (apiStepNumber === null) return;
 
             if (!groups[apiStepNumber]) {
-                groups[apiStepNumber] = { displayStepNumber: apiStepNumber, hindiVideo: null, englishVideo: null };
+                groups[apiStepNumber] = {
+                    displayStepNumber: displayStepNumber,
+                    apiStepNumber: apiStepNumber, 
+                    hindiVideo: null,
+                    englishVideo: null
+                };
             }
             if (item.title.toLowerCase().includes('hindi')) {
                 groups[apiStepNumber].hindiVideo = item;
@@ -145,7 +172,9 @@ const Dashboard = ({ navigation }) => {
                 groups[apiStepNumber].englishVideo = item;
             }
         });
-        return Object.values(groups).sort((a, b) => a.displayStepNumber - b.displayStepNumber);
+        return Object.values(groups).sort((a, b) => {
+            return a.apiStepNumber - b.apiStepNumber;
+        });
     };
 
     const groupedTrustData = useMemo(() => groupVideosByApiStep(videoData['trust']), [videoData['trust']]);
@@ -181,25 +210,33 @@ const Dashboard = ({ navigation }) => {
             'narrate': { name: 'ABLE TO NARRATE', folderId: 'c9830bc5eed04b18b0cd5919627ad818', groupedData: groupedNarrateData, image: require('../img/abletonarrate.png'), prerequisiteCategory: 'discussion' },
             'emotions': { name: 'EXPRESS EMOTIONS & BALANCE IT', folderId: 'a27799e2c148438ba450a80d546a9555', groupedData: groupedEmotionsData, image: require('../img/expressemotionandcontrol.png'), prerequisiteCategory: 'narrate' },
             'feelings': { name: 'FEELINGS OF OTHERS', folderId: '1471bf13c7f6490fb6f98ae846552a87', groupedData: groupedFeelingsData, image: require('../img/feelingofothers.png'), prerequisiteCategory: 'emotions' },
-            'knowledge': { name: 'KNOWLEDGE & CURIOSITY', folderId: '053dc785919e42aa941e6ee070b55325', groupedData: groupedKnowledgeData, image: require('../img/2148812268.jpg'), prerequisiteCategory: 'feelings' },
+            'knowledge': { name: 'KNOWLEDGE & CURIOSITY', folderIds: ["053dc785919e42aa941e6ee070b55325", "945fe57ec6304dbda1f16a10c4d0e2f9"], groupedData: groupedKnowledgeData, image: require('../img/2148812268.jpg'), prerequisiteCategory: 'feelings' },
         };
 
         let cumulativeStepCount = 0;
-        const categoryOrder = Object.keys(config);
+        const categoryOrder = [
+            'trust', 'loveAndCare', 'respect', 'familiar', 'speechDevelopment', 'truth',
+            'setBoundaries', 'listenFollow', 'cooperation', 'imagination', 'help',
+            'discussion', 'narrate', 'emotions', 'feelings', 'knowledge'
+        ];
 
-        for (const key of categoryOrder) {
-            const current = config[key];
-            const baseStepNumber = cumulativeStepCount;
-            current.finalGroupedData = current.groupedData.map(group => ({
-                ...group,
-                stepNumber: baseStepNumber + group.displayStepNumber,
-            }));
-            cumulativeStepCount += current.groupedData.length;
-        }
+        categoryOrder.forEach(key => {
+            const category = config[key];
+            const baseStep = cumulativeStepCount;
+            category.finalGroupedData = category.groupedData.map((video, index) => ({ ...video, stepNumber: baseStep + index + 1 }));
+            cumulativeStepCount += category.groupedData.length;
+        });
         return config;
-    }, [ // This hook now depends on the single videoData state object
+    }, [
         videoData
     ]);
+
+    useEffect(() => {
+        if (levelToUnlock) {
+            handleLevelPress(levelToUnlock, true);
+            setLevelToUnlock(null);
+        }
+    }, [videoData, masterConfig]);
 
     const foundationKeys = ['trust', 'loveAndCare', 'respect', 'familiar'];
     const middleKeys = ['speechDevelopment', 'truth', 'setBoundaries', 'listenFollow'];
@@ -212,7 +249,7 @@ const Dashboard = ({ navigation }) => {
                 const storedUserId = await AsyncStorage.getItem('userId');
                 setToken(storedToken);
                 setUserID(storedUserId);
-                await loadCompletedSteps(); // Load progress from storage
+                await loadCompletedSteps();
                 if (storedUserId && storedToken) {
                     await fetchUserProgress(storedUserId, storedToken);
                 }
@@ -243,11 +280,16 @@ const Dashboard = ({ navigation }) => {
             if (result.isSuccess && result.data) {
                 console.log('User progress data:', result.data);
                 const newCompletedSteps = {};
+                let highestCompletedStep = 0;
                 result.data.forEach(item => {
-                    if (item.is_finished || item.total_views > 0) {
+                    if (item.total_views > 0) {
                         newCompletedSteps[`step${item.level_step}`] = true;
+                        if (item.level_step > highestCompletedStep) {
+                            highestCompletedStep = item.level_step;
+                        }
                     }
                 });
+                setUnlockedStepsThreshold(highestCompletedStep);
                 setCompletedSteps(newCompletedSteps);
                 await AsyncStorage.setItem('completedSteps', JSON.stringify(newCompletedSteps));
             } else if (!result.isSuccess) {
@@ -303,7 +345,6 @@ const Dashboard = ({ navigation }) => {
         Animated.timing(scale1, { toValue: 1, duration: 600, useNativeDriver: true }).start();
         Animated.timing(scale2, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start();
         Animated.timing(scale3, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start();
-        Animated.timing(scale4, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start();
         return () => blinkingAnimation.stop();
     }, []);
 
@@ -314,56 +355,70 @@ const Dashboard = ({ navigation }) => {
 
     const fetchVideos = async (folderIds) => {
         if (!Array.isArray(folderIds)) folderIds = [folderIds];
-        const allVideos = { rows: [] };
+        let allVideos = { rows: [] };
         for (const folderId of folderIds) {
-            const endpoint = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
             try {
+                const endpoint = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
                 const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
                 if (!response.ok) throw new Error(`Failed to fetch videos for folder ${folderId}`);
                 const data = await response.json();
                 if (data && data.rows) { allVideos.rows.push(...data.rows); }
+                console.log(`Fetched ${data?.rows?.length || 0} videos from folder ${folderId}:`, data);
             } catch (error) {
-                Alert.alert("API Error", error.message);
-                return null;
+                console.error(`Error fetching videos from folder ${folderId}:`, error);
+                Alert.alert("API Error", `Could not load some videos. Please check your connection and try again. Details: ${error.message}`);
             }
         }
+        console.log('Final combined video list for the category:', allVideos);
         return allVideos;
+
     };
 
-    const handleCategoryPress = async (categoryKey) => {
+    const handleCategoryPress = async (categoryKey, isRetry = false) => {
         const config = masterConfig[categoryKey];
-        if (!config) return;
+        if (!config) {
+            console.error(`Configuration not found for category: ${categoryKey}`);
+            return;
+        }
 
         if (config.prerequisiteCategory) {
-            const prereqConfig = masterConfig[config.prerequisiteCategory];
-            if (prereqConfig) {
-                if (prereqConfig.finalGroupedData.length === 0) {
-                    Alert.alert("Locked", `Please complete all "${prereqConfig.name}" steps first. You may need to open that category to load the steps.`);
-                    return;
-                }
-                const requiredSteps = prereqConfig.finalGroupedData.map(g => `step${g.stepNumber}`);
-                if (!requiredSteps.every(step => !!completedSteps[step])) {
-                    Alert.alert("Locked", `Please complete all "${prereqConfig.name}" steps first.`);
+            const prerequisiteConfig = masterConfig[config.prerequisiteCategory];
+
+            if (!videoData[config.prerequisiteCategory]?.rows?.length) {
+                console.log(`Prerequisite data for '${config.prerequisiteCategory}' not loaded. Fetching now...`);
+                setIsVideoLoading(true);
+                await handleCategoryPress(config.prerequisiteCategory, true); 
+                setIsVideoLoading(false);
+                return; 
+            }
+            if (prerequisiteConfig) {
+                const allPrereqSteps = prerequisiteConfig.finalGroupedData.map(g => `step${g.stepNumber}`);
+                const areAllPrereqsCompleted = allPrereqSteps.every(stepKey => completedSteps[stepKey]);
+
+                if (!areAllPrereqsCompleted) {
+                    Alert.alert("Level Locked", `You must complete the "${prerequisiteConfig.name}" stage before accessing this one.`);
                     return;
                 }
             }
         }
 
         if (openCategory === categoryKey) {
-            setOpenCategory(null);
+            setOpenCategory(null); 
             return;
         }
 
         if (!videoData[categoryKey]?.rows?.length) {
             setIsVideoLoading(true);
-            const videoDetails = await fetchVideos(config.folderId || config.folderIds);
+            const videoDetails = await fetchVideos(config.folderIds || [config.folderId]);
             setIsVideoLoading(false);
-            if (videoDetails) {
+            if (videoDetails) { 
                 setVideoData(prevData => ({
                     ...prevData,
                     [categoryKey]: videoDetails
                 }));
-                setOpenCategory(categoryKey);
+                if (!isRetry) {
+                    setOpenCategory(categoryKey); 
+                }
             }
         } else {
             setOpenCategory(categoryKey);
@@ -374,21 +429,30 @@ const Dashboard = ({ navigation }) => {
         const config = masterConfig[openCategory];
         if (!config) return;
         const group = config.finalGroupedData.find(g => g.stepNumber === stepNumber);
-        const firstStepInCategory = config.finalGroupedData[0].stepNumber;
-        if (group && (stepNumber === firstStepInCategory || completedSteps[`step${stepNumber - 1}`])) {
+        const groupIndex = config.finalGroupedData.findIndex(g => g.stepNumber === stepNumber);
+
+        if (groupIndex > 0) {
+            const previousStep = config.finalGroupedData[groupIndex - 1];
+            const isPreviousStepCompleted = completedSteps[`step${previousStep.stepNumber}`];
+            if (!isPreviousStepCompleted) {
+                Alert.alert(
+                    "Step Locked",
+                    `Please complete Step ${previousStep.displayStepNumber} to unlock this step.`
+                );
+                return;
+            }
+        }
+
+        if (group) {
             setSelectedStepGroup({ ...group, category: openCategory });
             setIsModalVisible(true);
-        } else if (group) {
-            Alert.alert('Message!', 'Please watch the previous video to unlock this video!');
         } else {
             Alert.alert('Error', `Video group for step ${stepNumber} not found.`);
         }
     };
 
-        const handleVideo = async (videoId, step, language) => {
-            console.log(userId,step);
-            if(step != 90 && step != 91)
-        try {
+    const handleVideo = async (videoId, step, language) => {
+        if (step !== 90 && step !== 91) {
             const endpoint = `${url}User/User_Watch_Data?id=${userId}&level_step=${step}`;
             const response = await fetch(endpoint, {
                 headers: {
@@ -396,41 +460,41 @@ const Dashboard = ({ navigation }) => {
                     'Accept': 'application/json'
                 }
             });
+            try {
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log("dsvddvd", result);
+                    if (result.isSuccess && result.data) {
+                        const totalWatchCount = result?.data?.reduce((sum, record) => sum + record.is_finished, 0);
+                        if (totalWatchCount >= 4) {
+                            Alert.alert(" You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.");
+                            return;
+                        }
 
-            if (response.ok) {
-                const result = await response.json();
-                console.log("dsvddvd",result);
-                if (result.isSuccess && result.data) {
-                    const totalWatchCount = result.data.reduce((sum, record) => sum + record.is_finished, 0);
-                    if (totalWatchCount >= 4) {
-                        Alert.alert(" You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.");
+                        const languageRecord = result.data.find(d => d.language.toLowerCase() === language.toLowerCase());
+                        if (languageRecord && languageRecord.is_finished >= 3) {
+                            Alert.alert("Limit Reached", `You have already watched the ${language} video for this step 3 times.`);
+                            return;
+                        }
+                    } else if (!result.isSuccess) {
+                        Alert.alert("Error", `Could not verify video watch count: ${result.message}. Please try again.`);
                         return;
                     }
-
-                    const languageRecord = result.data.find(d => d.language.toLowerCase() === language.toLowerCase());
-                    if (languageRecord && languageRecord.is_finished >= 3) {
-                        Alert.alert("Limit Reached", `You have already watched the ${language} video for this step 3 times.`);
-                        return;
-                    }
-                } else if (!result.isSuccess) {
-                    Alert.alert("Error", `Could not verify video watch count: ${result.message}. Please try again.`);
+                } else {
+                    Alert.alert("Error", "Could not connect to the server to verify video watch count. Please check your internet connection and try again.");
                     return;
                 }
-            } else {
-                Alert.alert("Error", "Could not connect to the server to verify video watch count. Please check your internet connection and try again.");
+            } catch (error) {
+                console.error("Error fetching user watch data:", error);
+                Alert.alert("Error", "An unexpected error occurred while checking video permissions.");
                 return;
             }
-        } catch (error) {
-            console.error("Error fetching user watch data:", error);
-            Alert.alert("Error", "An unexpected error occurred while checking video permissions.");
-            return;
         }
 
         setIsModalVisible(false);
         setIsVideoLoading(true);
         let total_time = 0;
         try {
-            // Fetch video details to get the accurate duration (length)
             const videoDetails = await vdoCipherApi(videoId);
             if (videoDetails && videoDetails.length) {
                 total_time = videoDetails.length;
@@ -446,9 +510,9 @@ const Dashboard = ({ navigation }) => {
             if (!response.ok) { throw new Error("Video not found or failed to get OTP."); }
             const data = await response.json();
 
-            await saveCompletedStep(`step${step}`); // Save the completed step
-            navigation.navigate('VideoPlayerScreen', { 
-                id: videoId, otp: data.otp, playbackInfo: data.playbackInfo, language: language, cameFrom: route.name, step: step, total_time: total_time 
+            await saveCompletedStep(`step${step}`);
+            navigation.navigate('VideoPlayerScreen', {
+                id: videoId, otp: data.otp, playbackInfo: data.playbackInfo, language: language, cameFrom: 'Dashboard', step: step, total_time: total_time
             });
         } catch (err) {
             Alert.alert("Error", err.message);
@@ -482,23 +546,16 @@ const Dashboard = ({ navigation }) => {
         } catch (error) {
             Alert.alert("API Error", `An unexpected error occurred: ${error.message}`);
             return null;
+        } finally {
+            setIsVideoLoading(false);
         }
     };
 
     const handleIntroductionPress = async (introType) => {
         const folderId = "8a15a7910bcb41a897b50111ec4f95d9";
         setIsVideoLoading(true);
-        const videoDetails = await fetchVideos(folderId);
-         if (introType === 2) {
-            if (!completedSteps['step90']) {
-                Alert.alert(
-                    "Locked", 
-                    "Please complete Introduction I first."
-                );
-                setIsVideoLoading(false);
-                return; 
-            }
-        }
+        const videoDetails = await fetchVideos([folderId]); 
+        if (introType === 2) {}
         setIsVideoLoading(false);
         if (videoDetails?.rows?.length >= 4) {
             setVideoData(prevData => ({
@@ -513,33 +570,70 @@ const Dashboard = ({ navigation }) => {
         }
     };
 
-    const handleLevelPress = (level) => {
+    const handleLevelPress = async (level) => {
+        const checkAndLoadPrerequisites = async (keys, levelName) => {
+            // Check if video data for the prerequisite level is loaded. If not, fetch it.
+            const dataFetchPromises = keys
+                .filter(key => !videoData[key]?.rows?.length)
+                .map(key => fetchVideos(masterConfig[key].folderIds || [masterConfig[key].folderId]).then(details => ({ key, details })));
+    
+            if (dataFetchPromises.length > 0) {
+                setIsVideoLoading(true);
+                const results = await Promise.all(dataFetchPromises);
+                setIsVideoLoading(false);
+    
+                setVideoData(prevData => {
+                    const newData = { ...prevData };
+                    results.forEach(({ key, details }) => {
+                        if (details) newData[key] = details;
+                    });
+                    return newData;
+                });
+    
+                // After fetching, mark the current level to be unlocked and re-evaluate.
+                setLevelToUnlock(level);
+                return false; // Prereqs were not ready, will retry.
+            }
+    
+            // Check if all steps in the prerequisite level are completed.
+            const allPrereqSteps = keys.flatMap(key => masterConfig[key]?.finalGroupedData.map(g => `step${g.stepNumber}`) || []);
+            const areAllPrereqsCompleted = allPrereqSteps.every(stepKey => completedSteps[stepKey]);
+    
+            if (!areAllPrereqsCompleted) {
+                Alert.alert("Level Locked", `You must complete all steps in the ${levelName} Level to unlock this level.`);
+                return false; // Prereqs not met.
+            }
+    
+            return true; // All prerequisites are met.
+        };
+    
         if (level === 'foundation') {
-               if (!completedSteps['step91']) {
-                Alert.alert("Locked", "Please complete Introduction 2");
-                return;
-            }            
-            setActiveLevel('foundation');
+            setActiveLevel(level);
             return;
         }
-
-        const lastCategoryOfPrevLevel = level === 'middle' ? 'familiar' : 'listenFollow';
-        const prevLevelName = level === 'middle' ? 'Foundation' : 'Middle';
-
-        const lastCategoryConfig = masterConfig[lastCategoryOfPrevLevel];
-        if (lastCategoryConfig.finalGroupedData.length === 0) {
-            Alert.alert("Locked", `Please complete all "${prevLevelName} Level" steps first. You must open the final category of that level to check completion.`);
+    
+        if (level === 'middle') {
+            const foundationComplete = await checkAndLoadPrerequisites(foundationKeys, 'Foundation');
+            if (foundationComplete) {
+                setActiveLevel(level);
+            }
             return;
         }
-
-        const requiredSteps = lastCategoryConfig.finalGroupedData.map(g => `step${g.stepNumber}`);
-        if (!requiredSteps.every(step => !!completedSteps[step])) {
-            Alert.alert("Locked", `Please complete all "${prevLevelName} Level" steps first.`);
-            return;
+    
+        if (level === 'advanced') {
+            // First, check Foundation level prerequisites.
+            const foundationComplete = await checkAndLoadPrerequisites(foundationKeys, 'Foundation');
+            if (!foundationComplete) {
+                return; // Stop if foundation is not complete.
+            }
+    
+            // If Foundation is complete, check Middle level prerequisites.
+            const middleComplete = await checkAndLoadPrerequisites(middleKeys, 'Middle');
+            if (middleComplete) {
+                setActiveLevel(level);
+            }
         }
-
-        setActiveLevel(level);
-    };
+    };  
 
     const handleCloseModal = () => {
         setActiveLevel(null);
@@ -599,6 +693,8 @@ const styles = StyleSheet.create({
     image: { width: width - 20, height: height / 2, borderRadius: 5, },
     imagenested: { width: width - 48, height: height / 2.8, borderRadius: 5, },
     textOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, },
+    lockedDropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)' },
+    completedDropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: '#4DB6AC' },
     textOverlayTwo: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, flexDirection: 'row', justifyContent: 'space-between', },
     text: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
     bottomNav: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', backgroundColor: '#fff', paddingVertical: 10, bottom: 0, width: '100%', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 20, elevation: 5, },
@@ -606,9 +702,9 @@ const styles = StyleSheet.create({
     navIcon: { width: 24, height: 24, resizeMode: 'contain', marginBottom: 4, },
     navText: { color: 'gray', fontSize: 10, marginTop: 4, fontWeight: 'bold', },
     inactive: { opacity: 0.5, },
-    navTextActive: { color: 'rgba(20, 52, 164, 1)', fontSize: 10, marginTop: 4, fontWeight: 'bold', },
+    navTextActive: { color: 'rgba(20, 52, 164, 1)', fontSize: 10, marginTop: 4, fontWeight: 'bold', },    
     dropdownContent: { borderBottomLeftRadius: 5, borderBottomRightRadius: 5, width: '100%', marginBottom: 10, paddingHorizontal: 0, },
-    dropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', },
+    dropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.8)' },
     imageVideo: { width: 35, height: 35, borderRadius: 5 },
     durationContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' },
     timerImage: { width: 16, height: 16, marginRight: 4, },

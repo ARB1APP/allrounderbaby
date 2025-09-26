@@ -81,13 +81,19 @@ const LoginPage = ({ navigation }) => {
             console.log("API Response:", data);
 
             if (response.ok && data.data != null) {
+                // 🔹 Always save token + userId (so session persists)
+                await AsyncStorage.setItem('token', data.data.token);
+                await AsyncStorage.setItem('userId', data.data.userID.toString());
+
+                console.log('userId', data.data.userID);
+                console.log('token', data.data.token);
                 if (rememberMe) {
                     await AsyncStorage.setItem('rememberedUsername', username);
                     await AsyncStorage.setItem('rememberedPassword', password);
                     await AsyncStorage.setItem('termsAccepted', 'true');
                     await AsyncStorage.setItem('rememberMePreference', 'true');
-                    await AsyncStorage.setItem('token', data.data.token);
-                    await AsyncStorage.setItem('userId', data.data.userID.toString());
+                    // await AsyncStorage.setItem('token', data.data.token);
+                    // await AsyncStorage.setItem('userId', data.data.userID.toString());
                     console.log('userId', data.data.userID);
                     console.log('token', data.data.token);
                     console.log("Username and preference saved.");
@@ -179,8 +185,6 @@ const LoginPage = ({ navigation }) => {
                         await AsyncStorage.removeItem('termsAccepted');
                         await AsyncStorage.removeItem('rememberMePreference');
                         await AsyncStorage.removeItem('token');
-                        await AsyncStorage.removeItem('userId');
-                        await AsyncStorage.removeItem('token'); // Ensure token is cleared
                         await AsyncStorage.removeItem('userId'); // Ensure userId is cleared
 
                         setUsername('');
