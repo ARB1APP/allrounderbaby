@@ -78,18 +78,19 @@ const LoginPage = ({ navigation }) => {
             const response = await fetch(API_URL);
             const data = await response.json();
 
-            console.log("API Response:", data);
+            if (response.ok && data.data != null && data.code === 200) {
+                // 🔹 Always save token + userId (so session persists)
+                await AsyncStorage.setItem('token', data.data.token);
+                await AsyncStorage.setItem('userId', data.data.userID.toString());
 
-            if (response.ok && data.data != null) {
+                console.log('userId', data.data.userID);
+                console.log('token', data.data.token);
                 if (rememberMe) {
                     await AsyncStorage.setItem('rememberedUsername', username);
                     await AsyncStorage.setItem('rememberedPassword', password);
                     await AsyncStorage.setItem('termsAccepted', 'true');
                     await AsyncStorage.setItem('rememberMePreference', 'true');
-                    await AsyncStorage.setItem('token', data.data.token);
-                    await AsyncStorage.setItem('userId', data.data.userID.toString());
-                    console.log('userId', data.data.userID);
-                    console.log('token', data.data.token);
+                    // The token and userId are already saved above
                     console.log("Username and preference saved.");
                 } else {
                     await AsyncStorage.removeItem('rememberedUsername');
@@ -178,31 +179,36 @@ const LoginPage = ({ navigation }) => {
                         await AsyncStorage.removeItem('rememberedPassword');
                         await AsyncStorage.removeItem('termsAccepted');
                         await AsyncStorage.removeItem('rememberMePreference');
+                        // Clear all progress-related data as well
                         await AsyncStorage.removeItem('token');
-                        await AsyncStorage.removeItem('userId');
-                        await AsyncStorage.removeItem('token'); // Ensure token is cleared
                         await AsyncStorage.removeItem('userId'); // Ensure userId is cleared
+                        await AsyncStorage.removeItem('completedSteps');
+                        await AsyncStorage.removeItem('topicCompletionTimes');
+                        await AsyncStorage.removeItem('middleLevelCompletionTime');
+                        await AsyncStorage.removeItem('advancedLevelCompletionTime');
 
                         setUsername('');
                         setPassword('');
                         setRememberMe(false);
-                        setTermsAccepted(true);
                         setTermsAccepted(true); // Reset to default
 
-                        Alert.alert("Logged Out", "You have been successfully logged out.");
-
-                        navigation.setParams({ logout: undefined });
                     } catch (error) {
                         console.error("Error during logout credential clearing:", error);
                         Alert.alert("Logout Error", "Failed to clear local credentials during logout.");
                     } finally {
-                        setIsLoadingCredentials(false);
+                        // This should be inside finally to ensure it runs
+                        Alert.alert("Logged Out", "You have been successfully logged out.");
+                        navigation.setParams({ logout: undefined });
+                        // If we were already loading, we might need to reset this
+                        if(isLoadingCredentials) setIsLoadingCredentials(false); 
                     }
                 }
             };
 
             handleLogout();
 
+            // Cleanup function is not strictly necessary here unless you need to specifically remove listeners,
+            // but useFocusEffect handles focus/blur cleanup.
             return () => {
             };
         }, [route.params?.logout])
@@ -262,13 +268,13 @@ const LoginPage = ({ navigation }) => {
                         ]}
                     >
                         <TextInput
-                            style={[styles.input, usernameError ? styles.errorTextInput : null]}
+                            style={[styles.input, usernameError ? styles.errorTextInput : null, { color: isDarkMode ? Colors.white : Colors.black }]}
                             placeholder="Enter your username"
-                            placeholderTextColor="#a6a6a6"
+                            placeholderTextColor={isDarkMode ? '#a6a6a6' : '#a6a6a6'}
                             value={username}
                             onChangeText={handleUsernameChange}
                             autoCapitalize="none"
-                            keyboardAppearance="light"
+                            keyboardAppearance={isDarkMode ? 'dark' : 'light'}
                             returnKeyType='next'
                         />
                     </Animated.View>
@@ -281,13 +287,13 @@ const LoginPage = ({ navigation }) => {
                     <Animated.Text style={[styles.legend, passwordError ? styles.errorLegend : null, { transform: [{ translateX: passwordPosition }] }, { color: isDarkMode ? Colors.white : Colors.black }]}>Password</Animated.Text>
                     <Animated.View style={[styles.fieldset, passwordError ? styles.errorFieldset : null, { transform: [{ translateX: passwordPosition }] }]}>
                         <TextInput
-                            style={[styles.input, passwordError ? styles.errorTextInput : null]}
+                            style={[styles.input, passwordError ? styles.errorTextInput : null, { color: isDarkMode ? Colors.white : Colors.black }]}
                             secureTextEntry
                             placeholder="Enter your password"
-                            placeholderTextColor="#a6a6a6"
+                            placeholderTextColor={isDarkMode ? '#a6a6a6' : '#a6a6a6'}
                             value={password}
                             onChangeText={handlePasswordChange}
-                            keyboardAppearance="light"
+                            keyboardAppearance={isDarkMode ? 'dark' : 'light'}
                             returnKeyType='done' />
                     </Animated.View>
                     {passwordError !== '' && (
@@ -298,24 +304,34 @@ const LoginPage = ({ navigation }) => {
                             <CheckBox
                                 isChecked={termsAccepted}
                                 onClick={handleTermsChange}
-                                checkBoxColor={isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)'} />
+                                checkBoxColor={isDarkMode ? '#2754f7ff' : 'rgba(20, 52, 164, 1)'}
+                                checkedCheckBoxColor={isDarkMode ? '#2754f7ff' : 'rgba(20, 52, 164, 1)'}
+                            />
                             <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>
                                 By logging in, you agree to company’s{' '}
-                                <Text style={[styles.linkUnderline,
-                                { color: isDarkMode ? '#2754f7ff' : '#1434A4' }
-                                ]}>Terms and Conditions</Text> and{' '}
-                                <Text style={[styles.linkUnderline,
-                                { color: isDarkMode ? '#2754f7ff' : '#1434A4' }
-                                ]}>Privacy Policy</Text>
+                                <Text
+                                    style={[styles.linkUnderline, { color: isDarkMode ? '#2754f7ff' : '#1434A4' }]}
+                                    onPress={() => navigation.navigate('Terms of Service')}
+                                >
+                                    Terms and Conditions
+                                </Text>
+                                {' '}and{' '}
+                                <Text
+                                    style={[styles.linkUnderline, { color: isDarkMode ? '#2754f7ff' : '#1434A4' }]}
+                                    onPress={() => navigation.navigate('Privacy Policy')}
+                                >
+                                    Privacy Policy
+                                </Text>
                             </Text>
                         </Animated.View>
                         <Animated.View style={[styles.checkboxContainerSecond, { transform: [{ translateX: rememberMePosition }] }]}>
-                            <CheckBox
-                                isChecked={rememberMe}
+                                <CheckBox
+                                    isChecked={rememberMe}
                                 onClick={handleRememberMeChange}
-                                checkBoxColor={isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)'}
-                            />
-                            <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>Remember me</Text>
+                                    checkBoxColor={isDarkMode ? '#2754f7ff' : 'rgba(20, 52, 164, 1)'}
+                                    checkedCheckBoxColor={isDarkMode ? '#2754f7ff' : 'rgba(20, 52, 164, 1)'}
+                                />
+                                <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>Remember me</Text>
                         </Animated.View>
                     </View>
                     <Animated.View style={styles.shakeContainer}>
@@ -332,7 +348,7 @@ const LoginPage = ({ navigation }) => {
                             )}
                         </TouchableOpacity>
                     </Animated.View>
-                    <Text style={[styles.otpLink, { color: isDarkMode ? Colors.white : Colors.black }]}>Login through OTP</Text>
+                    <Text style={[styles.otpLink, { color: isDarkMode ? '#2754f7ff' : '#1434A4' }]}>Login through OTP</Text>
                 </ScrollView>
             </KeyboardAvoidingView>
         </View>
@@ -416,6 +432,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#a9a9a9',
         elevation: 0,
         shadowOpacity: 0,
+        shadowRadius: 0,
     },
     buttonText: {
         color: '#FFFFFF',

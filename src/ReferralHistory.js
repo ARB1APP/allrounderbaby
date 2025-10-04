@@ -140,14 +140,9 @@ const ReferralHistory = ({ navigation }) => {
   useEffect(() => {
     const backAction = () => {
       console.log('Hardware back press detected on ReferralHistory screen');
-      if (navigation.canGoBack()) {
-        console.log('Navigating back to Refer and Earn');
-        navigation.navigate('Refer and Earn');
-      } else {
-        console.log('Cannot go back, navigating to Home');
-        navigation.navigate('Home');
-      }
-      return true;
+      // Let the default back action occur
+      navigation.goBack();
+      return true; // Prevent default OS back behavior
     };
 
     const backHandler = BackHandler.addEventListener(

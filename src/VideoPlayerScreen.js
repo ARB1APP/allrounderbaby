@@ -29,6 +29,7 @@ const VideoPlayerScreen = () => {
     step,
     cameFrom,
     total_time,
+    stage_name,
   } = route.params || {};
 
   const isDarkMode = useColorScheme() === 'dark';
@@ -40,14 +41,19 @@ const VideoPlayerScreen = () => {
   const progressUpdated = useRef(false);
 
   const updateVideoProgress = useCallback(async (isFinished) => {
+    // Prevent sending progress multiple times
     if (progressUpdated.current) return;
     progressUpdated.current = true;
 
     const userId = await AsyncStorage.getItem('userId');
     const token = await AsyncStorage.getItem('token');
-    if (!userId || !token) return;
+    if (!userId || !token) {
+      console.log("User not logged in, cannot save progress.");
+      return;
+    }
 
-    let currentViews = 0, previousFinishCount = 0;
+    let currentViews = 0;
+    let previousFinishCount = 0;
     try {
         const savedProgress = await AsyncStorage.getItem('userProgress');
         if (savedProgress) {
@@ -58,13 +64,15 @@ const VideoPlayerScreen = () => {
                 previousFinishCount = videoProgress.is_finished || 0;
             }
         }
-    } catch (e) { console.error("Failed to get current video views:", e); }
+    } catch (e) { console.error("Failed to get local video progress:", e); }
 
     const currentTimeInSeconds = Math.round(currentTime / 1000);
-
-  
+    
+    // A video is considered finished if the 'isFinished' flag is true (from onEnded event)
+    // or if the playback is within the last 10 seconds of the total duration.
     const isNowConsideredFinished = isFinished || (totalDuration > 0 && currentTimeInSeconds >= totalDuration - 10);
 
+    // is_finished is treated as a counter for how many times the video has been completed.
     const newFinishCount = isNowConsideredFinished ? previousFinishCount + 1 : previousFinishCount;
 
     const payload = {
@@ -72,14 +80,17 @@ const VideoPlayerScreen = () => {
       video_id: videoId,
       last_watched_timestamp_seconds: currentTimeInSeconds,
       Language: language,
-      is_finished: newFinishCount,
+      is_finished: newFinishCount, // This is a finish counter
       level_step: step,
       total_time: totalDuration,
       total_views: currentViews + 1,
       otp: otp, 
-      playback: playbackInfo, 
+      playback: playbackInfo,
+      stage_name: stage_name + " " + step,
     };
-    console.log("Updating video progress:", payload);
+    
+    console.log("Attempting to update video progress with payload:", payload);
+
     try {
       const endpoint = `${url}User/User_Video_Data`;
       const response = await fetch(endpoint, { 
@@ -95,10 +106,10 @@ const VideoPlayerScreen = () => {
       const responseData = await response.json();
       console.log('API Response from User_Video_Data:', responseData);
 
-      if (!response.ok) {
-        console.error("Failed to update video progress on server:", responseData.message || 'Unknown error');
-        Alert.alert("Sync Error", "Could not save video progress to the server. Your progress may not be saved.");
-      } else {
+      // Check for both HTTP success and API success code
+      if (response.ok && responseData.code === 200) {
+        console.log("Successfully updated video progress on server.");
+        // Update local cache after successful server update
         try {
           const savedProgress = await AsyncStorage.getItem('userProgress');
           let progressData = savedProgress ? JSON.parse(savedProgress) : [];
@@ -113,11 +124,18 @@ const VideoPlayerScreen = () => {
           }
           await AsyncStorage.setItem('userProgress', JSON.stringify(progressData));
           console.log("Local userProgress cache updated.");
-        } catch (e) { console.error("Failed to update local userProgress cache:", e); }
+        } catch (e) { 
+          console.error("Failed to update local userProgress cache:", e); 
+        }
+      } else {
+        // Handle API errors or HTTP errors
+        const errorMessage = responseData.message || `HTTP Error: ${response.status}`;
+        console.error("Failed to update video progress on server:", errorMessage);
+        Alert.alert("Sync Error", `Could not save video progress to the server: ${errorMessage}`);
       }
     } catch (e) { 
-      console.error("Failed to update video progress on back press:", e); 
-      Alert.alert("Network Error", "A network error occurred while saving your progress.");
+      console.error("A network error occurred while updating video progress:", e); 
+      Alert.alert("Network Error", "A network error occurred while saving your progress. Please check your connection.");
     }
   }, [progressUpdated, videoId, currentTime, language, step, totalDuration, otp, playbackInfo]);
 
@@ -155,7 +173,7 @@ const VideoPlayerScreen = () => {
     await updateVideoProgress(false);
     Orientation.lockToPortrait();
     if (cameFrom === 'Dashboard') {
-      navigation.navigate('Home');
+      navigation.navigate('Home'); 
     } else if (cameFrom) {
       navigation.navigate(cameFrom);
     } else {
