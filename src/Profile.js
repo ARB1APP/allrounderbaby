@@ -59,8 +59,12 @@ const Profile = ({ navigation }) => {
     const theme = isDarkMode ? AppColors.dark : AppColors.light;
 
     const handleLogout = async () => {
-        try {
-            debugger;
+        Alert.alert("Logout", "Are you sure you want to log out?", [
+            { text: "Cancel", style: "cancel" },
+            {
+                text: "OK",
+                onPress: async () => {
+                    try {
             const token = await AsyncStorage.getItem('token');
             const userId = await AsyncStorage.getItem('userId');
 
@@ -70,7 +74,7 @@ const Profile = ({ navigation }) => {
                 return;
             }
 
-            const endpoint = `${url}/Login/LogoutMobileUser?userid=${userId}`;
+            const endpoint = `${url}Login/LogoutMobileUser?userid=${userId}`;
             const response = await fetch(endpoint, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -78,40 +82,49 @@ const Profile = ({ navigation }) => {
                 }
             });
 
-            if (!response.ok) {
-
-                const errorText = await response.text();
-                console.error('Server-side logout failed:', errorText);
-                Alert.alert(
-                    "Logout Warning",
-                    "Failed to log out from the server. Your local session has been cleared. Please try logging in again if you encounter issues."
-                );
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('Server-side logout failed:', errorText);
+                            Alert.alert(
+                                "Logout Warning",
+                                "Failed to log out from the server, but your local session has been cleared."
+                            );
+                        }
+                        await clearLocalSessionAndNavigate();
+                    } catch (error) {
+                        console.error('Error during logout process:', error);
+                        Alert.alert("Logout Error", "An unexpected error occurred during logout. Clearing local session as a fallback.");
+                        await clearLocalSessionAndNavigate();
+                    }
+                },
             }
-            await clearLocalSessionAndNavigate();
-
-        } catch (error) {
-            console.error('Error during logout process:', error);
-            Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
-            await clearLocalSessionAndNavigate();
-        }
+        ]);
     };
 
     const clearLocalSessionAndNavigate = async () => {
         try {
-            const allKeys = await AsyncStorage.getAllKeys();
-            const keysToKeep = []; // Add any keys you want to preserve across logouts, e.g., 'first_time_opened'
-            const keysToRemove = allKeys.filter(key => !keysToKeep.includes(key));
+            const rememberPreference = await AsyncStorage.getItem('rememberMePreference');
+            const keysToRemove = [
+                'token', 
+                'userId', 
+                'completedSteps', 
+                'topicCompletionTimes', 
+                'middleLevelCompletionTime', 
+                'advancedLevelCompletionTime'
+            ];
 
-            if (keysToRemove.length > 0) {
-                await AsyncStorage.multiRemove(keysToRemove);
+            if (rememberPreference !== 'true') {
+                // If "Remember Me" is not active, also remove credential and preference keys
+                keysToRemove.push('rememberedUsername', 'rememberedPassword', 'termsAccepted', 'rememberMePreference');
             }
-            // For older React Native versions that might not support multiRemove well, you can use clear().
-            // await AsyncStorage.clear();
+
+            await AsyncStorage.multiRemove(keysToRemove);
+            
             console.log('User session data cleared from AsyncStorage.');
             navigation.dispatch(
                 CommonActions.reset({
                     index: 0,
-                    routes: [{ name: 'Login' }],
+                    routes: [{ name: 'Login', params: { logout: true } }],
                 })
             );
         } catch (localError) {

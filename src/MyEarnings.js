@@ -430,9 +430,6 @@ const MyEarnings = ({ navigation }) => {
           'Content-Type': 'application/json',
         },
       });
-
-      console.log(`handleBankDetails: API Response Status: ${response.status} ${response.statusText}`);
-
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`handleBankDetails: Error fetching profile data: ${response.status} - ${errorText}`);
@@ -488,8 +485,6 @@ const MyEarnings = ({ navigation }) => {
           'Accept': 'application/json'
         }
       });
-
-      console.log(`handleEarningDetails: API Response Status: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
         let errorData;
@@ -577,8 +572,6 @@ const MyEarnings = ({ navigation }) => {
           'Accept': 'application/json'
         }
       });
-
-      console.log(`handleFeedbackEarnings: API Response Status: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
         const errorData = await response.text();

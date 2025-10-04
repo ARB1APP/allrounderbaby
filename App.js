@@ -1,6 +1,6 @@
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
 import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator } from 'react-native';
-import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from './SplashScreen';
@@ -37,6 +37,7 @@ import Trails from './src/Trails';
 
 const Drawer = createDrawerNavigator();
 const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+export const navigationRef = createNavigationContainerRef();
 
 const LightThemeColors = {
   background: '#FFFFFF',
@@ -213,12 +214,14 @@ const App = () => {
       await AsyncStorage.removeItem('userId');
       await AsyncStorage.removeItem('username');
       console.log('User session data cleared from AsyncStorage.');
-       navigation.getRootNavigator().dispatch(
+      if (navigationRef.isReady()) {
+        navigationRef.dispatch(
         CommonActions.reset({
           index: 0,
           routes: [{ name: 'Login' }],
         })
       );
+      }
     } catch (localError) {
       console.error('Error clearing local storage:', localError);
       Alert.alert("Local Session Error", "Failed to clear local session data. Please restart the app.");
@@ -226,13 +229,13 @@ const App = () => {
   }, []);
 
   const handleGlobalLogout = useCallback(
-    async (navigation) => {
+    async () => {
       try {
         const token = await AsyncStorage.getItem('token');
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) {
           console.log('userId not found in AsyncStorage. Clearing local session anyway.');
-          await clearLocalSessionAndNavigate(navigation);
+          await clearLocalSessionAndNavigate();
           return;
         }
         const endpoint = `${url}/Login/LogoutMobileUser?userid=${userId}`;
@@ -244,11 +247,11 @@ const App = () => {
           console.log('Server-side logout failed:', errorText);
           Alert.alert("Logout Warning", "Failed to log out from the server. Your local session has been cleared.");
         }
-        await clearLocalSessionAndNavigate(navigation);
+        await clearLocalSessionAndNavigate();
       } catch (error) {
         console.error('Error during logout process:', error);
         Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
-        await clearLocalSessionAndNavigate(navigation);
+        await clearLocalSessionAndNavigate();
       }
     },
     [clearLocalSessionAndNavigate]
@@ -260,11 +263,11 @@ const App = () => {
   });
 
   const renderDrawerNavigator = useCallback(
-    (navigation) => (
+    (initialRouteName) => (
       <Drawer.Navigator
-       initialRouteName={navigation}
+       initialRouteName={initialRouteName}
         drawerContent={(props) => (
-          <CustomDrawerContent {...props} theme={currentThemeColors} handleLogout={() => handleGlobalLogout(props.navigation)} />
+          <CustomDrawerContent {...props} theme={currentThemeColors} handleLogout={handleGlobalLogout} />
         )}
         screenOptions={getHeaderOptions(currentThemeColors)}
       >
@@ -313,7 +316,7 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <NavigationContainer theme={navigationTheme}>
+      <NavigationContainer ref={navigationRef} theme={navigationTheme}>
         {initialRoute === 'Splash' ? (
           <SplashScreen onVideoEnd={handleVideoEnd} />
         ) : (
