@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Modal, Alert, BackHandler, StatusBar, ActivityIndicator, Pressable, useColorScheme } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
@@ -107,7 +106,7 @@ const Dashboard = ({ navigation }) => {
     const [token, setToken] = useState(null);
     const [userId, setUserID] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-      const [dataLoaded, setDataLoaded] = useState(false);
+    const [dataLoaded, setDataLoaded] = useState(false);
     const [isVideoLoading, setIsVideoLoading] = useState(false);
     const [completedSteps, setCompletedSteps] = useState({});
     const [openCategory, setOpenCategory] = useState(null);
@@ -257,7 +256,6 @@ const Dashboard = ({ navigation }) => {
                     setUserID(storedUserId);
                     await fetchUserProgress(storedUserId, storedToken);
                 }
-                // Load other necessary data from AsyncStorage
                 await loadCompletedSteps();
                 await loadMiddleLevelCompletionTime();
                 await loadAdvancedLevelCompletionTime();
@@ -278,7 +276,6 @@ const Dashboard = ({ navigation }) => {
 
         return unsubscribe;
     }, [navigation]);
-
     const getCategoryFromStep = (stepNumber) => {
         for (const categoryKey in masterConfig) {
             const category = masterConfig[categoryKey];
@@ -288,7 +285,6 @@ const Dashboard = ({ navigation }) => {
         }
         return null;
     };
-
     const updateTopicCompletionTime = async (categoryKey, completionTime) => {
         try {
             const newCompletionTimes = { ...topicCompletionTimes, [categoryKey]: completionTime };
@@ -299,73 +295,69 @@ const Dashboard = ({ navigation }) => {
             console.error("Failed to save topic completion time:", error);
         }
     };
-
-
-  const fetchUserProgress = async (userId, token) => {
-    try {
-        const endpoint = `${url}User/User_Deshboard_Data?id=${userId}`;
-        const response = await fetch(endpoint, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            console.error('Failed to fetch user progress:', response.statusText);
-            return;
-        }
-
-        const result = await response.json();
-        if (result.isSuccess && result.data) {
-            const progressByStep = {};
-            result.data.forEach(item => {
-                progressByStep[item.level_step] = item;
-            });
-
-            const newCompletedSteps = {};
-            const newTopicCompletionTimes = {}; // Start with a fresh object
-            let highestCompletedStep = 0;
-
-            result.data.forEach(item => {
-                if (item.total_views > 0) {
-                    newCompletedSteps[`step${item.level_step}`] = true;
-                    console.log(`Marking step${item.level_step} as completed`); // Debug log
-                    if (item.level_step > highestCompletedStep) {
-                        highestCompletedStep = item.level_step;
-                    }
+    const fetchUserProgress = async (userId, token) => {
+        try {
+            const endpoint = `${url}User/User_Deshboard_Data?id=${userId}`;
+            const response = await fetch(endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
                 }
             });
 
-            for (const categoryKey in masterConfig) {
-                const category = masterConfig[categoryKey];
-                if (category.finalGroupedData && !newTopicCompletionTimes[categoryKey]) {
-                    const allSteps = category.finalGroupedData.map(g => `step${g.stepNumber}`);
-                    const isCategoryComplete = allSteps.every(stepKey => newCompletedSteps[stepKey]);
-                    if (isCategoryComplete) {
-                        const stepNumbers = allSteps.map(s => parseInt(s.replace('step', '')));
-                        const latestCompletion = Math.max(...stepNumbers.map(sn => new Date(progressByStep[sn]?.playedOn || 0).getTime()));
-                        if (latestCompletion > 0) {
-                            newTopicCompletionTimes[categoryKey] = new Date(latestCompletion).toISOString();
+            if (!response.ok) {
+                console.error('Failed to fetch user progress:', response.statusText);
+                return;
+            }
+
+            const result = await response.json();
+            if (result.isSuccess && result.data) {
+                const progressByStep = {};
+                result.data.forEach(item => {
+                    progressByStep[item.level_step] = item;
+                });
+
+                const newCompletedSteps = {};
+                const newTopicCompletionTimes = {};
+                let highestCompletedStep = 0;
+
+                result.data.forEach(item => {
+                    if (item.total_views > 0) {
+                        newCompletedSteps[`step${item.level_step}`] = true;
+                        console.log(`Marking step${item.level_step} as completed`);
+                        if (item.level_step > highestCompletedStep) {
+                            highestCompletedStep = item.level_step;
+                        }
+                    }
+                });
+
+                for (const categoryKey in masterConfig) {
+                    const category = masterConfig[categoryKey];
+                    if (category.finalGroupedData && !newTopicCompletionTimes[categoryKey]) {
+                        const allSteps = category.finalGroupedData.map(g => `step${g.stepNumber}`);
+                        const isCategoryComplete = allSteps.every(stepKey => newCompletedSteps[stepKey]);
+                        if (isCategoryComplete) {
+                            const stepNumbers = allSteps.map(s => parseInt(s.replace('step', '')));
+                            const latestCompletion = Math.max(...stepNumbers.map(sn => new Date(progressByStep[sn]?.playedOn || 0).getTime()));
+                            if (latestCompletion > 0) {
+                                newTopicCompletionTimes[categoryKey] = new Date(latestCompletion).toISOString();
+                            }
                         }
                     }
                 }
+
+                setUnlockedStepsThreshold(highestCompletedStep);
+                setCompletedSteps(newCompletedSteps);
+                setTopicCompletionTimes(newTopicCompletionTimes);
+                await AsyncStorage.setItem('completedSteps', JSON.stringify(newCompletedSteps));
+                await AsyncStorage.setItem('topicCompletionTimes', JSON.stringify(newTopicCompletionTimes));
+
+                setDataLoaded(true);
             }
-
-            setUnlockedStepsThreshold(highestCompletedStep);
-            setCompletedSteps(newCompletedSteps);
-            setTopicCompletionTimes(newTopicCompletionTimes);
-            await AsyncStorage.setItem('completedSteps', JSON.stringify(newCompletedSteps));
-            await AsyncStorage.setItem('topicCompletionTimes', JSON.stringify(newTopicCompletionTimes));
-
-            setDataLoaded(true); // ✅ Mark data as loaded
+        } catch (error) {
+            console.error("Failed to fetch user progress:", error);
         }
-    } catch (error) {
-        console.error("Failed to fetch user progress:", error);
-    }
-};
-
-
+    };
     const loadCompletedSteps = async () => {
         try {
             const savedSteps = await AsyncStorage.getItem('completedSteps');
@@ -376,7 +368,6 @@ const Dashboard = ({ navigation }) => {
             console.error("Failed to load completed steps from storage", error);
         }
     };
-
     const loadTopicCompletionTimes = async () => {
         try {
             const savedTimes = await AsyncStorage.getItem('topicCompletionTimes');
@@ -387,7 +378,6 @@ const Dashboard = ({ navigation }) => {
             console.error("Failed to load topic completion times from storage", error);
         }
     };
-
     const loadMiddleLevelCompletionTime = async () => {
         try {
             const savedTime = await AsyncStorage.getItem('middleLevelCompletionTime');
@@ -398,7 +388,6 @@ const Dashboard = ({ navigation }) => {
             console.error("Failed to load middle level completion time from storage", error);
         }
     };
-
     const loadAdvancedLevelCompletionTime = async () => {
         try {
             const savedTime = await AsyncStorage.getItem('advancedLevelCompletionTime');
@@ -409,7 +398,6 @@ const Dashboard = ({ navigation }) => {
             console.error("Failed to load advanced level completion time from storage", error);
         }
     };
-
     const saveCompletedStep = async (stepKey) => {
         try {
             const newCompletedSteps = { ...completedSteps, [stepKey]: true };
@@ -419,7 +407,6 @@ const Dashboard = ({ navigation }) => {
             console.error("Failed to save completed step to storage", error);
         }
     };
-
     const startHandAnimation = () => {
         const targetX = screenWidth * 0.4;
         const targetY = screenHeight * 0.3;
@@ -445,7 +432,6 @@ const Dashboard = ({ navigation }) => {
         Animated.timing(scale2, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start();
         Animated.timing(scale3, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start(); return () => blinkingAnimation.stop();
     }, []);
-
     const fetchVideos = async (folderIds) => {
         if (!Array.isArray(folderIds)) folderIds = [folderIds];
         let allVideos = { rows: [] };
@@ -456,17 +442,14 @@ const Dashboard = ({ navigation }) => {
                 if (!response.ok) throw new Error(`Failed to fetch videos for folder ${folderId}`);
                 const data = await response.json();
                 if (data && data.rows) { allVideos.rows.push(...data.rows); }
-                console.log(`Fetched ${data?.rows?.length || 0} videos from folder ${folderId}:`, data);
             } catch (error) {
                 console.error(`Error fetching videos from folder ${folderId}:`, error);
                 Alert.alert("API Error", `Could not load some videos. Please check your connection and try again. Details: ${error.message}`);
             }
         }
-        console.log('Final combined video list for the category:', allVideos);
         return allVideos;
 
     };
-
     const ensureCategoryDataIsLoaded = async (categoryKey) => {
         const config = masterConfig[categoryKey];
         if (config && !videoData[categoryKey]?.rows?.length) {
@@ -479,60 +462,67 @@ const Dashboard = ({ navigation }) => {
                     ...prevData,
                     [categoryKey]: videoDetails
                 }));
-                return true; // Data was fetched
+                return true;
             }
-            return false; // Fetch failed
+            return false;
         }
-        return true; // Data was already present
+        return true;
     };
     const arePrerequisitesMet = async (categoryKey) => {
-        
+
         const config = masterConfig[categoryKey];
         if (!config) return false;
-console.log(`Checking prerequisites for category: ${categoryKey}`);
-console.log('Current completed steps:', Object.keys(completedSteps).filter(k => completedSteps[k]));
-        // A category is unlocked only if its prerequisite is fully completed AND the required waiting period has passed.
+        console.log(`Checking prerequisites for category: ${categoryKey}`);
+        console.log('Current completed steps:', Object.keys(completedSteps).filter(k => completedSteps[k]));
         if (config.prerequisiteCategory) {
             const prereqConfig = masterConfig[config.prerequisiteCategory];
             if (prereqConfig) {
-                // Ensure the prerequisite category's video data is loaded to get step numbers
                 const isPrereqDataLoaded = await ensureCategoryDataIsLoaded(config.prerequisiteCategory);
                 if (!isPrereqDataLoaded) {
                     Alert.alert("Error", "Could not load prerequisite data. Please try again.");
                     return false;
                 }
-                // We need to get the latest config from masterConfig inside the function after a potential state update
                 const updatedPrereqConfig = masterConfig[config.prerequisiteCategory];
                 const allPrereqSteps = prereqConfig.finalGroupedData.map(g => `step${g.stepNumber}`);
                 const areAllPrereqsCompleted = allPrereqSteps.every(stepKey => completedSteps[stepKey]);
-    
+
                 if (!areAllPrereqsCompleted) {
                     Alert.alert("Level Locked", `You must complete the "${prereqConfig.name}" stage before accessing this one.`);
                     return false;
                 }
-    
                 const lastStepOfPrereq = prereqConfig.finalGroupedData[prereqConfig.finalGroupedData.length - 1];
                 const lastStepNumber = lastStepOfPrereq.stepNumber;
-    
                 const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}`;
                 try {
                     const response = await fetch(DETAILS_ENDPOINT, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
-    
                     if (response.ok) {
-                        const data = await response.json();
-                        if (data.isSuccess && data.data && data.data.length > 0) {
-                            const completionDate = new Date(data.data[0].createOn);
+                        const result = await response.json();
+                        if (result.isSuccess && result.data && result.data.length > 0) {
+                            // Append 'Z' to the date string to ensure it's parsed as UTC
+                            const completionDateUTC = new Date(result.data[0].createOn + 'Z');
+                            const nowUTC = new Date();
                             let lockDurationHours = 0;
                             if (foundationKeys.includes(config.prerequisiteCategory)) lockDurationHours = 24;
                             else if (middleKeys.includes(config.prerequisiteCategory) || advancedKeys.includes(config.prerequisiteCategory)) lockDurationHours = 48;
-    
                             if (lockDurationHours > 0) {
-                                const hoursSinceCompletion = (new Date() - completionDate) / (1000 * 60 * 60);
+                                const hoursSinceCompletion = (nowUTC.getTime() - completionDateUTC.getTime()) / (1000 * 60 * 60);
+                                console.log(`Hours since completion of ${config.prerequisiteCategory}: ${hoursSinceCompletion}`);
+                                const hoursRemaining = Math.ceil(lockDurationHours - hoursSinceCompletion);
+                                console.log(`Lock duration: ${lockDurationHours} hours, Hours remaining: ${hoursRemaining}`);
+
                                 if (hoursSinceCompletion < lockDurationHours) {
-                                    const hoursRemaining = Math.ceil(lockDurationHours - hoursSinceCompletion);
-                                    Alert.alert("Topic Locked", `Please wait. This topic will unlock in approximately ${hoursRemaining} hours.`);
+                                    let alertMessage = "";
+                                    if (lockDurationHours === 24) {
+                                        alertMessage = "Great progress! Your next topic will unlock in 24 hours. Use this time to practice what you’ve learned so far.";
+                                    } else if (lockDurationHours === 48) {
+                                        alertMessage = "Great progress! Your next topic will unlock in 48 hours. Use this time to practice what you’ve learned so far.";
+                                    }
+                                    Alert.alert("Topic Locked", alertMessage);
                                     return false;
                                 }
+                                // else {
+                                //     Alert.alert("Topic Unlocked!", "Your next Topic is now unlocked. Start watching!");
+                                // }
                             }
                         }
                     }
@@ -543,43 +533,36 @@ console.log('Current completed steps:', Object.keys(completedSteps).filter(k => 
                 }
             }
         }
-        return true; // All checks passed
+        return true;
     };
-
     const handleCategoryPress = async (categoryKey) => {
         if (!dataLoaded) {
-        console.log("Data still loading, wait...");
-        Alert.alert("Please wait", "Loading progress data...");
-        return;
-    }
+            console.log("Data still loading, wait...");
+            Alert.alert("Please wait", "Loading progress data...");
+            return;
+        }
 
-    // Perform all prerequisite and lock checks
-    const canProceed = await arePrerequisitesMet(categoryKey);
-    if (!canProceed) {
-        setOpenCategory(null); // Close any open category if checks fail
-        return;
-    }
+        const canProceed = await arePrerequisitesMet(categoryKey);
+        if (!canProceed) {
+            setOpenCategory(null);
+            return;
+        }
+        if (openCategory === categoryKey) {
+            setOpenCategory(null);
+            return;
+        }
+        const config = masterConfig[categoryKey];
+        const isDataLoaded = await ensureCategoryDataIsLoaded(categoryKey);
 
-    // If the same category is clicked again, close it. Otherwise, open the new one.
-    if (openCategory === categoryKey) {
-        setOpenCategory(null);
-        return;
-    }
-
-    // Load video data if missing
-    const config = masterConfig[categoryKey];
-    const isDataLoaded = await ensureCategoryDataIsLoaded(categoryKey);
-
-    if (isDataLoaded) {
-        setOpenCategory(categoryKey);
-    } else {
-        setIsVideoLoading(true);
-        await ensureCategoryDataIsLoaded(categoryKey); // Retry fetching
-        setIsVideoLoading(false);
-        setOpenCategory(categoryKey); // Attempt to open even if retry fails, might show empty
-    }
-};
-
+        if (isDataLoaded) {
+            setOpenCategory(categoryKey);
+        } else {
+            setIsVideoLoading(true);
+            await ensureCategoryDataIsLoaded(categoryKey);
+            setIsVideoLoading(false);
+            setOpenCategory(categoryKey);
+        }
+    };
     const handleDropdownItemClick = (stepNumber) => {
         const config = masterConfig[openCategory];
         if (!config) return;
@@ -606,47 +589,48 @@ console.log('Current completed steps:', Object.keys(completedSteps).filter(k => 
     };
 
     const handleVideo = async (videoId, step, language) => {
-             if (step !== 90 && step !== 91) {
-            console.log("Checking watch limits for step:", step, "language:", language, "videoId:", videoId);
-            const endpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${videoId}`;
-            try {
+        const currentCategory = getCategoryFromStep(step);
+        const stepGroup = masterConfig[currentCategory]?.finalGroupedData.find(g => g.stepNumber === step);
+        const hindiVideoId = stepGroup?.hindiVideo?.id;
+        const englishVideoId = stepGroup?.englishVideo?.id;
+        if (step !== 90 && step !== 91) {
+            const fetchWatchData = async (vid) => {
+                if (!vid) return null;
+                const endpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${vid}`;
                 const response = await fetch(endpoint, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
                 });
-
                 if (response.ok) {
                     const result = await response.json();
-                    console.log("dsvddvd", result);
-                    if (result.isSuccess && result.data) {
-                        const totalWatchCount = result?.data?.reduce((sum, record) => sum + record.is_finished, 0);
-                        if (totalWatchCount >= 4) {
-                            Alert.alert(" You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.");
-                            return;
-                        }
-
-                        const languageRecord = result.data.find(d => d.language.toLowerCase() === language.toLowerCase());
-                        if (languageRecord && languageRecord.is_finished >= 3) {
-                            Alert.alert("Limit Reached", `You have already watched the ${language} video for this step 3 times.`);
-                            return;
-                        }
-                    } else if (!result.isSuccess) {
-                        Alert.alert("Error", `Could not verify video watch count: ${result.message}. Please try again.`);
-                        return;
-                    }
-                } else {
-                    Alert.alert("Error", "Could not connect to the server to verify video watch count. Please check your internet connection and try again.");
+                    return result.isSuccess && result.data ? result.data : null;
+                }
+                return null;
+            };
+            try {
+                const [hindiData, englishData] = await Promise.all([
+                    fetchWatchData(hindiVideoId),
+                    fetchWatchData(englishVideoId)
+                ]);
+                const hindiWatchCount = hindiData?.reduce((sum, record) => sum + record.is_finished, 0) || 0;
+                const englishWatchCount = englishData?.reduce((sum, record) => sum + record.is_finished, 0) || 0;
+                const totalWatchCount = hindiWatchCount + englishWatchCount;
+                if (totalWatchCount >= 4) {
+                    Alert.alert(" You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.");
                     return;
                 }
+
+                const currentLanguageWatchCount = language.toLowerCase() === 'hindi' ? hindiWatchCount : englishWatchCount;
+                if (currentLanguageWatchCount >= 3) {
+                    Alert.alert("Limit Reached", `You have already watched the ${language} video for this step 3 times.`);
+                    return;
+                }
+
             } catch (error) {
                 console.error("Error fetching user watch data:", error);
                 Alert.alert("Error", "An unexpected error occurred while checking video permissions.");
                 return;
             }
         }
-
         setIsModalVisible(false);
         setIsVideoLoading(true);
         let total_time = 0;
@@ -667,23 +651,21 @@ console.log('Current completed steps:', Object.keys(completedSteps).filter(k => 
             const data = await response.json();
 
             await saveCompletedStep(`step${step}`);
+            debugger;
+            // if (step === 88) {
+            //     Alert.alert("Congratulations!", "Congratulations, you’ve completed all topics! Keep practicing and stay tuned for future updates.");
+            // }
 
-            // Check if this was the last step of a category.
-            // Use openCategory from state as the reliable source for the current category.
             if (openCategory) {
                 const category = masterConfig[openCategory];
                 const allSteps = category.finalGroupedData.map(g => `step${g.stepNumber}`);
-                // Check against newCompletedSteps which includes the one just saved
                 const newCompletedSteps = { ...completedSteps, [`step${step}`]: true };
                 const isCategoryComplete = allSteps.every(stepKey => newCompletedSteps[stepKey]);
 
                 if (isCategoryComplete && !topicCompletionTimes[openCategory]) {
                     await updateTopicCompletionTime(openCategory, new Date().toISOString());
                 }
-
-                // New condition: Check if the middle level's last category is completed
                 if (openCategory === 'listenFollow' && isCategoryComplete) {
-                    // Check if the completion time has already been set to avoid re-setting it
                     if (!middleLevelCompletionTime) {
                         const completionTime = new Date();
                         setMiddleLevelCompletionTime(completionTime);
@@ -695,10 +677,7 @@ console.log('Current completed steps:', Object.keys(completedSteps).filter(k => 
                         }
                     }
                 }
-
-                // New condition: Check if the advanced level's last category is completed
                 if (openCategory === 'knowledge' && isCategoryComplete) {
-                    // Check if the completion time has already been set to avoid re-setting it
                     if (!advancedLevelCompletionTime) {
                         const completionTime = new Date();
                         setAdvancedLevelCompletionTime(completionTime);
@@ -711,8 +690,6 @@ console.log('Current completed steps:', Object.keys(completedSteps).filter(k => 
                     }
                 }
             }
-            
-console.log("stage name", openCategory);
             navigation.navigate('VideoPlayerScreen', {
                 id: videoId,
                 otp: data.otp,
@@ -785,15 +762,34 @@ console.log("stage name", openCategory);
     };
 
     const handleLevelPress = async (level) => {
-        // **FIX**: Prevent level press until all initial data is loaded from the server.
         if (!dataLoaded) {
             console.log("Data is still loading. Please wait.");
             Alert.alert("Loading...", "Please wait until your progress is fully loaded.");
             return;
         }
+        const loadLevelVideos = async (keys) => {
+            const dataFetchPromises = keys
+                .filter(key => !videoData[key]?.rows?.length)
+                .map(key => fetchVideos(masterConfig[key].folderIds || [masterConfig[key].folderId]).then(details => ({ key, details })));
+            if (dataFetchPromises.length > 0) {
+                setIsVideoLoading(true);
+                try {
+                    const results = await Promise.all(dataFetchPromises);
+                    setVideoData(prevData => {
+                        const newData = { ...prevData };
+                        results.forEach(({ key, details }) => {
+                            if (details) newData[key] = details;
+                        });
+                        return newData;
+                    });
+                } finally {
+                    setIsVideoLoading(false);
+                }
+            }
+            return true;
+        };
 
         const checkAndLoadPrerequisites = async (keys, levelName) => {
-            // Check if video data for the prerequisite level is loaded. If not, fetch it.
             const dataFetchPromises = keys
                 .filter(key => !videoData[key]?.rows?.length)
                 .map(key => fetchVideos(masterConfig[key].folderIds || [masterConfig[key].folderId]).then(details => ({ key, details })));
@@ -810,51 +806,81 @@ console.log("stage name", openCategory);
                     });
                     return newData;
                 });
-
-                // After fetching, mark the current level to be unlocked and re-evaluate.
                 setLevelToUnlock(level);
-                return false; // Prereqs were not ready, will retry.
+                return false;
             }
-
-            // Check if all steps in the prerequisite level are completed.
             const allPrereqSteps = keys.flatMap(key => masterConfig[key]?.finalGroupedData.map(g => `step${g.stepNumber}`) || []);
             const areAllPrereqsCompleted = allPrereqSteps.every(stepKey => completedSteps[stepKey]);
-
             if (!areAllPrereqsCompleted) {
                 Alert.alert("Level Locked", `You must complete all steps in the ${levelName} Level to unlock this level.`);
-                return false; // Prereqs not met.
+                return false;
             }
-
-            return true; // All prerequisites are met.
+            return true;
         };
-
         if (level === 'foundation') {
             if (!completedSteps['step91']) {
                 Alert.alert("Locked", "Please complete Introduction II before starting the Foundation Level.");
                 return;
             }
+            await loadLevelVideos(foundationKeys);
+            const lastStepOfMiddle = "49";
+            if (lastStepOfMiddle > 0) {
+                const endpoint = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepOfMiddle}`;
+                try {
+                    const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
+                    if (response.ok) {
+                        const resultData = await response.json();
+                        if (resultData.isSuccess && resultData.data && resultData.data.length > 0) {
+                            // Append 'Z' to the date string to ensure it's parsed as UTC
+                            const completionDateUTC = new Date(resultData.data[0].createOn + 'Z');
+                            const nowUTC = new Date();
+                            const hoursSinceCompletion = (nowUTC.getTime() - completionDateUTC.getTime()) / (1000 * 60 * 60);
+                            if (hoursSinceCompletion > 170) {
+                                Alert.alert(" You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.");
+                                return;
+                            }
+                        }
+                    }
+                } catch (error) { console.error("Could not check foundation lock time", error); }
+            }
             setActiveLevel(level);
-            return;
         }
-
         if (level === 'middle') {
             const foundationComplete = await checkAndLoadPrerequisites(foundationKeys, 'Foundation');
             if (foundationComplete) {
+                await loadLevelVideos(middleKeys);
+                const StepOfAdvance = "84";
+                if (StepOfAdvance > 0) {
+                    const endpoint = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${StepOfAdvance}`;
+                    try {
+                        const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
+                        if (response.ok) {
+                            const resultData = await response.json();
+                            if (resultData.isSuccess && resultData.data && resultData.data.length > 0) {
+                                // Append 'Z' to the date string to ensure it's parsed as UTC
+                                const completionDateUTC = new Date(resultData.data[0].createOn + 'Z');
+                                const nowUTC = new Date();
+                                const hoursSinceCompletion = (nowUTC.getTime() - completionDateUTC.getTime()) / (1000 * 60 * 60);
+                                if (hoursSinceCompletion > 170) {
+                                    Alert.alert(" You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.");
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (error) { console.error("Could not check foundation lock time", error); }
+                }
                 setActiveLevel(level);
             }
             return;
         }
-
         if (level === 'advanced') {
-            // First, check Foundation level prerequisites.
             const foundationComplete = await checkAndLoadPrerequisites(foundationKeys, 'Foundation');
             if (!foundationComplete) {
-                return; // Stop if foundation is not complete.
+                return;
             }
-
-            // If Foundation is complete, check Middle level prerequisites.
             const middleComplete = await checkAndLoadPrerequisites(middleKeys, 'Middle');
             if (middleComplete) {
+                await loadLevelVideos(advancedKeys);
                 setActiveLevel(level);
             }
         }
@@ -875,16 +901,12 @@ console.log("stage name", openCategory);
         }[activeLevel];
 
         const levelName = `${activeLevel.charAt(0).toUpperCase() + activeLevel.slice(1)} Level`;
-
         return <LevelModal levelName={levelName} onClose={handleCloseModal} isDarkMode={isDarkMode}>{levelKeys.map(key => { const config = masterConfig[key]; if (!config) return null; return (<React.Fragment key={key}><CategoryButton image={config.image} title={config.name} onPress={() => handleCategoryPress(key)} isOpen={openCategory === key} />{openCategory === key && <VideoStepList groups={config.finalGroupedData} completedSteps={completedSteps} onStepPress={handleDropdownItemClick} isDarkMode={isDarkMode} />}</React.Fragment>); })}</LevelModal>
     }
-
     const closeLanguageModal = () => setIsModalVisible(false);
-
     if (isLoading) {
         return <View style={styles.loaderContainer}><ActivityIndicator size="large" /></View>;
     }
-
     return (
         <View style={[styles.container, backgroundStyle]}>
             <View style={styles.imageContainer}>
@@ -898,7 +920,6 @@ console.log("stage name", openCategory);
                 </ScrollView>
                 {renderLevelModal()}
             </View>
-
             {isModalVisible && selectedStepGroup && (<View style={styles.modalLikeContainer}><Pressable style={[styles.modalContent, backgroundStyle]} onPress={(e) => e.stopPropagation()}><View style={styles.modalContentMainDiv}><Text style={[styles.modalTitle, textColorModal]}>Select Language</Text><TouchableOpacity onPress={closeLanguageModal}><Text style={[styles.modalContentClose, textColorModalPara]}>✕</Text></TouchableOpacity></View><View style={styles.borderLine} /><Text style={[styles.modalText, textColorModalPara]}>In which language would you like to watch this video?</Text><View style={styles.modalButtons}><TouchableOpacity style={[styles.modalButton, !selectedStepGroup.hindiVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.hindiVideo.id, selectedStepGroup.stepNumber, 'hindi')} disabled={!selectedStepGroup.hindiVideo}><Text style={styles.modalButtonText}>Hindi</Text></TouchableOpacity><TouchableOpacity style={[styles.modalButton, !selectedStepGroup.englishVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.englishVideo.id, selectedStepGroup.stepNumber, 'english')} disabled={!selectedStepGroup.englishVideo}><Text style={styles.modalButtonText}>English</Text></TouchableOpacity></View></Pressable></View>)}
             <View style={[styles.bottomNav, backgroundStyle]}><TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}><Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: isDarkMode ? '#60b5f6' : 'rgba(20, 52, 164, 1)' }]} /><Text style={[styles.navTextActive, { color: isDarkMode ? '#60b5f6' : '#1434a4' }]}>Home</Text></TouchableOpacity><TouchableOpacity style={[styles.navItem, styles.inactive]} onPress={() => navigation.navigate('Cashback for Feedback')}><Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: 'gray' }]} /><Text style={styles.navText}>Cashback for Feedback</Text></TouchableOpacity><TouchableOpacity style={[styles.navItem, styles.inactive]} onPress={() => navigation.navigate('Refer and Earn')}><Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: 'gray' }]} /><Text style={styles.navText}>Refer & Earn</Text></TouchableOpacity><TouchableOpacity style={[styles.navItem, styles.inactive]} onPress={() => navigation.navigate('My Profile')}><Image source={require('../img/proflie.png')} style={[styles.navIcon, { tintColor: 'gray' }]} /><Text style={styles.navText}>My Profile</Text></TouchableOpacity></View>
             {isVideoLoading && (<View style={styles.modalLikeContainer}><ActivityIndicator size="large" color="#FFFFFF" /><Text style={styles.loadingText}>Loading...</Text></View>)}
