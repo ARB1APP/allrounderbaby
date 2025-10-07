@@ -93,8 +93,8 @@ const LoginPage = ({ navigation }) => {
                     // The token and userId are already saved above
                     console.log("Username and preference saved.");
                 } else {
-                    await AsyncStorage.removeItem('rememberedUsername');
-                    await AsyncStorage.removeItem('rememberedPassword');
+                 await AsyncStorage.removeItem('rememberedUsername');
+                  await AsyncStorage.removeItem('rememberedPassword');
                     await AsyncStorage.removeItem('termsAccepted');
                     await AsyncStorage.removeItem('rememberMePreference');
                     console.log("Username and preference removed.");
@@ -152,7 +152,7 @@ const LoginPage = ({ navigation }) => {
                 } else {
                     setUsername('');
                     setPassword('');
-                    setRememberMe(true);
+                    setRememberMe(false);
                     setTermsAccepted(true);
                 }
 
@@ -170,48 +170,37 @@ const LoginPage = ({ navigation }) => {
 
     useFocusEffect(
         React.useCallback(() => {
-            const handleLogout = async () => {
+            const handleFocus = async () => {
+                // This logic now runs every time the screen is focused.
+                // First, load credentials.
+                await loadCredentials();
 
+                // Then, check if we came here from a logout action.
                 if (route.params?.logout) {
-                    console.log("Logout action detected in LoginPage. Clearing all stored credentials.");
-                    try {
+                    console.log("Logout action detected in LoginPage.");
+                    const rememberPreference = await AsyncStorage.getItem('rememberMePreference');
+                    if (rememberPreference !== 'true') {
+                        console.log("'Remember Me' is not active. Clearing credentials.");
+                        // If "Remember Me" is not on, clear the fields.
                         await AsyncStorage.removeItem('rememberedUsername');
                         await AsyncStorage.removeItem('rememberedPassword');
-                        await AsyncStorage.removeItem('termsAccepted');
-                        await AsyncStorage.removeItem('rememberMePreference');
-                        // Clear all progress-related data as well
-                        await AsyncStorage.removeItem('token');
-                        await AsyncStorage.removeItem('userId'); // Ensure userId is cleared
-                        await AsyncStorage.removeItem('completedSteps');
-                        await AsyncStorage.removeItem('topicCompletionTimes');
-                        await AsyncStorage.removeItem('middleLevelCompletionTime');
-                        await AsyncStorage.removeItem('advancedLevelCompletionTime');
-
                         setUsername('');
                         setPassword('');
                         setRememberMe(false);
-                        setTermsAccepted(true); // Reset to default
-
-                    } catch (error) {
-                        console.error("Error during logout credential clearing:", error);
-                        Alert.alert("Logout Error", "Failed to clear local credentials during logout.");
-                    } finally {
-                        // This should be inside finally to ensure it runs
-                        Alert.alert("Logged Out", "You have been successfully logged out.");
-                        navigation.setParams({ logout: undefined });
-                        // If we were already loading, we might need to reset this
-                        if(isLoadingCredentials) setIsLoadingCredentials(false); 
                     }
+                    Alert.alert("Logged Out", "You have been successfully logged out.");
+                    // Clear the logout param so this doesn't run again on next focus
+                    navigation.setParams({ logout: undefined });
                 }
             };
 
-            handleLogout();
+            handleFocus();
 
             // Cleanup function is not strictly necessary here unless you need to specifically remove listeners,
             // but useFocusEffect handles focus/blur cleanup.
             return () => {
             };
-        }, [route.params?.logout])
+        }, [route.params?.logout, navigation])
     );
 
 

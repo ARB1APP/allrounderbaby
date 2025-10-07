@@ -130,6 +130,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     color: theme.textSecondary,
     marginBottom: 8,
   },
+  
   emphasisText: {
     fontWeight: '600',
     color: theme.textPrimary,
@@ -316,6 +317,14 @@ const createCashbackStyles = (theme) => StyleSheet.create({
   disabledButton: {
     backgroundColor: theme.textMuted,
   },
+  subListItem: {
+    marginLeft: 15,
+    marginRight: 20,
+    fontSize: 15,
+    lineHeight: 22,
+    color: theme.textSecondary,
+    marginBottom: 8,
+  },
 });
 
 const CashbackforFeedback = () => {
@@ -323,6 +332,7 @@ const CashbackforFeedback = () => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = useMemo(() => createCashbackStyles(theme), [theme]);
+    const isDarkMode = useColorScheme() === 'dark';
 
   const [token, setToken] = useState(null);
   const [userId, setUserID] = useState(null);
@@ -330,16 +340,30 @@ const CashbackforFeedback = () => {
   const [cashbackVideos, setCashbackVideos] = useState({});
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [selectedVideoGroup, setSelectedVideoGroup] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
   
   const CASHBACK_FOLDER_ID = "3b7737b5e34740318231b0f1c0797b34";
 
   useEffect(() => {
     const backAction = () => {
-      navigation.navigate('Home');
+      if (showDetails) {
+        setShowDetails(false);
+      } else {
+        navigation.navigate('Home');
+      }
       return true;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
+  }, [navigation, showDetails]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Reset the state when the screen comes into focus
+      setShowDetails(false);
+    });
+
+    return unsubscribe;
   }, [navigation]);
 
   useEffect(() => {
@@ -534,7 +558,7 @@ const CashbackforFeedback = () => {
   }, [cashbackVideos]);
 
   const onPressKnowMoreButton = () => {
-    navigation.navigate('Cashback for Feedback Conditions');
+    setShowDetails(true);
   };
 
   const handleThumbnailClick = () => {
@@ -603,9 +627,108 @@ const CashbackforFeedback = () => {
           </Text>
         </View>
 
-        <TouchableOpacity onPress={onPressKnowMoreButton} style={styles.linkButton}>
-          <Text style={styles.linkText}>Know more</Text>
-        </TouchableOpacity>
+        {!showDetails && (
+          <TouchableOpacity onPress={onPressKnowMoreButton} style={styles.linkButton}>
+            <Text style={styles.linkText}>Know more</Text>
+          </TouchableOpacity>
+        )}
+
+      {showDetails && (<View>
+         <View style={styles.sectionDivider} />
+        <View style={styles.importantDetailsBox}>
+                   <Text  style={[
+                            styles.sectionHeader,
+                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                        ]}>Submission & Review Process</Text>
+               <Text style={styles.subListItem}>
+                  <Text style={styles.emphasisText}>✔️ 
+                    </Text> Feedback  must be submitted after logging in to our website .
+                </Text>
+                <Text style={styles.subListItem}>
+                  <Text style={styles.emphasisText}>✔️ 
+                     </Text> Our team will review and verify yourfeedback before 
+                          approval. 
+                </Text>
+                <Text style={styles.subListItem}>
+                  <Text style={styles.emphasisText}>✔️ 
+                    </Text> Cashback is issued only if the feedback is detailed, genuine, and approved.
+                    <Text style={styles.emphasisText}></Text>
+                </Text>
+                </View>
+                <View style={styles.sectionDivider} />
+                <View style={styles.importantDetailsBox}>
+                   <Text  style={[
+                            styles.sectionHeader,
+                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                        ]}>Bank Account & Payment Processing</Text>
+               <Text style={styles.subListItem}>
+                 <Text style={styles.emphasisText}>✔️ </Text> 
+                  Update your bank details after logging in to our website—this account will be used for your cashback payout.
+                </Text>
+                <Text style={styles.subListItem}>
+                  <Text style={styles.emphasisText}>✔️ </Text> 
+                  Cashback is processed within 1 to 60 days after approval.
+                </Text>
+                </View>
+            <View style={styles.sectionDivider} />
+                 <View style={styles.importantDetailsBox}>
+                   <Text  style={[
+                            styles.sectionHeader,
+                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                        ]}>International Participants</Text>
+                 <Text style={styles.subListItem}>
+                   <Text style={styles.emphasisText}>✔️ </Text> 
+                    For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
+                </Text>
+                <Text style={styles.subListItem}>
+                    <Text style={styles.emphasisText}>✔️ </Text> 
+                    The final amount credited depends on your bank’s deductions and exchange rates.
+                </Text>
+                </View>
+            <View style={styles.sectionDivider} />
+                   <View style={styles.importantDetailsBox}>
+                   <Text  style={[
+                            styles.sectionHeader,
+                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                        ]}>Tax & Compliance</Text>
+                <Text style={styles.subListItem}>
+                      <Text style={styles.emphasisText}>✔️ </Text> 
+                       No TDS will be deducted under Section 194J of the Indian Income Tax Act, subject to applicable rules.
+                </Text> 
+                  <Text style={styles.subListItem}>{'\n'}
+                      <Text style={styles.emphasisText}>For International Users:</Text> 
+                </Text>
+                   <Text style={styles.subListItem}>
+                       <Text style={styles.emphasisText}>✔️ </Text> 
+                       You are responsible for reporting and paying taxes in accordance with your local tax regulations.
+                </Text>
+                <Text style={styles.subListItem}>
+                       <Text style={styles.emphasisText}>✔️ </Text> 
+                       Cashback is treated as commission income and may be taxable under the laws of your country.
+                </Text>
+                </View>
+            <View style={styles.sectionDivider} />
+          <View style={styles.importantDetailsBox}>
+                   <Text  style={[
+                            styles.sectionHeader,
+                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                        ]}>Important Notes</Text>
+                  <Text style={styles.subListItem}>
+                       <Text style={styles.emphasisText}>✔️ </Text> 
+                       AllrounderBaby does not offer tax advice. Please consult your tax advisor.
+                </Text>
+                    <Text style={styles.subListItem}>
+                       <Text style={styles.emphasisText}>✔️ </Text> 
+                      By submitting feedback, you agree to our Terms of Use and Privacy Policy.
+                </Text>
+                </View>
+             <View style={styles.sectionDivider} />
+                <View style={styles.importantDetailsBox}>
+                  <Text style={styles.finalCallToAction}>
+                    Your feedback matters! Help us improve and get rewarded with cashback up to ₹1,000 / $10
+                  </Text>
+                </View>
+      </View>)}
 
       </ScrollView>
 

@@ -109,6 +109,7 @@ const ReferAndEarn = ({ navigation }) => {
   const [referEarnVideos, setReferEarnVideos] = useState({});
   const [userDetails, setUserDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   // New state for the language selection modal
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
@@ -139,6 +140,15 @@ const ReferAndEarn = ({ navigation }) => {
   }, [token]);
 
   useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Reset the state when the screen comes into focus
+      setShowDetails(false);
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
     const backAction = () => {
       if (shareModalVisible) {
         closeShareModal();
@@ -148,12 +158,16 @@ const ReferAndEarn = ({ navigation }) => {
         setIsLanguageModalVisible(false);
         return true;
       }
+      if (showDetails) {
+        setShowDetails(false);
+        return true;
+      }
       navigation.navigate('Home');
       return true;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
-  }, [shareModalVisible, isLanguageModalVisible, navigation]);
+  }, [shareModalVisible, isLanguageModalVisible, navigation, showDetails]);
 
   const ageOptions = [
     { label: "0-1 year", value: "0-1" },
@@ -174,7 +188,7 @@ const ReferAndEarn = ({ navigation }) => {
   };
 
   const onPressKnowMoreButton = () => {
-    navigation.navigate('Refer and Earn conditiions');
+    setShowDetails(true);
   };
 
   const onPressReferralHistoryBtn = () => {
@@ -564,10 +578,120 @@ const ReferAndEarn = ({ navigation }) => {
           </Text>
         </View>
 
-        <TouchableOpacity onPress={onPressKnowMoreButton} style={styles.linkButton}>
-          <Text style={styles.linkText}>Know more</Text>
-        </TouchableOpacity>
+        {!showDetails && (
+          <TouchableOpacity onPress={onPressKnowMoreButton} style={styles.linkButton}>
+            <Text style={styles.linkText}>Know more</Text>
+          </TouchableOpacity>
+        )}
+
+        {showDetails && (<View>
+          <View style={styles.sectionDivider} />
+          
+                  <View style={styles.importantDetailsBox}>
+          
+                     <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Processing & Bank Details</Text>
+          
+                   <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️</Text>  
+                         ️ Update your bank details after logging in to our website—this account will be used for your earning payout.
+                      </Text>
+          
+                      <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️</Text>  
+                         ️  Cashback is processed within 1 to 60 days depending on transaction volume and verification time.
+                      </Text>
+                  </View>
+          
+                   <View style={styles.sectionDivider} />
+                      <View style={styles.importantDetailsBox}>
+          
+                            <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
+                              International Payments & Charges
+                             </Text>
+          
+                          <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️</Text>  
+                         ️ For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
+                      </Text>
+          
+                      <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️</Text>  
+                         ️   The final amount credited depends on your bank’s deductions and exchange rates.
+                      </Text>
+                    </View>
+          
+                <View style={styles.sectionDivider} />
+                 
+                   <View style={styles.sectionDivider} />
+                  <View style={styles.importantDetailsBox}>
+          
+                        <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
+                             Tax & Compliance
+                          </Text>
+          
+                     <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️</Text>  
+                         ️ Referral income is considered commission income and is subject to Indian tax laws.
+                      </Text>
+          
+                      <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️</Text>  
+                         ️   Payouts may be withheld until PAN details are submitted to ensure tax compliance.
+                      </Text>
+          
+                    <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️</Text>  
+                         ️   A TDS (Tax Deducted at Source) of 5% has been deducted under Section 194H of the Income Tax Act, 
+                            1961. Payouts are made after tax deduction. 
+                            You may claim credit for this TDS when filing your income tax return
+                              {'\n'}{'\n'}
+                      </Text>
+          
+                     
+          
+                  <Text  style={styles.boldText}>For International Users:   {'\n'}</Text>
+          
+                    <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️ </Text>  
+                            You are responsible for reporting your referral income according to your local tax laws.
+                      </Text>
+          
+                 <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️ </Text>  
+                           We do not deduct or file international taxes on your behalf.
+                      </Text>
+                      
+                </View>
+          
+                <View style={styles.sectionDivider} />
+                  <View style={styles.importantDetailsBox}>
+          
+                        <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Important Notes
+                     </Text>
+          
+                      <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️ </Text>  
+                           AllrounderBaby does not offer tax advice. Please consult your tax advisor.
+                      </Text>
+          
+                      <Text style={styles.listItem}>
+                         <Text style={styles.boldText}>✔️ </Text>  
+                            By receiving referral earnings, you agree to our Terms of Use and Privacy Policy.
+                      </Text>
+          
+                      
+                </View>
+                 <View style={styles.sectionDivider} />
+                  <View style={styles.importantDetailsBox}>
+                    <Text style={[styles.listItem, { textAlign: 'center' }]}>
+                          <Text style={styles.boldText}>
+                            Science says children grow better with good friends—earn ₹3,000 / $30 by referring your child’s friends’ parents, and they get 10% OFF!
+                            </Text>
+                      </Text>
+                  </View>
+        </View>)}
       </ScrollView>
+      
 
       {/* Language Selection Modal */}
       {isLanguageModalVisible && selectedVideoGroup && (
