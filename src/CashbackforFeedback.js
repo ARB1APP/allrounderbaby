@@ -323,14 +323,12 @@ const CashbackforFeedback = () => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = useMemo(() => createCashbackStyles(theme), [theme]);
-
   const [token, setToken] = useState(null);
   const [userId, setUserID] = useState(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [cashbackVideos, setCashbackVideos] = useState({});
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [selectedVideoGroup, setSelectedVideoGroup] = useState(null);
-  
   const CASHBACK_FOLDER_ID = "3b7737b5e34740318231b0f1c0797b34";
 
   useEffect(() => {
@@ -438,17 +436,20 @@ const CashbackforFeedback = () => {
 
     setIsVideoLoading(true);
 
+    const sessionId = await AsyncStorage.getItem('sessionId');
+    const watermarkText = `User: ${userId} Video: ${videoId} Session: ${sessionId}`;
     const annotationObject = [{
       type: 'rtext',
-      text: '{AllRounderBaby}',
+      text: watermarkText,
       alpha: '0.60',
-      color: '0xFF0000',
-      size: '20',
+      color: '0xFFFFFF',
+      size: '16',
       interval: '5000',
     }];
 
     const requestBody = {
       userId: userId,
+      userId: userId, 
       videoId: videoId,
       annotate: JSON.stringify(annotationObject)
     };
@@ -487,6 +488,7 @@ const CashbackforFeedback = () => {
             poster: poster,
             total_time: total_time,
             cameFrom: 'Cashback for Feedback',
+            sessionId: sessionId,
           });
         }
       }
@@ -545,7 +547,7 @@ const CashbackforFeedback = () => {
       const videoGroup = {
         hindiVideo: hindiVideo ? { id: hindiVideo.id } : null,
         englishVideo: englishVideo ? { id: englishVideo.id } : null,
-        stepNumber: 'cashback', // Assign a unique key for the modal logic
+        stepNumber: 'cashback', 
       };
   
       setSelectedVideoGroup(videoGroup);

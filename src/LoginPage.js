@@ -79,10 +79,16 @@ const LoginPage = ({ navigation }) => {
             const data = await response.json();
 
             if (response.ok && data.data != null && data.code === 200) {
-                // 🔹 Always save token + userId (so session persists)
                 await AsyncStorage.setItem('token', data.data.token);
                 await AsyncStorage.setItem('userId', data.data.userID.toString());
-
+                const sessionId = Math.random().toString(36).substring(2, 15);
+                await AsyncStorage.setItem('sessionId', sessionId);
+                const { firstName, lastName, emailAddress, phoneNumber } = data.data || {};
+                if (firstName && lastName) {
+                    await AsyncStorage.setItem('Name', `${firstName} ${lastName}`);
+                }
+                if (emailAddress) await AsyncStorage.setItem('userEmail', emailAddress);
+                if (phoneNumber) await AsyncStorage.setItem('phoneNumber', phoneNumber);
                 console.log('userId', data.data.userID);
                 console.log('token', data.data.token);
                 if (rememberMe) {
@@ -90,7 +96,6 @@ const LoginPage = ({ navigation }) => {
                     await AsyncStorage.setItem('rememberedPassword', password);
                     await AsyncStorage.setItem('termsAccepted', 'true');
                     await AsyncStorage.setItem('rememberMePreference', 'true');
-                    // The token and userId are already saved above
                     console.log("Username and preference saved.");
                 } else {
                     await AsyncStorage.removeItem('rememberedUsername');
@@ -179,9 +184,9 @@ const LoginPage = ({ navigation }) => {
                         await AsyncStorage.removeItem('rememberedPassword');
                         await AsyncStorage.removeItem('termsAccepted');
                         await AsyncStorage.removeItem('rememberMePreference');
-                        // Clear all progress-related data as well
                         await AsyncStorage.removeItem('token');
-                        await AsyncStorage.removeItem('userId'); // Ensure userId is cleared
+                        await AsyncStorage.removeItem('sessionId');
+                        await AsyncStorage.removeItem('userId');
                         await AsyncStorage.removeItem('completedSteps');
                         await AsyncStorage.removeItem('topicCompletionTimes');
                         await AsyncStorage.removeItem('middleLevelCompletionTime');
@@ -190,25 +195,20 @@ const LoginPage = ({ navigation }) => {
                         setUsername('');
                         setPassword('');
                         setRememberMe(false);
-                        setTermsAccepted(true); // Reset to default
+                        setTermsAccepted(true);
 
                     } catch (error) {
                         console.error("Error during logout credential clearing:", error);
                         Alert.alert("Logout Error", "Failed to clear local credentials during logout.");
                     } finally {
-                        // This should be inside finally to ensure it runs
                         Alert.alert("Logged Out", "You have been successfully logged out.");
                         navigation.setParams({ logout: undefined });
-                        // If we were already loading, we might need to reset this
-                        if(isLoadingCredentials) setIsLoadingCredentials(false); 
+                        if (isLoadingCredentials) setIsLoadingCredentials(false);
                     }
                 }
             };
 
             handleLogout();
-
-            // Cleanup function is not strictly necessary here unless you need to specifically remove listeners,
-            // but useFocusEffect handles focus/blur cleanup.
             return () => {
             };
         }, [route.params?.logout])
@@ -325,13 +325,13 @@ const LoginPage = ({ navigation }) => {
                             </Text>
                         </Animated.View>
                         <Animated.View style={[styles.checkboxContainerSecond, { transform: [{ translateX: rememberMePosition }] }]}>
-                                <CheckBox
-                                    isChecked={rememberMe}
+                            <CheckBox
+                                isChecked={rememberMe}
                                 onClick={handleRememberMeChange}
-                                    checkBoxColor={isDarkMode ? '#2754f7ff' : 'rgba(20, 52, 164, 1)'}
-                                    checkedCheckBoxColor={isDarkMode ? '#2754f7ff' : 'rgba(20, 52, 164, 1)'}
-                                />
-                                <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>Remember me</Text>
+                                checkBoxColor={isDarkMode ? '#2754f7ff' : 'rgba(20, 52, 164, 1)'}
+                                checkedCheckBoxColor={isDarkMode ? '#2754f7ff' : 'rgba(20, 52, 164, 1)'}
+                            />
+                            <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>Remember me</Text>
                         </Animated.View>
                     </View>
                     <Animated.View style={styles.shakeContainer}>

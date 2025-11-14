@@ -23,7 +23,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
-// Assume these are defined elsewhere in your code
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
   cardBackground: '#FFFFFF',
@@ -109,8 +108,6 @@ const ReferAndEarn = ({ navigation }) => {
   const [referEarnVideos, setReferEarnVideos] = useState({});
   const [userDetails, setUserDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // New state for the language selection modal
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [selectedVideoGroup, setSelectedVideoGroup] = useState(null);
 
@@ -216,7 +213,6 @@ const ReferAndEarn = ({ navigation }) => {
   };
 
   const fetchReferEarnVideos = async (folderId) => {
-    // ... (Your existing fetchReferEarnVideos function)
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
       Alert.alert(
@@ -262,7 +258,6 @@ const ReferAndEarn = ({ navigation }) => {
   };
 
   const vdoCipher_api = async (videoId) => {
-    // ... (Your existing vdoCipher_api function)
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
       Alert.alert("No Internet Connection", "Please check your internet connection and try again.");
@@ -307,7 +302,6 @@ const ReferAndEarn = ({ navigation }) => {
   };
 
   const handleRefrealcode = async (currentToken, currentUserId) => {
-    // ... (Your existing handleRefrealcode function)
     const effectiveToken = currentToken || token;
     const effectiveUserId = currentUserId || userId;
     if (!effectiveToken || !effectiveUserId) {
@@ -369,21 +363,31 @@ const ReferAndEarn = ({ navigation }) => {
   };
 
   const handleVideoPlayback = async (videoId, language, title, poster) => {
-    // ... (Your existing handleVideoPlayback function)
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
       Alert.alert("No Internet Connection", "Please check your internet connection and try again.");
       return;
     }
+    if (!userId) {
+      Alert.alert("Authentication Error", "User ID not available for watermark. Please log in again.");
+      setIsVideoLoading(false);
+      return;
+    }
+
     setIsVideoLoading(true);
+
+    const sessionId = await AsyncStorage.getItem('sessionId');
+    const watermarkText = `User: ${userId} Video: ${videoId} Session: ${sessionId}`;
+    console.log("Watermark Text:", watermarkText);
+
     const annotationObject = [{
       type: 'rtext',
-      text: '{AllRounderBaby}',
+      text: watermarkText,
       alpha: '0.60',
-      color: '0xFF0000',
-      size: '20',
+      color: '0xFFFFFF',
+      size: '16',
       interval: '5000',
-    }, ];
+    }];
     const requestBody = {
       userId: userId,
       videoId: videoId,
@@ -418,6 +422,7 @@ const ReferAndEarn = ({ navigation }) => {
               poster: poster,
               total_time: total_time,
               cameFrom: 'Refer and Earn',
+              sessionId: sessionId,
             });
             setIsVideoLoading(false);
           }
@@ -436,7 +441,6 @@ const ReferAndEarn = ({ navigation }) => {
   };
 
   const playableReferEarnVideos = useMemo(() => {
-    // This function filters the videos to find the Hindi and English versions
     const videos = [];
     let englishItem = null;
     let hindiItem = null;
@@ -471,7 +475,6 @@ const ReferAndEarn = ({ navigation }) => {
     return videos;
   }, [referEarnVideos]);
 
-  // NEW HANDLER FUNCTION for the thumbnail click
   const handleThumbnailClickForReferAndEarn = () => {
     if (playableReferEarnVideos.length > 0) {
       const hindiVideo = playableReferEarnVideos.find(v => v.language === 'hindi');
@@ -480,7 +483,7 @@ const ReferAndEarn = ({ navigation }) => {
       const videoGroup = {
         hindiVideo: hindiVideo ? { id: hindiVideo.id } : null,
         englishVideo: englishVideo ? { id: englishVideo.id } : null,
-        stepNumber: 'refer-and-earn', // A unique key for this modal
+        stepNumber: 'refer-and-earn',
       };
 
       setSelectedVideoGroup(videoGroup);
@@ -494,8 +497,6 @@ const ReferAndEarn = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-
-        {/* ... (Your existing UI code for referral code, buttons, etc.) */}
         <View style={[styles.importantDetailsBox, { marginTop: 10 }]}>
           <Text style={styles.titleText}>Earn ₹3,000 / $30 every time</Text>
           <Text style={styles.titleText}>Refer a friend & they get 10% OFF</Text>
@@ -523,8 +524,6 @@ const ReferAndEarn = ({ navigation }) => {
           </View>
         </View>
         <View style={styles.sectionDivider} />
-
-        {/* This is the new clickable section for the video */}
         <View style={styles.importantDetailsBox}>
           <TouchableOpacity onPress={handleThumbnailClickForReferAndEarn}>
             <Text style={styles.contentParagraph}>
@@ -568,8 +567,6 @@ const ReferAndEarn = ({ navigation }) => {
           <Text style={styles.linkText}>Know more</Text>
         </TouchableOpacity>
       </ScrollView>
-
-      {/* Language Selection Modal */}
       {isLanguageModalVisible && selectedVideoGroup && (
         <Pressable style={styles.modalOverlay} onPress={() => setIsLanguageModalVisible(false)}>
           <Pressable style={styles.modalView} onPress={(e) => e.stopPropagation()}>
@@ -610,8 +607,6 @@ const ReferAndEarn = ({ navigation }) => {
           </Pressable>
         </Pressable>
       )}
-
-      {/* Existing share modal */}
       {shareModalVisible && (
         <Pressable style={styles.modalOverlay} onPress={closeShareModal}>
           <Pressable style={styles.modalView} onPress={(e) => e.stopPropagation()}>
@@ -655,8 +650,6 @@ const ReferAndEarn = ({ navigation }) => {
           </Pressable>
         </Pressable>
       )}
-
-      {/* ... (Your existing bottom navigation) */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
           <Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
@@ -664,7 +657,7 @@ const ReferAndEarn = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Cashback for Feedback')}>
           <Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint, textAlign:'center' }]}>Cashback for Feedback</Text>
+          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint, textAlign: 'center' }]}>Cashback for Feedback</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
           <Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: theme.bottomNavActiveTint }]} />
@@ -679,7 +672,6 @@ const ReferAndEarn = ({ navigation }) => {
   );
 };
 
-// Stylesheet definition
 const createReferAndEarnStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
@@ -715,7 +707,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  borderLine: { borderBottomWidth: 1,  borderBottomColor: theme.borderColorD, width: "100%", marginBottom: 15,},
+  borderLine: { borderBottomWidth: 1, borderBottomColor: theme.borderColorD, width: "100%", marginBottom: 15, },
   detailPoint: {
     fontSize: 15,
     lineHeight: 22,
@@ -851,7 +843,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     fontWeight: '600',
     color: theme.textPrimary,
   },
-     emphasisTexts: {
+  emphasisTexts: {
     fontWeight: '800',
     color: theme.textPrimary,
   },
@@ -999,11 +991,10 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
   },
   radioGroupTitle: {
     fontSize: 16,
-    // fontWeight: '500',
     color: theme.textSecondaryModal,
     marginBottom: 20,
     alignSelf: 'flex-start',
-    textAlign:'center',
+    textAlign: 'center',
   },
   radioGroupContainer: {
     width: '100%',
@@ -1060,7 +1051,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     fontSize: 15,
   },
   disabledButton: {
-    backgroundColor: 'gray', // Added for disabled state
+    backgroundColor: 'gray',
     opacity: 0.6
   }
 });
