@@ -38,10 +38,14 @@ const VideoPlayerScreen = () => {
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(route.params.total_time || 0);
+  const [displayUserId, setDisplayUserId] = useState(null);
+  const [userName, setUserName] = useState(null);
+  const [userEmail, setUserEmail] = useState(null);
+  const [userPhone, setUserPhone] = useState(null);
   const progressUpdated = useRef(false);
+  const [sessionId, setSessionId] = useState(route.params.sessionId || null);
 
   const updateVideoProgress = useCallback(async (isFinished) => {
-    // Prevent sending progress multiple times
     if (progressUpdated.current) return;
     progressUpdated.current = true;
 
@@ -55,24 +59,19 @@ const VideoPlayerScreen = () => {
     let currentViews = 0;
     let previousFinishCount = 0;
     try {
-        const savedProgress = await AsyncStorage.getItem('userProgress');
-        if (savedProgress) {
-            const progressData = JSON.parse(savedProgress);
-            const videoProgress = progressData.find(p => p.video_id === videoId);
-            if (videoProgress) {
-                currentViews = videoProgress.total_views || 0;
-                previousFinishCount = videoProgress.is_finished || 0;
-            }
+      const savedProgress = await AsyncStorage.getItem('userProgress');
+      if (savedProgress) {
+        const progressData = JSON.parse(savedProgress);
+        const videoProgress = progressData.find(p => p.video_id === videoId);
+        if (videoProgress) {
+          currentViews = videoProgress.total_views || 0;
+          previousFinishCount = videoProgress.is_finished || 0;
         }
+      }
     } catch (e) { console.error("Failed to get local video progress:", e); }
 
     const currentTimeInSeconds = Math.round(currentTime / 1000);
-    
-    // A video is considered finished if the 'isFinished' flag is true (from onEnded event)
-    // or if the playback is within the last 10 seconds of the total duration.
     const isNowConsideredFinished = isFinished || (totalDuration > 0 && currentTimeInSeconds >= totalDuration - 10);
-
-    // is_finished is treated as a counter for how many times the video has been completed.
     const newFinishCount = isNowConsideredFinished ? previousFinishCount + 1 : previousFinishCount;
 
     const payload = {
@@ -80,41 +79,38 @@ const VideoPlayerScreen = () => {
       video_id: videoId,
       last_watched_timestamp_seconds: currentTimeInSeconds,
       Language: language,
-      is_finished: newFinishCount, // This is a finish counter
+      is_finished: newFinishCount,
       level_step: step,
       total_time: totalDuration,
       total_views: currentViews + 1,
-      otp: otp, 
+      otp: otp,
       playback: playbackInfo,
       stage_name: stage_name + " " + step,
     };
-    
+
     console.log("Attempting to update video progress with payload:", payload);
 
     try {
       const endpoint = `${url}User/User_Video_Data`;
-      const response = await fetch(endpoint, { 
-        method: 'POST', 
-        headers: { 
-          'Accept': 'application/json', 
-          'Content-Type': 'application/json', 
-          'Authorization': `Bearer ${token}` 
-        }, 
-        body: JSON.stringify(payload) 
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
       });
 
       const responseData = await response.json();
       console.log('API Response from User_Video_Data:', responseData);
-
-      // Check for both HTTP success and API success code
       if (response.ok && responseData.code === 200) {
         console.log("Successfully updated video progress on server.");
-        // Update local cache after successful server update
         try {
           const savedProgress = await AsyncStorage.getItem('userProgress');
           let progressData = savedProgress ? JSON.parse(savedProgress) : [];
           const videoIndex = progressData.findIndex(p => p.video_id === videoId);
-          
+
           if (videoIndex > -1) {
             progressData[videoIndex].total_views = payload.total_views;
             progressData[videoIndex].is_finished = payload.is_finished;
@@ -124,17 +120,16 @@ const VideoPlayerScreen = () => {
           }
           await AsyncStorage.setItem('userProgress', JSON.stringify(progressData));
           console.log("Local userProgress cache updated.");
-        } catch (e) { 
-          console.error("Failed to update local userProgress cache:", e); 
+        } catch (e) {
+          console.error("Failed to update local userProgress cache:", e);
         }
       } else {
-        // Handle API errors or HTTP errors
         const errorMessage = responseData.message || `HTTP Error: ${response.status}`;
         console.error("Failed to update video progress on server:", errorMessage);
         Alert.alert("Sync Error", `Could not save video progress to the server: ${errorMessage}`);
       }
-    } catch (e) { 
-      console.error("A network error occurred while updating video progress:", e); 
+    } catch (e) {
+      console.error("A network error occurred while updating video progress:", e);
       Alert.alert("Network Error", "A network error occurred while saving your progress. Please check your connection.");
     }
   }, [progressUpdated, videoId, currentTime, language, step, totalDuration, otp, playbackInfo]);
@@ -143,10 +138,26 @@ const VideoPlayerScreen = () => {
     useCallback(() => {
       setIsLoading(true);
       setError(null);
-      progressUpdated.current = false; // Reset progress flag for new video
+      progressUpdated.current = false;
+
+      const fetchUserData = async () => {
+        const id = await AsyncStorage.getItem('userId');
+        setDisplayUserId(id);
+        const name = await AsyncStorage.getItem('Name');
+        setUserName(name);
+        const email = await AsyncStorage.getItem('userEmail');
+        setUserEmail(email);
+        const phone = await AsyncStorage.getItem('phoneNumber');
+        setUserPhone(phone);
+      };
+      const fetchSessionId = async () => {
+        const sid = await AsyncStorage.getItem('sessionId');
+        if (!sessionId) setSessionId(sid);
+      };
+      fetchSessionId();
+      fetchUserData();
 
       return () => {
-        // The backAction will handle the progress update on back press.
         if (playerRef.current) {
           try {
             if (typeof playerRef.current.pause === 'function') {
@@ -173,7 +184,7 @@ const VideoPlayerScreen = () => {
     await updateVideoProgress(false);
     Orientation.lockToPortrait();
     if (cameFrom === 'Dashboard') {
-      navigation.navigate('Home'); 
+      navigation.navigate('Home');
     } else if (cameFrom) {
       navigation.navigate(cameFrom);
     } else {
@@ -224,7 +235,6 @@ const VideoPlayerScreen = () => {
   }, [navigation, cameFrom, backAction]);
 
   const handleInitializationSuccess = useCallback(() => {
-    // Player is ready, but we wait for onLoaded to hide the spinner
   }, []);
 
   const handleProgress = useCallback((progress) => {
@@ -249,7 +259,7 @@ const VideoPlayerScreen = () => {
       <View style={[styles.container, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter, justifyContent: 'center', alignItems: 'center' }]}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={isDarkMode ? Colors.darker : Colors.lighter} />
         <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
-         The video details (OTP or playback information) are missing. Please back up and try restarting.
+          The video details (OTP or playback information) are missing. Please back up and try restarting.
         </Text>
       </View>
     );
@@ -258,14 +268,6 @@ const VideoPlayerScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: 'black' }]}>
       <StatusBar barStyle='light-content' backgroundColor='black' />
-
-      {/* {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#FFFFFF" />
-          <Text style={styles.loadingText}>Loading Video...</Text>
-        </View>
-      )} */}
-
       {error && !isLoading ? (
         <View style={[styles.errorContainer, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
           <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
@@ -292,6 +294,19 @@ const VideoPlayerScreen = () => {
           onPlayerStateChanged={handlePlayerStateChange}
         />
       )}
+      <View style={{
+        position: 'absolute',
+        top: 10,
+        left: 10,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        padding: 5,
+        borderRadius: 3
+      }}>
+        <Text style={{ color: 'white' }}>Name: {userName}</Text>
+        <Text style={{ color: 'white' }}>Email: {userEmail}</Text>
+        <Text style={{ color: 'white' }}>Phone: {userPhone}</Text>
+        <Text style={{ color: 'white' }}>sessionId : {sessionId}</Text>
+      </View>
     </View>
   );
 };
