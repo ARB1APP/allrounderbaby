@@ -233,12 +233,18 @@ const App = () => {
       try {
         const token = await AsyncStorage.getItem('token');
         const userId = await AsyncStorage.getItem('userId');
+        const deviceKey = await AsyncStorage.getItem('deviceKey');
         if (!userId) {
           console.log('userId not found in AsyncStorage. Clearing local session anyway.');
           await clearLocalSessionAndNavigate();
           return;
         }
-        const endpoint = `${url}/Login/LogoutMobileUser?userid=${userId}`;
+        if (!deviceKey) {
+          console.warn('deviceKey not found in AsyncStorage. Clearing local session anyway.');
+          await clearLocalSessionAndNavigate();
+          return;
+        }
+        const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceKey)}`;
         const response = await fetch(endpoint, {
           headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
         });

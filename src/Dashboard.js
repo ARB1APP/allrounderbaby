@@ -267,9 +267,14 @@ const Dashboard = ({ navigation }) => {
 
         loadInitialData();
 
-        const unsubscribe = navigation.addListener('focus', () => {
+           const unsubscribe = navigation.addListener('focus', () => {
             loadInitialData();
-        });
+        // const unsubscribe = navigation.addListener('focus', async () => {
+        //     const cameFromVideo = navigation.getState().routes.some(route => route.name === 'VideoPlayerScreen');
+        //     if (cameFromVideo) {
+        //         await loadCompletedSteps();
+        //     }
+        }); 
 
         return unsubscribe;
     }, [navigation]);
@@ -297,7 +302,8 @@ const Dashboard = ({ navigation }) => {
 
     const fetchUserProgress = async (userId, token) => {
         try {
-            const endpoint = `${url}User/User_Deshboard_Data?id=${userId}`;
+            const deviceKey = await AsyncStorage.getItem('deviceKey');
+            const endpoint = `${url}User/User_Deshboard_Data?id=${userId}&DeviceKey=${deviceKey}`;
             const response = await fetch(endpoint, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -477,7 +483,7 @@ const Dashboard = ({ navigation }) => {
         return true;
     };
     const arePrerequisitesMet = async (categoryKey) => {
-debugger;
+        const deviceKey = await AsyncStorage.getItem('deviceKey');
         const config = masterConfig[categoryKey];
         if (!config) return false;
         console.log(`Checking prerequisites for category: ${categoryKey}`);
@@ -502,7 +508,7 @@ debugger;
                 const lastStepOfPrereq = prereqConfig.finalGroupedData[prereqConfig.finalGroupedData.length - 1];
                 const lastStepNumber = lastStepOfPrereq.stepNumber;
 
-                const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}`;
+                const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}&DeviceKey=${deviceKey}`;
                 try {
                     const response = await fetch(DETAILS_ENDPOINT, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
 
@@ -518,9 +524,10 @@ debugger;
                                 const hoursSinceCompletion = (new Date() - completionDate) / (1000 * 60 * 60);
                                 if (hoursSinceCompletion < lockDurationHours) {
                                     const hoursRemaining = Math.ceil(lockDurationHours - hoursSinceCompletion);
-                                    Alert.alert("Topic Locked", `Great progress! Your next topic will unlock in ${lockDurationHours} hours. Use this time to practice what you’ve learned so far.  Your next Topic is now unlocked. Start watching!
-`);
+                                    Alert.alert("Topic Locked", `Great progress! Your next topic will unlock in ${lockDurationHours} hours. Use this time to practice what you’ve learned so far.`);
                                     return false;
+                                } else {
+                                    Alert.alert("Topic Unlocked!", `Your next Topic is now unlocked. Start watching!`);
                                 }
                             }
                         }
@@ -592,7 +599,8 @@ debugger;
     };
 
     const handleVideo = async (videoId, step, language) => {
-       
+        const deviceKey = await AsyncStorage.getItem('deviceKey');
+
         if (step !== 90 && step !== 91) {
             const stepGroup = selectedStepGroup;
             const hindiVideoId = stepGroup?.hindiVideo?.id;
@@ -602,7 +610,7 @@ debugger;
             try {
                 const videoIdsForStep = [hindiVideoId, englishVideoId].filter(Boolean);
                 for (const id of videoIdsForStep) {
-                    const endpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${id}`;
+                    const endpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${id}&DeviceKey=${deviceKey}`;
                     const response = await fetch(endpoint, {
                         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
                     });
@@ -618,7 +626,7 @@ debugger;
                     Alert.alert("Limit Reached", ' You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.');
                     return;
                 }
-                const specificVideoEndpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${videoId}`;
+                const specificVideoEndpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${videoId}&DeviceKey=${deviceKey}`;
                 const specificVideoResponse = await fetch(specificVideoEndpoint, {
                     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
                 });
@@ -648,6 +656,7 @@ debugger;
         setIsModalVisible(false);
         setIsVideoLoading(true);
         let total_time = 0;
+        debugger;
         try {
             const videoDetails = await vdoCipherApi(videoId);
             if (videoDetails && videoDetails.length) {
@@ -656,10 +665,29 @@ debugger;
                 console.warn(`Could not fetch video duration for videoId: ${videoId}. Defaulting to 0.`);
             }
 
+            const name = await AsyncStorage.getItem('Name') || 'N/A';
+            const email = await AsyncStorage.getItem('userEmail') || 'N/A';
+            const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
+            const sessionId = await AsyncStorage.getItem('sessionId');
+            const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
+            const annotationObject = [{
+                type: 'rtext',
+                text: watermarkText,
+                alpha: '0.60',
+                color: '0xFFFFFF',
+                size: '16',
+                interval: '5000',
+            }];
+            const requestBody = {
+                UserId: parseInt(userId, 10),
+                VideoId: videoId,
+                annotate: JSON.stringify(annotationObject)
+            };
+
             const response = await fetch(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
                 method: 'POST',
                 headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ userId, videoId, annotate: JSON.stringify([{ type: 'rtext', text: '{AllRounderBaby}' }]) }),
+                body: JSON.stringify(requestBody),
             });
             if (!response.ok) { throw new Error("Video not found or failed to get OTP."); }
             const data = await response.json();
@@ -775,6 +803,7 @@ debugger;
     };
 
     const handleLevelPress = async (level) => {
+        const deviceKey = await AsyncStorage.getItem('deviceKey');
         if (!dataLoaded) {
             console.log("Data is still loading. Please wait.");
             Alert.alert("Loading...", "Please wait until your progress is fully loaded.");
@@ -801,11 +830,10 @@ debugger;
                     setIsVideoLoading(false);
                 }
             }
-            return true; // Indicates data is ready
+            return true; 
         };
 
         const checkAndLoadPrerequisites = async (keys, levelName) => {
-            // Check if video data for the prerequisite level is loaded. If not, fetch it.
             const dataFetchPromises = keys
                 .filter(key => !videoData[key]?.rows?.length)
                 .map(key => fetchVideos(masterConfig[key].folderIds || [masterConfig[key].folderId]).then(details => ({ key, details })));
@@ -828,7 +856,7 @@ debugger;
             }
 
             const allPrereqSteps = keys.flatMap(key => masterConfig[key]?.finalGroupedData.map(g => `step${g.stepNumber}`) || []);
-           
+
             const areAllPrereqsCompleted = allPrereqSteps.every(stepKey => completedSteps[stepKey]);
 
             if (!areAllPrereqsCompleted) {
@@ -847,8 +875,7 @@ debugger;
             await loadLevelVideos(foundationKeys);
             const lastStepOfMiddle = "49";
             if (lastStepOfMiddle > 0) {
-                debugger;
-                const endpoint = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepOfMiddle}`;
+                const endpoint = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepOfMiddle}&DeviceKey=${deviceKey}`;
                 try {
                     const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
                     if (response.ok) {
@@ -866,13 +893,13 @@ debugger;
             }
             setActiveLevel(level);
         }
-         if (level === 'middle') {
+        if (level === 'middle') {
             const foundationComplete = await checkAndLoadPrerequisites(foundationKeys, 'Foundation');
             if (foundationComplete) {
                 await loadLevelVideos(middleKeys);
                 const StepOfAdvance = "84";
                 if (StepOfAdvance > 0) {
-                    const endpoint = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${StepOfAdvance}`;
+                    const endpoint = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${StepOfAdvance}&DeviceKey=${deviceKey}`;
                     try {
                         const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
                         if (response.ok) {
@@ -888,9 +915,9 @@ debugger;
                         }
                     } catch (error) { console.error("Could not check foundation lock time", error); }
                 }
-                setActiveLevel(level);
+            setActiveLevel(level);
             }
-            return;
+             return;
         }
         if (level === 'advanced') {
             const foundationComplete = await checkAndLoadPrerequisites(foundationKeys, 'Foundation');
@@ -936,7 +963,7 @@ debugger;
         <View style={[styles.container, backgroundStyle]}>
             <View style={styles.imageContainer}>
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(1)}><Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}><Image source={require('../img/Intro1.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlay}><Text style={styles.text}>Introduction I</Text></View></Animated.View></TouchableOpacity>
+                    <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(1)}><Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 5 }]}><Image source={require('../img/Intro1.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlay}><Text style={styles.text}>Introduction I</Text></View></Animated.View></TouchableOpacity>
                     <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(2)}><Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}><Image source={require('../img/Intro2.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlay}><Text style={styles.text}>Introduction II</Text></View></Animated.View></TouchableOpacity>
                     <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('foundation')}><Animated.View style={[styles.button, { transform: [{ scale: scale1 }], marginTop: 10 }]}><Image source={require('../img/foundationlevel.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlayTwo}><Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity: 0 }]} /><Text style={styles.text}>Foundation Level</Text><Animated.Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity }]} resizeMode="cover" /></View></Animated.View></TouchableOpacity>
                     <Animated.Image source={require('../img/tap.png')} style={[styles.handImage, { opacity: handOpacity, transform: [{ translateX: handPositionX }, { translateY: handPositionY }, { scale: handScale }] }]} resizeMode="contain" pointerEvents="none" />
@@ -957,7 +984,7 @@ const styles = StyleSheet.create({
     imageContainer: { flex: 1, flexDirection: 'column', alignItems: 'center', paddingVertical: 10, gap: 10 },
     button: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
     buttonNested: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
-    image: { width: width - 20, height: height / 2, borderRadius: 5, },
+    image: { width: width - 20, height: 250, resizeMode: 'center', borderRadius: 5, },
     imagenested: { width: width - 48, height: height / 2.8, borderRadius: 5, },
     textOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, },
     lockedDropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)' },

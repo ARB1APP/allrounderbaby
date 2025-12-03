@@ -38,12 +38,7 @@ const VideoPlayerScreen = () => {
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(route.params.total_time || 0);
-  const [displayUserId, setDisplayUserId] = useState(null);
-  const [userName, setUserName] = useState(null);
-  const [userEmail, setUserEmail] = useState(null);
-  const [userPhone, setUserPhone] = useState(null);
   const progressUpdated = useRef(false);
-  const [sessionId, setSessionId] = useState(route.params.sessionId || null);
 
   const updateVideoProgress = useCallback(async (isFinished) => {
     if (progressUpdated.current) return;
@@ -51,6 +46,7 @@ const VideoPlayerScreen = () => {
 
     const userId = await AsyncStorage.getItem('userId');
     const token = await AsyncStorage.getItem('token');
+    const deviceKey = await AsyncStorage.getItem('deviceKey');
     if (!userId || !token) {
       console.log("User not logged in, cannot save progress.");
       return;
@@ -86,6 +82,7 @@ const VideoPlayerScreen = () => {
       otp: otp,
       playback: playbackInfo,
       stage_name: stage_name + " " + step,
+      deviceKey: deviceKey,
     };
 
     console.log("Attempting to update video progress with payload:", payload);
@@ -139,23 +136,6 @@ const VideoPlayerScreen = () => {
       setIsLoading(true);
       setError(null);
       progressUpdated.current = false;
-
-      const fetchUserData = async () => {
-        const id = await AsyncStorage.getItem('userId');
-        setDisplayUserId(id);
-        const name = await AsyncStorage.getItem('Name');
-        setUserName(name);
-        const email = await AsyncStorage.getItem('userEmail');
-        setUserEmail(email);
-        const phone = await AsyncStorage.getItem('phoneNumber');
-        setUserPhone(phone);
-      };
-      const fetchSessionId = async () => {
-        const sid = await AsyncStorage.getItem('sessionId');
-        if (!sessionId) setSessionId(sid);
-      };
-      fetchSessionId();
-      fetchUserData();
 
       return () => {
         if (playerRef.current) {
@@ -294,19 +274,6 @@ const VideoPlayerScreen = () => {
           onPlayerStateChanged={handlePlayerStateChange}
         />
       )}
-      <View style={{
-        position: 'absolute',
-        top: 10,
-        left: 10,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        padding: 5,
-        borderRadius: 3
-      }}>
-        <Text style={{ color: 'white' }}>Name: {userName}</Text>
-        <Text style={{ color: 'white' }}>Email: {userEmail}</Text>
-        <Text style={{ color: 'white' }}>Phone: {userPhone}</Text>
-        <Text style={{ color: 'white' }}>sessionId : {sessionId}</Text>
-      </View>
     </View>
   );
 };

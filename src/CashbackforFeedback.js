@@ -436,8 +436,11 @@ const CashbackforFeedback = () => {
 
     setIsVideoLoading(true);
 
+    const name = await AsyncStorage.getItem('Name') || 'N/A';
+    const email = await AsyncStorage.getItem('userEmail') || 'N/A';
+    const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
     const sessionId = await AsyncStorage.getItem('sessionId');
-    const watermarkText = `User: ${userId} Video: ${videoId} Session: ${sessionId}`;
+    const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
     const annotationObject = [{
       type: 'rtext',
       text: watermarkText,
@@ -448,9 +451,8 @@ const CashbackforFeedback = () => {
     }];
 
     const requestBody = {
-      userId: userId,
-      userId: userId, 
-      videoId: videoId,
+      UserId: parseInt(userId, 10),
+      VideoId: videoId,
       annotate: JSON.stringify(annotationObject)
     };
 
