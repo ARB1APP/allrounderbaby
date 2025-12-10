@@ -10,12 +10,10 @@ const TermsofService = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-      console.log('Hardware back press detected');
       if (navigation.canGoBack()) {
-        console.log('Navigating back');
         navigation.navigate('My Profile');
       } else {
-        console.log('Cannot go back, staying on screen or navigating to Home');
+
       }
       return true;
     };
@@ -26,7 +24,6 @@ const TermsofService = ({ navigation }) => {
     );
 
     return () => {
-      console.log('Removing back handler');
       backHandler.remove();
       StatusBar.setHidden(false);
     };
@@ -1154,16 +1151,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   hilite: {
-    backgroundColor: '#FFFACD', // A nice light yellow color (Lemon Chiffon)
-    padding: 15, // Add some padding for better aesthetics
-    borderRadius: 8, // Slightly rounded corners
-    margin: 10, // Add some margin around the container
+    backgroundColor: '#FFFACD',
+    padding: 15,
+    borderRadius: 8, 
+    margin: 10, 
   },
   leadTextss: {
-    // You can keep your existing styles for leadTextss here
     fontSize: 16,
     marginBottom: 8,
-    color: '#333', // Darker text color for better contrast
+    color: '#333', 
   },
 });
 

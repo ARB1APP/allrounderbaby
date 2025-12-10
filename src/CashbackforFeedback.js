@@ -19,6 +19,7 @@ import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
+import LinearGradient from 'react-native-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
@@ -98,6 +99,16 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     fontWeight: '400',
     color: theme.textPrimary,
     lineHeight: 24,
+  },
+  gradientHeaderText: {
+    fontSize: 17,
+    textAlign: 'center',
+    fontWeight: '600',
+    color: '#1A202C', // Force dark text for readability on light gradient
+    lineHeight: 24,
+  },
+  gradientHeaderSubText: {
+    fontWeight: '400',
   },
   Thumbnail: {
     fontSize: 16,
@@ -322,6 +333,7 @@ const CashbackforFeedback = () => {
   const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
+  const isDarkMode = colorScheme === 'dark';
   const styles = useMemo(() => createCashbackStyles(theme), [theme]);
   const [token, setToken] = useState(null);
   const [userId, setUserID] = useState(null);
@@ -329,6 +341,7 @@ const CashbackforFeedback = () => {
   const [cashbackVideos, setCashbackVideos] = useState({});
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [selectedVideoGroup, setSelectedVideoGroup] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
   const CASHBACK_FOLDER_ID = "3b7737b5e34740318231b0f1c0797b34";
 
   useEffect(() => {
@@ -436,8 +449,11 @@ const CashbackforFeedback = () => {
 
     setIsVideoLoading(true);
 
+    const name = await AsyncStorage.getItem('Name') || 'N/A';
+    const email = await AsyncStorage.getItem('userEmail') || 'N/A';
+    const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
     const sessionId = await AsyncStorage.getItem('sessionId');
-    const watermarkText = `User: ${userId} Video: ${videoId} Session: ${sessionId}`;
+    const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
     const annotationObject = [{
       type: 'rtext',
       text: watermarkText,
@@ -448,9 +464,8 @@ const CashbackforFeedback = () => {
     }];
 
     const requestBody = {
-      userId: userId,
-      userId: userId, 
-      videoId: videoId,
+      UserId: parseInt(userId, 10),
+      VideoId: videoId,
       annotate: JSON.stringify(annotationObject)
     };
 
@@ -536,7 +551,7 @@ const CashbackforFeedback = () => {
   }, [cashbackVideos]);
 
   const onPressKnowMoreButton = () => {
-    navigation.navigate('Cashback for Feedback Conditions');
+    setShowDetails(!showDetails);
   };
 
   const handleThumbnailClick = () => {
@@ -561,20 +576,21 @@ const CashbackforFeedback = () => {
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-
-        <View style={[styles.importantDetailsBox, { marginTop: 10, marginBottom: 10 }]}>
-          <Text style={styles.headerTitle}>Get ₹1,000 / $10 Cashback </Text>
-          <Text style={styles.headerTitle}>
-            <Text style={styles.headerTitl}>for your genuine</Text> Feedback!
+        <LinearGradient
+          colors={['#FFF8E5', '#FFFDEB']}
+          style={[styles.importantDetailsBox, { marginTop: 10, marginBottom: 10 }]}>
+          <Text style={styles.gradientHeaderText}>You get ₹1,000 / $10 Cashback </Text>
+          <Text style={styles.gradientHeaderText}>
+            <Text style={styles.gradientHeaderSubText}>for your genuine</Text> Feedback!
           </Text>
-        </View>
+        </LinearGradient>
         <View style={styles.sectionDivider} />
 
         <View style={styles.importantDetailsBox}>
           <TouchableOpacity onPress={handleThumbnailClick}>
             <Text style={styles.introParagraph}>
               <Text style={styles.Thumbnail}>One video window – Full width thumbnail will be provided</Text>
-              {'\n'}{'\n'}
+              {'\n'}
               <Text style={styles.emphasisTexts}>Upon click it will ask Hindi / English</Text>
             </Text>
           </TouchableOpacity>
@@ -605,8 +621,107 @@ const CashbackforFeedback = () => {
           </Text>
         </View>
 
+        {showDetails && (
+          <View style={styles.sectionLinkDivider} >
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+                       <Text  style={[
+                                styles.sectionHeader,
+                                { color: isDarkMode ? '#fff' : '#1434a4' }
+                            ]}>Submission & Review Process</Text>
+                   <Text style={styles.subListItem}>
+                      <Text style={styles.emphasisText}>✔️ 
+                        </Text> Feedback  must be submitted after logging in to our website .
+                    </Text>
+                    <Text style={styles.subListItem}>
+                      <Text style={styles.emphasisText}>✔️ 
+                         </Text> Our team will review and verify yourfeedback before 
+                              approval. 
+                    </Text>
+                    <Text style={styles.subListItem}>
+                      <Text style={styles.emphasisText}>✔️ 
+                        </Text> Cashback is issued only if the feedback is detailed, genuine, and approved.
+                        <Text style={styles.emphasisText}></Text>
+                    </Text>
+                    </View>
+                    <View style={styles.sectionDivider} />
+                    <View style={styles.importantDetailsBox}>
+                       <Text  style={[
+                                styles.sectionHeader,
+                                { color: isDarkMode ? '#fff' : '#1434a4' }
+                            ]}>Bank Account & Payment Processing</Text>
+                   <Text style={styles.subListItem}>
+                     <Text style={styles.emphasisText}>✔️ </Text> 
+                      Update your bank details after logging in to our website—this account will be used for your cashback payout.
+                    </Text>
+                    <Text style={styles.subListItem}>
+                      <Text style={styles.emphasisText}>✔️ </Text> 
+                      Cashback is processed within 1 to 60 days after approval.
+                    </Text>
+                    </View>
+                <View style={styles.sectionDivider} />
+                     <View style={styles.importantDetailsBox}>
+                       <Text  style={[
+                                styles.sectionHeader,
+                                { color: isDarkMode ? '#fff' : '#1434a4' }
+                            ]}>International Participants</Text>
+                     <Text style={styles.subListItem}>
+                       <Text style={styles.emphasisText}>✔️ </Text> 
+                        For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
+                    </Text>
+                    <Text style={styles.subListItem}>
+                        <Text style={styles.emphasisText}>✔️ </Text> 
+                        The final amount credited depends on your bank’s deductions and exchange rates.
+                    </Text>
+                    </View>
+                <View style={styles.sectionDivider} />
+                       <View style={styles.importantDetailsBox}>
+                       <Text  style={[
+                                styles.sectionHeader,
+                                { color: isDarkMode ? '#fff' : '#1434a4' }
+                            ]}>Tax & Compliance</Text>
+                    <Text style={styles.subListItem}>
+                          <Text style={styles.emphasisText}>✔️ </Text> 
+                           No TDS will be deducted under Section 194J of the Indian Income Tax Act, subject to applicable rules.
+                    </Text> 
+                      <Text style={styles.subListItem}>{'\n'}
+                          <Text style={styles.emphasisText}>For International Users:</Text> 
+                    </Text>
+                       <Text style={styles.subListItem}>
+                           <Text style={styles.emphasisText}>✔️ </Text> 
+                           You are responsible for reporting and paying taxes in accordance with your local tax regulations.
+                    </Text>
+                    <Text style={styles.subListItem}>
+                           <Text style={styles.emphasisText}>✔️ </Text> 
+                           Cashback is treated as commission income and may be taxable under the laws of your country.
+                    </Text>
+                    </View>
+                <View style={styles.sectionDivider} />
+              <View style={styles.importantDetailsBox}>
+                       <Text  style={[
+                                styles.sectionHeader,
+                                { color: isDarkMode ? '#fff' : '#1434a4' }
+                            ]}>Important Notes</Text>
+                      <Text style={styles.subListItem}>
+                           <Text style={styles.emphasisText}>✔️ </Text> 
+                           AllrounderBaby does not offer tax advice. Please consult your tax advisor.
+                    </Text>
+                        <Text style={styles.subListItem}>
+                           <Text style={styles.emphasisText}>✔️ </Text> 
+                          By submitting feedback, you agree to our Terms of Use and Privacy Policy.
+                    </Text>
+                    </View>
+                 <View style={styles.sectionDivider} />
+                    <View style={styles.importantDetailsBox}>
+                      <Text style={styles.finalCallToAction}>
+                        Your feedback matters! Help us improve and get rewarded with cashback up to ₹1,000 / $10
+                      </Text>
+                    </View>
+          </View>
+        )}
+
         <TouchableOpacity onPress={onPressKnowMoreButton} style={styles.linkButton}>
-          <Text style={styles.linkText}>Know more</Text>
+          <Text style={styles.linkText}>{showDetails ? 'Know less' : 'Know more'}</Text>
         </TouchableOpacity>
 
       </ScrollView>

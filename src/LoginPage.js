@@ -41,6 +41,16 @@ const LoginPage = ({ navigation }) => {
     const handleRememberMeChange = () => setRememberMe((prev) => !prev);
 
     const handlePress = async () => {
+        const getDeviceId = async () => {
+            let deviceId = await AsyncStorage.getItem('deviceId');
+            if (!deviceId) {
+                deviceId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+                await AsyncStorage.setItem('deviceId', deviceId);
+            }
+            return deviceId;
+           
+        };
+
         setIsLoggingIn(true);
         try {
             setUsernameError('');
@@ -72,37 +82,33 @@ const LoginPage = ({ navigation }) => {
                 return;
             }
 
-            const API_URL = `${url}Login/LoginMobileUser?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
-            console.log("Attempting to login with URL:", API_URL);
-
+            const deviceId = await getDeviceId();
+            const API_URL = `${url}Login/LoginMobileUser?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&deviceId=${encodeURIComponent(deviceId)}`;
             const response = await fetch(API_URL);
             const data = await response.json();
 
-            if (response.ok && data.data != null && data.code === 200) {
+            if (response.ok && data?.data && data.code === 200) {
                 await AsyncStorage.setItem('token', data.data.token);
                 await AsyncStorage.setItem('userId', data.data.userID.toString());
                 const sessionId = Math.random().toString(36).substring(2, 15);
                 await AsyncStorage.setItem('sessionId', sessionId);
-                const { firstName, lastName, emailAddress, phoneNumber } = data.data || {};
+                const { firstName, lastName, emailAddress, phoneNumber, deviceKey } = data.data || {};
                 if (firstName && lastName) {
                     await AsyncStorage.setItem('Name', `${firstName} ${lastName}`);
                 }
                 if (emailAddress) await AsyncStorage.setItem('userEmail', emailAddress);
                 if (phoneNumber) await AsyncStorage.setItem('phoneNumber', phoneNumber);
-                console.log('userId', data.data.userID);
-                console.log('token', data.data.token);
+                if (deviceKey) await AsyncStorage.setItem('deviceKey', deviceKey);
                 if (rememberMe) {
                     await AsyncStorage.setItem('rememberedUsername', username);
                     await AsyncStorage.setItem('rememberedPassword', password);
                     await AsyncStorage.setItem('termsAccepted', 'true');
                     await AsyncStorage.setItem('rememberMePreference', 'true');
-                    console.log("Username and preference saved.");
                 } else {
                     await AsyncStorage.removeItem('rememberedUsername');
                     await AsyncStorage.removeItem('rememberedPassword');
                     await AsyncStorage.removeItem('termsAccepted');
                     await AsyncStorage.removeItem('rememberMePreference');
-                    console.log("Username and preference removed.");
                 }
 
                 if (navigation) {
@@ -178,14 +184,14 @@ const LoginPage = ({ navigation }) => {
             const handleLogout = async () => {
 
                 if (route.params?.logout) {
-                    console.log("Logout action detected in LoginPage. Clearing all stored credentials.");
-                    try {
+                     try {
                         await AsyncStorage.removeItem('rememberedUsername');
                         await AsyncStorage.removeItem('rememberedPassword');
                         await AsyncStorage.removeItem('termsAccepted');
                         await AsyncStorage.removeItem('rememberMePreference');
                         await AsyncStorage.removeItem('token');
                         await AsyncStorage.removeItem('sessionId');
+                        await AsyncStorage.removeItem('deviceKey');
                         await AsyncStorage.removeItem('userId');
                         await AsyncStorage.removeItem('completedSteps');
                         await AsyncStorage.removeItem('topicCompletionTimes');

@@ -67,14 +67,21 @@ const Profile = ({ navigation }) => {
                     try {
             const token = await AsyncStorage.getItem('token');
             const userId = await AsyncStorage.getItem('userId');
+            const deviceKey = await AsyncStorage.getItem('deviceKey');
 
             if (!userId) {
                 console.warn('userId not found in AsyncStorage. Clearing local session anyway.');
                 await clearLocalSessionAndNavigate();
                 return;
             }
+            if (!deviceKey) {
+                console.warn('deviceKey not found in AsyncStorage. Clearing local session anyway.');
+                await clearLocalSessionAndNavigate();
+                return;
+            }
 
-            const endpoint = `${url}Login/LogoutMobileUser?userid=${userId}`;
+
+            const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceKey)}`;
             const response = await fetch(endpoint, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -114,13 +121,11 @@ const Profile = ({ navigation }) => {
             ];
 
             if (rememberPreference !== 'true') {
-                // If "Remember Me" is not active, also remove credential and preference keys
                 keysToRemove.push('rememberedUsername', 'rememberedPassword', 'termsAccepted', 'rememberMePreference');
             }
 
             await AsyncStorage.multiRemove(keysToRemove);
             
-            console.log('User session data cleared from AsyncStorage.');
             navigation.dispatch(
                 CommonActions.reset({
                     index: 0,

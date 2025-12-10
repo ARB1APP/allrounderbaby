@@ -214,13 +214,11 @@ const PrivacyPolicy = ({ navigation }) => {
   ];
      useEffect(() => {
             const backAction = () => {
-                console.log('Hardware back press detected');
                 if (navigation.canGoBack()) {
-                    console.log('Navigating back');
                     navigation.navigate('My Profile');
                 } else {
-                    console.log('Cannot go back, staying on screen or navigating to Home');
-                }
+
+                  }
                 return true;
             };
     
@@ -230,7 +228,6 @@ const PrivacyPolicy = ({ navigation }) => {
             );
     
             return () => {
-                console.log('Removing back handler');
                 backHandler.remove();
                 StatusBar.setHidden(false);
             };
@@ -944,7 +941,7 @@ const PrivacyPolicy = ({ navigation }) => {
       <Text>
         <Text style={{ fontWeight: 'bold' }}>Address:</Text>{' '}
         <Text
-          style={{ color: 'blue', textDecorationLine: 'underline' }} // Applying link-like style to address for consistency
+          style={{ color: 'blue', textDecorationLine: 'underline' }} 
         >
           Flat A 304 Royal City, Potiya Road, Durg - 491001, Chattisgarh, India
         </Text>

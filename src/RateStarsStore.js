@@ -10,12 +10,9 @@ const RateStarsStore = ({ navigation }) => {
 
   useEffect(() => {
             const backAction = () => {
-                console.log('Hardware back press detected');
                 if (navigation.canGoBack()) {
-                    console.log('Navigating back');
                     navigation.navigate('My Profile');
                 } else {
-                    console.log('Cannot go back, staying on screen or navigating to Home');
                 }
                 return true;
             };
@@ -26,7 +23,6 @@ const RateStarsStore = ({ navigation }) => {
             );
     
             return () => {
-                console.log('Removing back handler');
                 backHandler.remove();
                 StatusBar.setHidden(false);
             };

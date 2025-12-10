@@ -21,6 +21,7 @@ import {
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import LinearGradient from 'react-native-linear-gradient';
 const { width, height } = Dimensions.get('window');
 
 const lightThemeColors = {
@@ -110,6 +111,7 @@ const ReferAndEarn = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [selectedVideoGroup, setSelectedVideoGroup] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const REFER_EARN_FOLDER_ID = "9ebe21e5639c440c930ba642a07d0a0b";
 
@@ -171,7 +173,7 @@ const ReferAndEarn = ({ navigation }) => {
   };
 
   const onPressKnowMoreButton = () => {
-    navigation.navigate('Refer and Earn conditiions');
+    setShowDetails(!showDetails);
   };
 
   const onPressReferralHistoryBtn = () => {
@@ -203,9 +205,7 @@ const ReferAndEarn = ({ navigation }) => {
     try {
       const result = await Share.share({ message: shareMessage });
       if (result.action === Share.sharedAction) {
-        console.log('Code shared!', result.activityType ? `Via: ${result.activityType}` : '');
       } else if (result.action === Share.dismissedAction) {
-        console.log('Share dismissed');
       }
     } catch (error) {
       Alert.alert('Error', 'An error occurred while sharing: ' + error.message);
@@ -246,7 +246,6 @@ const ReferAndEarn = ({ navigation }) => {
         return null;
       }
       const videoDetails = await response.json();
-      console.log("Raw API Response for Refer & Earn Videos:", videoDetails);
       setReferEarnVideos(videoDetails);
       return videoDetails;
     } catch (error) {
@@ -305,12 +304,10 @@ const ReferAndEarn = ({ navigation }) => {
     const effectiveToken = currentToken || token;
     const effectiveUserId = currentUserId || userId;
     if (!effectiveToken || !effectiveUserId) {
-      console.log("handleRefrealcode: Token or User ID not available for fetching referral code. Skipping API call.");
       setIsLoading(false);
       return;
     }
     const DETAILS_ENDPOINT = `${url}User/getUsersDetails_By_ID?userid=${effectiveUserId}`;
-    console.log(`handleRefrealcode: Attempting to fetch from: ${DETAILS_ENDPOINT}`);
     setIsLoading(true);
     try {
       const response = await fetch(DETAILS_ENDPOINT, {
@@ -320,7 +317,6 @@ const ReferAndEarn = ({ navigation }) => {
           'Accept': 'application/json'
         }
       });
-      console.log(`handleRefrealcode: API Response Status: ${response.status} ${response.statusText}`);
       if (!response.ok) {
         let errorData;
         const responseText = await response.text();
@@ -338,18 +334,14 @@ const ReferAndEarn = ({ navigation }) => {
         return;
       }
       const jsonResponse = await response.json();
-      console.log("handleRefrealcode: Parsed JSON response for user details:", jsonResponse);
       if (Array.isArray(jsonResponse) && jsonResponse.length > 0) {
         setUserDetails(jsonResponse[0]);
         if (jsonResponse[0].referal_Code) {
           setCode(jsonResponse[0].referal_Code);
-          console.log("handleRefrealcode: Referral code successfully set:", jsonResponse[0].referal_Code);
         } else {
-          console.log("handleRefrealcode: 'referal_Code' property not found in user details response, or is null/empty.");
           setCode("N/A");
         }
       } else {
-        console.log("handleRefrealcode: User data not found or format is invalid (not an array or empty array).");
         Alert.alert("Data Error", "User data not found or format is invalid.");
         setCode("N/A");
       }
@@ -376,9 +368,11 @@ const ReferAndEarn = ({ navigation }) => {
 
     setIsVideoLoading(true);
 
+    const name = await AsyncStorage.getItem('Name') || 'N/A';
+    const email = await AsyncStorage.getItem('userEmail') || 'N/A';
+    const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
     const sessionId = await AsyncStorage.getItem('sessionId');
-    const watermarkText = `User: ${userId} Video: ${videoId} Session: ${sessionId}`;
-    console.log("Watermark Text:", watermarkText);
+    const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
 
     const annotationObject = [{
       type: 'rtext',
@@ -389,8 +383,8 @@ const ReferAndEarn = ({ navigation }) => {
       interval: '5000',
     }];
     const requestBody = {
-      userId: userId,
-      videoId: videoId,
+      UserId: parseInt(userId, 10),
+      VideoId: videoId,
       annotate: JSON.stringify(annotationObject)
     };
     try {
@@ -471,7 +465,6 @@ const ReferAndEarn = ({ navigation }) => {
         length: hindiItem.length
       });
     }
-    console.log("Playable Refer & Earn Videos after filtering:", videos);
     return videos;
   }, [referEarnVideos]);
 
@@ -497,10 +490,12 @@ const ReferAndEarn = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={[styles.importantDetailsBox, { marginTop: 10 }]}>
-          <Text style={styles.titleText}>Earn ₹3,000 / $30 every time</Text>
-          <Text style={styles.titleText}>Refer a friend & they get 10% OFF</Text>
-        </View>
+        <LinearGradient
+          colors={['#FFF8E5', '#FFFDEB']}
+          style={[styles.importantDetailsBox, { marginTop: 10, color: isDarkMode ? '#fff' : '#003366'}]}>
+          <Text style={styles.gradientTitleText}>You earn ₹3,000 / $30 every time</Text>
+          <Text style={styles.gradientTitleText}>Refer a friend & they get 10% OFF</Text>
+        </LinearGradient>
         <View style={styles.sectionDivider} />
         <View style={styles.importantDetailsBox}>
           <Text style={[styles.referralCodeLabel, { color: isDarkMode ? '#fff' : '#1434a4' }]}>Your Referral Code</Text>
@@ -529,7 +524,7 @@ const ReferAndEarn = ({ navigation }) => {
             <Text style={styles.contentParagraph}>
               <Text style={styles.introParagraph}>
                 <Text style={styles.Thumbnail}>One video window – full width thumbnail will be provided</Text>
-                {'\n'}{'\n'}
+                {'\n'}
                 <Text style={styles.emphasisTexts}>Upon click it will ask Hindi / English</Text>
               </Text>
             </Text>
@@ -563,10 +558,121 @@ const ReferAndEarn = ({ navigation }) => {
           </Text>
         </View>
 
+      
+        {showDetails && (
+          <View style={styles.sectionLinkDivider}>
+            <View style={styles.sectionDivider} />
+            
+                    <View style={styles.importantDetailsBox}>
+            
+                       <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Processing & Bank Details</Text>
+            
+                     <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️</Text>  
+                           ️ Update your bank details after logging in to our website—this account will be used for your earning payout.
+                        </Text>
+            
+                        <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️</Text>  
+                           ️  Cashback is processed within 1 to 60 days depending on transaction volume and verification time.
+                        </Text>
+                    </View>
+            
+                     <View style={styles.sectionDivider} />
+                        <View style={styles.importantDetailsBox}>
+            
+                              <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
+                                International Payments & Charges
+                               </Text>
+            
+                            <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️</Text>  
+                           ️ For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
+                        </Text>
+            
+                        <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️</Text>  
+                           ️   The final amount credited depends on your bank’s deductions and exchange rates.
+                        </Text>
+                      </View>
+            
+                  <View style={styles.sectionDivider} />
+                   
+                     <View style={styles.sectionDivider} />
+                    <View style={styles.importantDetailsBox}>
+            
+                          <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
+                               Tax & Compliance
+                            </Text>
+            
+                       <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️</Text>  
+                           ️ Referral income is considered commission income and is subject to Indian tax laws.
+                        </Text>
+            
+                        <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️</Text>  
+                           ️   Payouts may be withheld until PAN details are submitted to ensure tax compliance.
+                        </Text>
+            
+                      <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️</Text>  
+                           ️   A TDS (Tax Deducted at Source) of 5% has been deducted under Section 194H of the Income Tax Act, 
+                              1961. Payouts are made after tax deduction. 
+                              You may claim credit for this TDS when filing your income tax return
+                                {'\n'}{'\n'}
+                        </Text>
+            
+                       
+            
+                    <Text  style={styles.boldText}>For International Users:   {'\n'}</Text>
+            
+                      <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️ </Text>  
+                              You are responsible for reporting your referral income according to your local tax laws.
+                        </Text>
+            
+                   <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️ </Text>  
+                             We do not deduct or file international taxes on your behalf.
+                        </Text>
+                        
+                  </View>
+            
+                  <View style={styles.sectionDivider} />
+                    <View style={styles.importantDetailsBox}>
+            
+                          <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Important Notes
+                       </Text>
+            
+                        <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️ </Text>  
+                             AllrounderBaby does not offer tax advice. Please consult your tax advisor.
+                        </Text>
+            
+                        <Text style={styles.listItem}>
+                           <Text style={styles.boldText}>✔️ </Text>  
+                              By receiving referral earnings, you agree to our Terms of Use and Privacy Policy.
+                        </Text>
+            
+                        
+                  </View>
+                   <View style={styles.sectionDivider} />
+                    <View style={styles.importantDetailsBox}>
+                      <Text style={[styles.listItem, { textAlign: 'center' }]}>
+                            <Text style={styles.boldText}>
+                              Science says – “Your child grows better with good friends”
+                              REFER your child’s friends’ parents ! 
+                              </Text>
+                        </Text>
+                    </View>
+          </View>
+        )}
+
         <TouchableOpacity onPress={onPressKnowMoreButton} style={styles.linkButton}>
-          <Text style={styles.linkText}>Know more</Text>
+          <Text style={styles.linkText}>{showDetails ? 'Know less' : 'Know more'}</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </ScrollView> 
       {isLanguageModalVisible && selectedVideoGroup && (
         <Pressable style={styles.modalOverlay} onPress={() => setIsLanguageModalVisible(false)}>
           <Pressable style={styles.modalView} onPress={(e) => e.stopPropagation()}>
@@ -691,7 +797,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     fontWeight: '600',
   },
   importantDetailsBox: {
-    marginHorizontal: 20,
+    marginHorizontal: 40,
     marginTop: 0,
     padding: 15,
     backgroundColor: theme.cardBackground,
@@ -707,7 +813,12 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  borderLine: { borderBottomWidth: 1, borderBottomColor: theme.borderColorD, width: "100%", marginBottom: 15, },
+  borderLine: { 
+    borderBottomWidth: 1, 
+    borderBottomColor: 
+    theme.borderColorD, 
+    width: "100%",
+    marginBottom: 15, },
   detailPoint: {
     fontSize: 15,
     lineHeight: 22,
@@ -736,6 +847,16 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     color: theme.textPrimary,
     lineHeight: 24,
   },
+  gradientTitleText: {
+    fontSize: 17,
+    textAlign: 'center',
+    marginHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    fontWeight: '600',
+    color: '#1A202C',
+    lineHeight: 24,
+  },
   sectionDivider: {
     height: 1,
     backgroundColor: theme.borderColor,
@@ -745,15 +866,15 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
   referralCodeLabel: {
     textAlign: 'center',
     fontWeight: '600',
-    fontSize: 20,
-    marginTop: 10,
+    fontSize: 18,
+    marginTop: 0,
     marginBottom: 10,
   },
   referralCodeDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
+    marginVertical: 0,
   },
   referralCodeText: {
     fontSize: 18,
@@ -774,17 +895,19 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginHorizontal: 20,
-    marginVertical: 20,
+    marginVertical: 10,
   },
   primaryButton: {
     flex: 1,
     backgroundColor: theme.primaryAction,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 8,
+    height: 35,
     alignItems: 'center',
     marginHorizontal: 5,
     elevation: theme.elevation / 2,
     shadowColor: theme.bottomNavShadowColor,
+   
     shadowOffset: {
       width: 0,
       height: 2
@@ -795,8 +918,10 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
   secondaryButton: {
     flex: 1,
     backgroundColor: theme.cardBackground,
-    paddingVertical: 12,
+   paddingVertical: 7,
     borderRadius: 8,
+    height: 35,
+    width: 10,
     borderWidth: 1,
     borderColor: theme.secondaryActionBorder,
     alignItems: 'center',
@@ -805,12 +930,12 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
   buttonTextPrimary: {
     color: theme.primaryActionText,
     fontWeight: '600',
-    fontSize: 15,
+    fontSize: 12,
   },
   buttonTextSecondary: {
     color: theme.secondaryActionText,
     fontWeight: '600',
-    fontSize: 15,
+    fontSize: 12,
   },
   lastUpdatedText: {
     textAlign: 'center',

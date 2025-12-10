@@ -385,14 +385,12 @@ const MyEarnings = ({ navigation }) => {
           if (storedToken && storedUserId) {
             setUserID(storedUserId);
             setToken(storedToken);
-            // Fetch all data in parallel for better performance
             await Promise.all([
               handleBankDetails(storedToken, storedUserId),
               handleEarningDetails(storedToken, storedUserId),
               handleFeedbackEarnings(storedToken, storedUserId)
             ]);
           } else {
-            console.log("No token or userId found. Skipping API calls.");
           }
         } catch (error) {
           console.error("Failed to load data from storage", error);
@@ -414,12 +412,10 @@ const MyEarnings = ({ navigation }) => {
 
   const handleBankDetails = async (token, userId) => {
     if (!userId || !token) {
-      console.log("handleBankDetails: Token or User ID not available. Skipping API call.");
-      return;
+       return;
     }
 
     const DETAILS_ENDPOINT = `${url}MyProfile/MyProfileDetails_Get_ByID?UserID=${userId}`;
-    console.log(`handleBankDetails: Attempting to fetch from: ${DETAILS_ENDPOINT}`);
     setIsLoading(true);
 
     try {
@@ -438,8 +434,6 @@ const MyEarnings = ({ navigation }) => {
       }
 
       const result = await response.json();
-      console.log("handleBankDetails: Parsed JSON response for bank details:", result);
-
       if (result && result.data) {
         const details = {
           country: result.data.country,
@@ -457,8 +451,7 @@ const MyEarnings = ({ navigation }) => {
         };
         setBankDetails(details);
       } else {
-        console.log("handleBankDetails: Bank data not found or format is invalid (missing 'data' property).");
-        setBankDetails(null);
+         setBankDetails(null);
       }
     } catch (error) {
       console.error("handleBankDetails: Network or unexpected error:", error);
@@ -470,13 +463,11 @@ const MyEarnings = ({ navigation }) => {
 
   const handleEarningDetails = async (token, userId) => {
     if (!userId || !token) {
-      console.log("handleEarningDetails: Token or User ID not available for fetching earning details. Skipping API call.");
-      return;
+       return;
     }
 
     const DETAILS_ENDPOINT = `${url}ReferralTransaction/ReferralTransactionList_Get_ByID?ReferralCodeFromUserID=${userId}`;
-    console.log(`handleEarningDetails: Attempting to fetch from: ${DETAILS_ENDPOINT}`);
-
+ 
     try {
       const response = await fetch(DETAILS_ENDPOINT, {
         method: 'GET',
@@ -502,8 +493,6 @@ const MyEarnings = ({ navigation }) => {
       }
 
       const jsonResponse = await response.json();
-      console.log("handleEarningDetails: Parsed JSON response for earning details:", jsonResponse);
-
       if (jsonResponse && Array.isArray(jsonResponse.data) && jsonResponse.data.length > 0) {
         const referralTransactions = jsonResponse.data;
 
@@ -523,10 +512,8 @@ const MyEarnings = ({ navigation }) => {
 
         if (referralTransactions.length > 0 && referralTransactions[0].referralCodeName) {
           setCode(referralTransactions[0].referralCodeName);
-          console.log("handleEarningDetails: Referral code successfully set from earning details:", referralTransactions[0].referralCodeName);
-        } else {
-          console.log("handleEarningDetails: 'referralCodeName' property not found in earning details response 'data' object item, or is null/empty.");
-          if (code === "Login Req." || code === "") setCode("N/A");
+         } else {
+           if (code === "Login Req." || code === "") setCode("N/A");
         }
 
       } else if (jsonResponse && jsonResponse.data && !Array.isArray(jsonResponse.data)) {
@@ -537,8 +524,7 @@ const MyEarnings = ({ navigation }) => {
         setPendingReferralCount(0);
         if (code === "Login Req." || code === "") setCode("N/A");
       } else {
-        console.log("handleEarningDetails: Earning data not found or format is invalid (missing 'data' property or empty array).");
-        setReferralCount(0);
+         setReferralCount(0);
         setEarningsPerReferral(3000);
         setPendingReferralCount(0);
         if (code === "Login Req." || code === "") setCode("N/A");
@@ -557,13 +543,11 @@ const MyEarnings = ({ navigation }) => {
 
   const handleFeedbackEarnings = async (currentToken, currentUserId) => {
     if (!currentUserId || !currentToken) {
-      console.log("handleFeedbackEarnings: Token or User ID not available. Skipping API call.");
-      return;
+       return;
     }
 
     const FEEDBACK_ENDPOINT = `${url}MyProfile/cashback-processed?userId=${currentUserId}`;
-    console.log(`handleFeedbackEarnings: Attempting to fetch from: ${FEEDBACK_ENDPOINT}`);
-
+ 
     try {
       const response = await fetch(FEEDBACK_ENDPOINT, {
         method: 'GET',
@@ -580,16 +564,12 @@ const MyEarnings = ({ navigation }) => {
       }
 
       const jsonResponse = await response.json();
-      console.log("handleFeedbackEarnings: Parsed JSON response for feedback details:", jsonResponse);
-      if (jsonResponse.code === 200) {
+        if (jsonResponse.code === 200) {
         setFeedbackEarnings('1000.00');
-        console.log("handleFeedbackEarnings: Feedback earnings set to 1000 based on code 200.");
       } else if (jsonResponse.code === 404) {
         setFeedbackEarnings('0.00');
-        console.log("handleFeedbackEarnings: Feedback earnings set to 0 based on code 404.");
       } else {
-        console.log("handleFeedbackEarnings: Unexpected response code for feedback earnings. Defaulting to 0.");
-        setFeedbackEarnings('0.00');
+         setFeedbackEarnings('0.00');
       }
 
     } catch (error) {

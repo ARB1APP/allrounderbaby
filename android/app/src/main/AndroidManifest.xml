@@ -8,7 +8,7 @@
     
 
     <application
-      android:name=".MainApplication"
+      android:name="com.allrounderbaby.MainApplication"
       android:label="@string/app_name"
       android:icon="@mipmap/ic_launcher"
       android:roundIcon="@mipmap/ic_launcher_round"
@@ -16,7 +16,7 @@
       android:theme="@style/AppTheme"
       android:supportsRtl="true">
       <activity
-        android:name=".MainActivity"
+        android:name="com.allrounderbaby.MainActivity"
         android:supportsPictureInPicture="true"
         android:label="@string/app_name"
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
@@ -29,8 +29,8 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
-       <service
-        android:name=".VdoPlayerForegroundService"
+      <service
+       android:name="com.allrounderbaby.app.VdoPlayerForegroundService"
         android:foregroundServiceType="mediaPlayback"
         android:exported="false" />
     </application>

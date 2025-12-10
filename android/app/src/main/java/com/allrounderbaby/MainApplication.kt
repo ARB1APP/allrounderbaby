@@ -1,6 +1,7 @@
 package com.allrounderbaby
 
 import android.app.Application
+import com.allrounderbaby.app.BuildConfig
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
