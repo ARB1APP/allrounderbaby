@@ -112,7 +112,7 @@ const Dashboard = ({ navigation }) => {
     const [completedSteps, setCompletedSteps] = useState({});
     const [openCategory, setOpenCategory] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [activeLevel, setActiveLevel] = useState(null); // 'foundation', 'middle', 'advanced'
+    const [activeLevel, setActiveLevel] = useState(null); 
     const [selectedStepGroup, setSelectedStepGroup] = useState(null);
     const [topicCompletionTimes, setTopicCompletionTimes] = useState({});
     const [unlockedStepsThreshold, setUnlockedStepsThreshold] = useState(0);
@@ -269,11 +269,6 @@ const Dashboard = ({ navigation }) => {
 
            const unsubscribe = navigation.addListener('focus', () => {
             loadInitialData();
-        // const unsubscribe = navigation.addListener('focus', async () => {
-        //     const cameFromVideo = navigation.getState().routes.some(route => route.name === 'VideoPlayerScreen');
-        //     if (cameFromVideo) {
-        //         await loadCompletedSteps();
-        //     }
         }); 
 
         return unsubscribe;
@@ -294,7 +289,6 @@ const Dashboard = ({ navigation }) => {
             const newCompletionTimes = { ...topicCompletionTimes, [categoryKey]: completionTime };
             setTopicCompletionTimes(newCompletionTimes);
             await AsyncStorage.setItem('topicCompletionTimes', JSON.stringify(newCompletionTimes));
-            console.log(`Updated completion time for ${categoryKey} to ${completionTime}`);
         } catch (error) {
             console.error("Failed to save topic completion time:", error);
         }
@@ -330,8 +324,7 @@ const Dashboard = ({ navigation }) => {
                 result.data.forEach(item => {
                     if (item.total_views > 0) {
                         newCompletedSteps[`step${item.level_step}`] = true;
-                        console.log(`Marking step${item.level_step} as completed`);
-                        if (item.level_step > highestCompletedStep) {
+                       if (item.level_step > highestCompletedStep) {
                             highestCompletedStep = item.level_step;
                         }
                     }
@@ -453,13 +446,11 @@ const Dashboard = ({ navigation }) => {
                 if (!response.ok) throw new Error(`Failed to fetch videos for folder ${folderId}`);
                 const data = await response.json();
                 if (data && data.rows) { allVideos.rows.push(...data.rows); }
-                console.log(`Fetched ${data?.rows?.length || 0} videos from folder ${folderId}:`, data);
             } catch (error) {
                 console.error(`Error fetching videos from folder ${folderId}:`, error);
                 Alert.alert("API Error", `Could not load some videos. Please check your connection and try again. Details: ${error.message}`);
             }
         }
-        console.log('Final combined video list for the category:', allVideos);
         return allVideos;
 
     };
@@ -467,7 +458,6 @@ const Dashboard = ({ navigation }) => {
     const ensureCategoryDataIsLoaded = async (categoryKey) => {
         const config = masterConfig[categoryKey];
         if (config && !videoData[categoryKey]?.rows?.length) {
-            console.log(`Data for ${categoryKey} is missing, fetching...`);
             setIsVideoLoading(true);
             const videoDetails = await fetchVideos(config.folderIds || [config.folderId]);
             setIsVideoLoading(false);
@@ -486,9 +476,7 @@ const Dashboard = ({ navigation }) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
         const config = masterConfig[categoryKey];
         if (!config) return false;
-        console.log(`Checking prerequisites for category: ${categoryKey}`);
-        console.log('Current completed steps:', Object.keys(completedSteps).filter(k => completedSteps[k]));
-        if (config.prerequisiteCategory) {
+         if (config.prerequisiteCategory) {
             const prereqConfig = masterConfig[config.prerequisiteCategory];
             if (prereqConfig) {
                 const isPrereqDataLoaded = await ensureCategoryDataIsLoaded(config.prerequisiteCategory);
@@ -507,7 +495,7 @@ const Dashboard = ({ navigation }) => {
 
                 const lastStepOfPrereq = prereqConfig.finalGroupedData[prereqConfig.finalGroupedData.length - 1];
                 const lastStepNumber = lastStepOfPrereq.stepNumber;
-
+console.log(userId, lastStepNumber, deviceKey);
                 const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}&DeviceKey=${deviceKey}`;
                 try {
                     const response = await fetch(DETAILS_ENDPOINT, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
@@ -544,7 +532,6 @@ const Dashboard = ({ navigation }) => {
 
     const handleCategoryPress = async (categoryKey) => {
         if (!dataLoaded) {
-            console.log("Data still loading, wait...");
             Alert.alert("Please wait", "Loading progress data...");
             return;
         }
@@ -656,7 +643,6 @@ const Dashboard = ({ navigation }) => {
         setIsModalVisible(false);
         setIsVideoLoading(true);
         let total_time = 0;
-        debugger;
         try {
             const videoDetails = await vdoCipherApi(videoId);
             if (videoDetails && videoDetails.length) {
@@ -709,8 +695,7 @@ const Dashboard = ({ navigation }) => {
                         setMiddleLevelCompletionTime(completionTime);
                         try {
                             await AsyncStorage.setItem('middleLevelCompletionTime', completionTime.toISOString());
-                            console.log('Middle level completion time saved:', completionTime.toISOString());
-                        } catch (error) {
+                       } catch (error) {
                             console.error('Failed to save middle level completion time:', error);
                         }
                     }
@@ -722,15 +707,12 @@ const Dashboard = ({ navigation }) => {
                         setAdvancedLevelCompletionTime(completionTime);
                         try {
                             await AsyncStorage.setItem('advancedLevelCompletionTime', completionTime.toISOString());
-                            console.log('Advanced level completion time saved:', completionTime.toISOString());
-                        } catch (error) {
+                       } catch (error) {
                             console.error('Failed to save advanced level completion time:', error);
                         }
                     }
                 }
             }
-
-            console.log("stage name", openCategory);
             navigation.navigate('VideoPlayerScreen', {
                 id: videoId,
                 otp: data.otp,
@@ -746,8 +728,6 @@ const Dashboard = ({ navigation }) => {
         } finally {
             setIsVideoLoading(false);
         }
-
-        console.log('Video ID:', videoId);
     };
 
     const vdoCipherApi = async (videoId) => {
@@ -805,7 +785,6 @@ const Dashboard = ({ navigation }) => {
     const handleLevelPress = async (level) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
         if (!dataLoaded) {
-            console.log("Data is still loading. Please wait.");
             Alert.alert("Loading...", "Please wait until your progress is fully loaded.");
             return;
         }

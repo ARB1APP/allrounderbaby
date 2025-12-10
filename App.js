@@ -181,7 +181,6 @@ const App = () => {
       try {
         const firstTime = await AsyncStorage.getItem('first_time_opened');
         const token = await AsyncStorage.getItem('token');
-        console.log("firstTime", firstTime);
         if (!firstTime) {
           setInitialRoute('Splash');
         } else if (token) {
@@ -213,7 +212,6 @@ const App = () => {
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('userId');
       await AsyncStorage.removeItem('username');
-      console.log('User session data cleared from AsyncStorage.');
       if (navigationRef.isReady()) {
         navigationRef.dispatch(
         CommonActions.reset({
@@ -235,12 +233,10 @@ const App = () => {
         const userId = await AsyncStorage.getItem('userId');
         const deviceKey = await AsyncStorage.getItem('deviceKey');
         if (!userId) {
-          console.log('userId not found in AsyncStorage. Clearing local session anyway.');
-          await clearLocalSessionAndNavigate();
+         await clearLocalSessionAndNavigate();
           return;
         }
         if (!deviceKey) {
-          console.warn('deviceKey not found in AsyncStorage. Clearing local session anyway.');
           await clearLocalSessionAndNavigate();
           return;
         }
@@ -250,7 +246,6 @@ const App = () => {
         });
         if (!response.ok) {
           const errorText = await response.text();
-          console.log('Server-side logout failed:', errorText);
           Alert.alert("Logout Warning", "Failed to log out from the server. Your local session has been cleared.");
         }
         await clearLocalSessionAndNavigate();

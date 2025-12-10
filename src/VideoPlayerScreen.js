@@ -48,7 +48,6 @@ const VideoPlayerScreen = () => {
     const token = await AsyncStorage.getItem('token');
     const deviceKey = await AsyncStorage.getItem('deviceKey');
     if (!userId || !token) {
-      console.log("User not logged in, cannot save progress.");
       return;
     }
 
@@ -85,8 +84,6 @@ const VideoPlayerScreen = () => {
       deviceKey: deviceKey,
     };
 
-    console.log("Attempting to update video progress with payload:", payload);
-
     try {
       const endpoint = `${url}User/User_Video_Data`;
       const response = await fetch(endpoint, {
@@ -100,9 +97,7 @@ const VideoPlayerScreen = () => {
       });
 
       const responseData = await response.json();
-      console.log('API Response from User_Video_Data:', responseData);
       if (response.ok && responseData.code === 200) {
-        console.log("Successfully updated video progress on server.");
         try {
           const savedProgress = await AsyncStorage.getItem('userProgress');
           let progressData = savedProgress ? JSON.parse(savedProgress) : [];
@@ -116,7 +111,6 @@ const VideoPlayerScreen = () => {
             progressData.push({ video_id: videoId, total_views: payload.total_views, is_finished: payload.is_finished, level_step: payload.level_step });
           }
           await AsyncStorage.setItem('userProgress', JSON.stringify(progressData));
-          console.log("Local userProgress cache updated.");
         } catch (e) {
           console.error("Failed to update local userProgress cache:", e);
         }

@@ -47,7 +47,6 @@ const LoginPage = ({ navigation }) => {
                 deviceId = Date.now().toString(36) + Math.random().toString(36).substring(2);
                 await AsyncStorage.setItem('deviceId', deviceId);
             }
-              console.log('Login :', deviceId);
             return deviceId;
            
         };
@@ -85,8 +84,6 @@ const LoginPage = ({ navigation }) => {
 
             const deviceId = await getDeviceId();
             const API_URL = `${url}Login/LoginMobileUser?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&deviceId=${encodeURIComponent(deviceId)}`;
-            console.log("Attempting to login with URL:", API_URL);
-
             const response = await fetch(API_URL);
             const data = await response.json();
 
@@ -102,21 +99,16 @@ const LoginPage = ({ navigation }) => {
                 if (emailAddress) await AsyncStorage.setItem('userEmail', emailAddress);
                 if (phoneNumber) await AsyncStorage.setItem('phoneNumber', phoneNumber);
                 if (deviceKey) await AsyncStorage.setItem('deviceKey', deviceKey);
-                console.log('Login successful:', data.data.deviceKey);
-                console.log('userId', data.data.userID);
-                console.log('token', data.data.token);
                 if (rememberMe) {
                     await AsyncStorage.setItem('rememberedUsername', username);
                     await AsyncStorage.setItem('rememberedPassword', password);
                     await AsyncStorage.setItem('termsAccepted', 'true');
                     await AsyncStorage.setItem('rememberMePreference', 'true');
-                    console.log("Username and preference saved.");
                 } else {
                     await AsyncStorage.removeItem('rememberedUsername');
                     await AsyncStorage.removeItem('rememberedPassword');
                     await AsyncStorage.removeItem('termsAccepted');
                     await AsyncStorage.removeItem('rememberMePreference');
-                    console.log("Username and preference removed.");
                 }
 
                 if (navigation) {
@@ -192,8 +184,7 @@ const LoginPage = ({ navigation }) => {
             const handleLogout = async () => {
 
                 if (route.params?.logout) {
-                    console.log("Logout action detected in LoginPage. Clearing all stored credentials.");
-                    try {
+                     try {
                         await AsyncStorage.removeItem('rememberedUsername');
                         await AsyncStorage.removeItem('rememberedPassword');
                         await AsyncStorage.removeItem('termsAccepted');

@@ -77,14 +77,13 @@ const ReferralHistory = ({ navigation }) => {
 
   const fetchReferralHistory = async (currentToken, currentUserId) => {
     if (!currentToken || !currentUserId) {
-      console.log("Skipping fetchReferralHistory: Token or User ID is missing.");
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     const API_ENDPOINT = `${url}ReferralTransaction/ReferralTransactionList_Get_ByID?ReferralCodeFromUserID=${currentUserId}`;
-    console.log(`Fetching referral history from: ${API_ENDPOINT}`);
+  
 
     try {
       const response = await fetch(API_ENDPOINT, {
@@ -95,7 +94,6 @@ const ReferralHistory = ({ navigation }) => {
         },
       });
 
-      console.log(`ReferralHistory API Response Status: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
         let errorData;
@@ -112,18 +110,14 @@ const ReferralHistory = ({ navigation }) => {
       }
 
       const jsonResponse = await response.json();
-      console.log("ReferralHistory Raw API Response:", jsonResponse);
 
       if (jsonResponse && Array.isArray(jsonResponse.data)) {
         if (jsonResponse.data.length > 0) {
           setReferralHistory(jsonResponse.data);
-          console.log("Referral history data successfully set.");
         } else {
-          console.log("API returned data array, but it's empty.");
           setReferralHistory([]);
         }
       } else {
-        console.log("API response does not contain a 'data' array or is in an unexpected format.");
         setReferralHistory([]);
       }
 
@@ -139,10 +133,8 @@ const ReferralHistory = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-      console.log('Hardware back press detected on ReferralHistory screen');
-      // Let the default back action occur
       navigation.goBack();
-      return true; // Prevent default OS back behavior
+      return true; 
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -151,7 +143,6 @@ const ReferralHistory = ({ navigation }) => {
     );
 
     return () => {
-      console.log('Removing back handler on ReferralHistory screen unmount');
       backHandler.remove();
       StatusBar.setHidden(false);
     };

@@ -1,4 +1,4 @@
-package com.allrounderbaby;
+package com.allrounderbaby.app;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import com.allrounderbaby.MainActivity;
 
 public class VdoPlayerForegroundService extends Service {
 

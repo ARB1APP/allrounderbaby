@@ -121,13 +121,11 @@ const Profile = ({ navigation }) => {
             ];
 
             if (rememberPreference !== 'true') {
-                // If "Remember Me" is not active, also remove credential and preference keys
                 keysToRemove.push('rememberedUsername', 'rememberedPassword', 'termsAccepted', 'rememberMePreference');
             }
 
             await AsyncStorage.multiRemove(keysToRemove);
             
-            console.log('User session data cleared from AsyncStorage.');
             navigation.dispatch(
                 CommonActions.reset({
                     index: 0,

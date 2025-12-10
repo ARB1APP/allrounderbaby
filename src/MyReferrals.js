@@ -259,27 +259,7 @@ const MyReferrals = ({ navigation }) => {
           <View style={styles.placeholderContainer}>
             <Text style={styles.placeholderText}>You haven't referred anyone yet. Share your code to start earning!</Text>
           </View>
-        ) : (
-          <View style={styles.listContainer}>
-             <Text style={styles.listHeader}>Referral History</Text>
-             {referrals.map((item) => (
-                <View key={item.id} style={styles.referralItem}>
-                   <View style={styles.referralInfo}>
-                      <Text style={styles.referralName}>{item.name}</Text>
-                      <Text style={styles.referralDate}>{item.date}</Text>
-                   </View>
-                   <View style={styles.referralStatusContainer}>
-                      <Text style={[
-                         styles.referralStatus,
-                         item.status === 'Completed' ? styles.statusCompleted : styles.statusPending
-                      ]}>
-                         {item.status}
-                      </Text>
-                      {item.status === 'Completed' && <Text style={styles.referralEarnings}>{item.earnings}</Text>}
-                   </View>
-                </View>
-             ))}
-          </View>
+        ) : (<></>
         )}
       </ScrollView>
     </View>

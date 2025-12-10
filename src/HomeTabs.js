@@ -19,7 +19,6 @@ const HomeTabs = () => {
         const videoId = "c88fb7568e814d0e852f74387fe9aa61";
         const response = await fetch(`https://dev.vdocipher.com/api/videos/${videoId}`); 
         const data = await response.json();
-        console.log('Response', data);
         setOtp(data.otp);
         setPlaybackInfo(data.playbackInfo);
       } catch (error) {

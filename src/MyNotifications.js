@@ -1,209 +1,252 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  StyleSheet,
-  Text,
   View,
-  ScrollView,
+  Text,
+  StyleSheet,
   TouchableOpacity,
+  Switch,
+  Modal,
   Image,
   useColorScheme,
+  Platform,
+  Linking,
+  AppState,
   BackHandler,
-  StatusBar,
 } from 'react-native';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
-const lightThemeColors = {
-  screenBackground: '#f1f2f2',
-  cardBackground: '#ffffff',
-  cardBorder: '#cccccc',
-  textPrimary: '#000000',
-  textSecondary: '#333333',
-  textBody: '#666666',
-  textTimestamp: '#999999',
-  textPlaceholder: 'gray',
-  unreadIndicator: 'rgba(20, 52, 164, 0.7)',
-  unreadItemBackground: '#f8f9fa',
-  shadowColor: '#000000',
-  statusBarContent: 'dark-content',
-
-  bottomNavBackground: '#ffffff',
-  activeIconTint: 'rgba(20, 52, 164, 1)',
-  inactiveIconTint: 'gray',
-  activeNavText: 'rgba(20, 52, 164, 1)',
-  inactiveNavText: 'gray',
+const light = {
+  bg: '#f1f2f2',
+  card: '#ffffff',
+  text: '#000',
+  subText: '#666',
+  border: '#ddd',
 };
 
-const darkThemeColors = {
-  screenBackground: '#121212',
-  cardBackground: '#1E1E1E',
-  cardBorder: '#3A3A3A',
-  textPrimary: '#E0E0E0',
-  textSecondary: '#D0D0D0',
-  textBody: '#B0B0B0',
-  textTimestamp: '#888888',
-  textPlaceholder: '#777777',
-  unreadIndicator: 'rgba(60, 102, 224, 0.8)',
-  unreadItemBackground: '#252525',
-  shadowColor: '#000000',
-  statusBarContent: 'light-content',
+const popupLight = { bg: '#fff', text: '#000', allow: '#1a73e8', deny: '#444' };
 
-  bottomNavBackground: '#1E1E1E',
-  activeIconTint: 'rgba(60, 102, 224, 1)',
-  inactiveIconTint: '#888888',
-  activeNavText: 'rgba(60, 102, 224, 1)',
-  inactiveNavText: '#888888',
+const dark = {
+  bg: '#121212',
+  card: '#1E1E1E',
+  text: '#fff',
+  subText: '#aaa',
+  border: '#333',
 };
 
-const createMyNotificationsStyles = (theme) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.screenBackground,
-  },
-  scrollContainer: {
-     flexGrow: 1,
-     paddingBottom: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-    color: theme.textPrimary,
-    paddingHorizontal: 15,
-  },
-  placeholderContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      minHeight: 200,
-  },
-  placeholderText: {
-      fontSize: 16,
-      color: theme.textPlaceholder,
-      textAlign: 'center',
-  },
-  notificationItem: {
-    backgroundColor: theme.cardBackground,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.cardBorder,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  unreadBackground: {
-    backgroundColor: theme.unreadItemBackground,
-  },
-  unreadIndicator: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: theme.unreadIndicator,
-      marginRight: 12,
-  },
-  notificationContent: {
-     flex: 1,
-  },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.textSecondary,
-    marginBottom: 4,
-  },
-  notificationBody: {
-    fontSize: 14,
-    color: theme.textBody,
-    lineHeight: 20,
-    marginBottom: 6,
-  },
-  notificationTimestamp: {
-    fontSize: 12,
-    color: theme.textTimestamp,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: theme.bottomNavBackground,
-    paddingVertical: 10,
-    width: '100%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: theme.shadowColor,
-    shadowOffset: { width: 0, height: -2 },
-  },
-  navItem: { alignItems: 'center', flex: 1, },
-  navIcon: { width: 25, height: 25, resizeMode: 'contain', },
-  activeIcon: { tintColor: theme.activeIconTint, },
-  inactiveIcon: { tintColor: theme.inactiveIconTint, },
-  navTextActive: { color: theme.activeNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
-  navText: { color: theme.inactiveNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
-});
+const popupDark = { bg: '#333', text: '#fff', allow: '#63B3ED', deny: '#ccc' };
 
-const MyNotifications = ({ navigation }) => {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
-  const styles = createMyNotificationsStyles(theme);
+const NotificationSettings = ({ navigation }) => {
+  const mode = useColorScheme();
+  const theme = mode === 'dark' ? dark : light;
+  const popupTheme = mode === 'dark' ? popupDark : popupLight;
+
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false); 
+  const [generalEnabled, setGeneralEnabled] = useState(true);
+  const [showPermissionPopup, setShowPermissionPopup] = useState(false);
+
+  const NOTIFICATION_PERMISSION = useMemo(() => {
+    if (Platform.OS === 'ios') {
+      return PERMISSIONS.IOS.NOTIFICATIONS;
+    }
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      return PERMISSIONS.ANDROID.POST_NOTIFICATIONS;
+    }
+    return null; 
+  }, []);
+
+  const checkNotificationPermission = useCallback(async () => {
+    if (!NOTIFICATION_PERMISSION) {
+      setNotificationsEnabled(true);
+      return;
+    }
+    const result = await check(NOTIFICATION_PERMISSION);
+    const isGranted = result === RESULTS.GRANTED;
+    setNotificationsEnabled(isGranted);
+    if (!isGranted) {
+      setGeneralEnabled(false);
+    }
+  }, [NOTIFICATION_PERMISSION]);
+
+  useEffect(() => {
+    checkNotificationPermission();
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        checkNotificationPermission();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [checkNotificationPermission]);
 
   useEffect(() => {
     const backAction = () => {
-        if (navigation.canGoBack()) {
-            navigation.navigate('My Profile');
-        } else {
-        }
-        return true;
+      navigation.navigate('My Profile');
+      return true; 
     };
 
-    const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        backAction
-    );
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
-    return () => {
-        backHandler.remove();
-    };
+    return () => backHandler.remove();
   }, [navigation]);
 
-  const notifications = [
-    { id: 1, title: 'Feedback Approved!', body: 'Your recent feedback has been approved. Cashback of ₹500 is being processed.', timestamp: '2 hours ago', read: false },
-    { id: 2, title: 'Referral Success!', body: 'Your referred friend John Doe has signed up! You both earned rewards.', timestamp: '1 day ago', read: false },
-    { id: 3, title: 'Withdrawal Processed', body: 'Your withdrawal request of ₹3500 has been successfully processed.', timestamp: '3 days ago', read: true },
-    { id: 4, title: 'New Feature: Medals', body: 'Check out the new Medals section in your profile to track your achievements!', timestamp: '1 week ago', read: true },
-  ];
+  const handleToggleNotifications = async () => {
+    if (!NOTIFICATION_PERMISSION) {
+      Linking.openSettings();
+      return;
+    }
+    const result = await check(NOTIFICATION_PERMISSION);
+    switch (result) {
+      case RESULTS.UNAVAILABLE:
+        break;
+      case RESULTS.DENIED:
+        const requestResult = await request(NOTIFICATION_PERMISSION);
+        if (requestResult === RESULTS.GRANTED) {
+          setNotificationsEnabled(true);
+        } else {
+          setGeneralEnabled(false);
+        }
+        break;
+      case RESULTS.GRANTED:
+        Linking.openSettings();
+        break;
+      case RESULTS.BLOCKED:
+        setShowPermissionPopup(true);
+        break;
+    }
+  };
+
+  const openSettings = () => {
+    setShowPermissionPopup(false);
+    Linking.openSettings();
+  };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {notifications.length === 0 ? (
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderText}>You have no notifications yet.</Text>
-          </View>
-        ) : (
-          notifications.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[
-                styles.notificationItem,
-                !item.read && styles.unreadBackground
-              ]}
-              onPress={() => {
-                console.log('Notification pressed:', item.id);
-              }}
-            >
-              {!item.read && <View style={styles.unreadIndicator} />}
-              <View style={styles.notificationContent}>
-                <Text style={styles.notificationTitle}>{item.title}</Text>
-                <Text style={styles.notificationBody}>{item.body}</Text>
-                <Text style={styles.notificationTimestamp}>{item.timestamp}</Text>
-              </View>
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('My Profile')} style={styles.backButton}>
+          <Image
+            source={require('../img/arrowicon.png')}
+            style={[styles.backIcon, { tintColor: theme.text }]}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: theme.text }]}>Notification Settings</Text>
+      </View>
+
+      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>Enable Notifications</Text>
+        <Switch
+          value={notificationsEnabled}
+          onValueChange={handleToggleNotifications}
+          trackColor={{ false: '#767577', true: '#81b0ff' }}
+          thumbColor={notificationsEnabled ? '#1a73e8' : '#f4f3f4'}
+        />
+      </View>
+
+      <Text style={[styles.subtitle, { color: theme.subText }]}>Customize notification</Text>
+
+      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>General</Text>
+        <Switch
+          value={generalEnabled}
+          onValueChange={(newValue) => notificationsEnabled && setGeneralEnabled(newValue)}
+          disabled={!notificationsEnabled}
+          trackColor={{ false: '#767577', true: '#81b0ff' }}
+          thumbColor={generalEnabled ? '#1a73e8' : '#f4f3f4'}
+        />
+      </View>
+
+      <Modal transparent visible={showPermissionPopup} animationType="fade">
+        <View style={[styles.popupOverlay]}>
+          <View style={[styles.popupBox, { backgroundColor: popupTheme.bg }]}>
+            <Text style={[styles.popupText, { color: popupTheme.text }]}>
+              Allow <Text style={{ fontWeight: 'bold' }}>Allrounder Baby</Text> to send you notifications?
+            </Text>
+            <Text style={[styles.popupSubText, { color: theme.subText }]}>To enable notifications, you need to go to your device settings.</Text>
+            <TouchableOpacity style={styles.popupButton} onPress={openSettings}>
+              <Text style={[styles.popupButtonTextAllow, { color: popupTheme.allow }]}>Open Settings</Text>
             </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
+
+            <TouchableOpacity style={styles.popupButton} onPress={() => setShowPermissionPopup(false)}>
+              <Text style={[styles.popupButtonTextNo, { color: popupTheme.deny }]}>Not now</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 };
 
-export default MyNotifications;
+export default NotificationSettings;
+
+const styles = StyleSheet.create({
+  container: { flex: 1, paddingTop: 20 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    marginBottom: 20,
+  },
+  backButton: {
+    padding: 5,
+  },
+  backIcon: {
+    width: 24,
+    height: 24,
+    transform: [{ rotate: '180deg' }],
+  },
+  title: { fontSize: 20, fontWeight: 'bold', marginLeft: 10 },
+  subtitle: { marginTop: 15, marginBottom: 8, fontSize: 13 },
+  card: {
+    padding: 18,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  cardTitle: { fontSize: 16, fontWeight: '600' },
+
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  popupBox: {
+    width: '80%',
+    padding: 25,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  popupText: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  popupSubText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  popupButton: {
+    width: '100%',
+    paddingVertical: 12,
+  },
+  popupButtonTextAllow: {
+    color: '#1a73e8',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  popupButtonTextNo: {
+    color: '#444',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 5,
+  },
+});

@@ -1,0 +1,132 @@
+--------- beginning of main
+12-09 18:12:15.839 W/PerfettoTrace(23568): type=1400 audit(0.0:66982): avc: denied { write } for name="traced_producer" dev="tmpfs" ino=4016 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:traced_producer_socket:s0 tclass=sock_file permissive=0 app=com.google.android.gms
+12-09 18:12:20.107 I/NearbyMediums(23735): No BLE Fast/GATT advertisements found in the latest cycle.
+12-09 18:12:20.107 I/NearbyMediums(23735): Current Tracked Scanning Clients are : {NearbyConnections.EnvironmentMonitor, NearbySharing}
+12-09 18:12:20.929 I/Finsky  (19783): [2881] Stats for Executor: BlockingExecutor unr@d96bbd5[Running, pool size = 4, active threads = 0, queued tasks = 0, completed tasks = 36]
+12-09 18:12:20.930 I/Finsky  (19783): [2881] Stats for Executor: LightweightExecutor unr@2270fea[Running, pool size = 4, active threads = 0, queued tasks = 0, completed tasks = 191]
+12-09 18:12:20.958 I/Finsky  (19783): [2881] Stats for Executor: bgExecutor unr@a7742db[Running, pool size = 4, active threads = 0, queued tasks = 0, completed tasks = 285]
+12-09 18:12:21.080 I/InputTransport(14225): Create ARC handle: 0xb40000764b422940
+12-09 18:12:21.110 I/Finsky  (19783): [2881] Stats for Executor: GrpcBackgroundExecutor unr@b886178[Running, pool size = 1, active threads = 0, queued tasks = 0, completed tasks = 1]
+12-09 18:12:21.162 D/ViewRootImpl[Conversation](14225): msg2 update new insets InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,84], mVisible=true}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2214][1080,2340], mVisible=true}, InsetsSource: {mType=ITYPE_TOP_GESTURES, mFrame=[0,0][1080,84], mVisible=true}, InsetsSource: {mType=ITYPE_BOTTOM_GESTURES, mFrame=[0,2214][1080,2340], mVisible=true}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,84], mVisible=true}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2214][1080,2340], mVisible=true}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,0][0,0], mVisible=false} }
+12-09 18:12:22.023 D/OpenGLRenderer(14225): endAllActiveAnimators on 0xb40000764b3f7500 (RippleDrawable) with handle 0xb40000764b4224e0
+12-09 18:12:22.035 I/InputTransport(14225): Destroy ARC handle: 0xb40000764b422940
+12-09 18:12:22.809 I/InputTransport(14225): Create ARC handle: 0xb40000764b4223a0
+12-09 18:12:22.883 D/ViewRootImpl[Conversation](14225): msg2 update new insets InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,84], mVisible=true}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2214][1080,2340], mVisible=true}, InsetsSource: {mType=ITYPE_TOP_GESTURES, mFrame=[0,0][1080,84], mVisible=true}, InsetsSource: {mType=ITYPE_BOTTOM_GESTURES, mFrame=[0,2214][1080,2340], mVisible=true}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,84], mVisible=true}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2214][1080,2340], mVisible=true}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,0][0,0], mVisible=false} }
+12-09 18:12:23.122 D/Linux   (19323): [Posix_connect Debug]Process com.microsoft.teams :443 
+12-09 18:12:23.788 D/OpenGLRenderer(14225): endAllActiveAnimators on 0xb400007663450000 (RippleDrawable) with handle 0xb400007726e355a0
+12-09 18:12:23.812 I/InputTransport(14225): Destroy ARC handle: 0xb40000764b4223a0
+12-09 18:12:23.881 I/InputTransport(14225): Create ARC handle: 0xb4000076633f67e0
+12-09 18:12:23.904 I/InputTransport(14225): Destroy ARC handle: 0xb4000076633f67e0
+12-09 18:12:24.430 I/ActivityTaskManager( 1330): Displayed android/com.android.internal.app.ResolverActivity: +501ms
+12-09 18:12:24.444 I/InputTransport( 6224): Create ARC handle: 0x76ad75a540
+12-09 18:12:24.549 I/gle.android.gm(23568): Explicit concurrent copying GC freed 79218(3767KB) AllocSpace objects, 18(744KB) LOS objects, 20% free, 23MB/29MB, paused 170us total 388.448ms
+12-09 18:12:26.177 I/.gms.persisten(23735): Explicit concurrent copying GC freed 55039(3370KB) AllocSpace objects, 18(596KB) LOS objects, 23% free, 19MB/25MB, paused 201us total 302.507ms
+12-09 18:12:26.898 W/InitStatus(14225): Not blocking Provider (252122538)
+12-09 18:12:26.898 W/InitStatus(14225): Not blocking Provider (252122538)
+12-09 18:12:27.110 E/VysorControl(16172): video ended
+12-09 18:12:27.110 E/VysorControl(16172): java.io.IOException: pipe closed
+12-09 18:12:27.110 E/VysorControl(16172): 	at b.a.a.b0.a(Unknown Source:4)
+12-09 18:12:27.110 E/VysorControl(16172): 	at b.a.a.o1.n.o(Unknown Source:62)
+12-09 18:12:27.110 E/VysorControl(16172): 	at b.a.a.o1.n.j(Unknown Source:33)
+12-09 18:12:27.110 E/VysorControl(16172): 	at b.a.a.o1.l.p(:27)
+12-09 18:12:27.110 E/VysorControl(16172): 	at b.a.a.o1.l.o(:6)
+12-09 18:12:27.110 E/VysorControl(16172): 	at b.a.a.o1.i.run(:1)
+12-09 18:12:27.110 E/VysorControl(16172): 	at java.lang.Thread.run(Thread.java:923)
+12-09 18:12:27.116 I/VysorFactory(16172): VirtualDisplay released
+12-09 18:12:27.116 I/VysorFactory(16172): factory released
+12-09 18:12:27.117 I/StdOutDevice(16172): Writer done
+12-09 18:12:27.118 I/VysorControl(16172): stopping capture
+12-09 18:12:27.118 I/VysorControl(16172): previous video client b.a.a.o1.n@9599c6a
+12-09 18:12:27.151 I/StdOutDevice(16172): =======ENCODING COMPLETE=======
+12-09 18:12:27.165 I/StdOutDevice(16172): Requested Width: 1170 Requested Height: 540
+12-09 18:12:27.165 I/VysorControl(16172): registering virtual display
+12-09 18:12:27.165 I/StdOutDevice(16172): Bitrate: 1000000
+12-09 18:12:27.165 I/StdOutDevice(16172): Listing Enc Codecs. Enc + Dec count: 101
+12-09 18:12:27.166 I/StdOutDevice(16172): OMX.MTK.VIDEO.ENCODER.AVC
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 2130706944
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 2130708361
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 2135033992
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 19
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 6
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 11
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 16
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 2130707200
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 15
+12-09 18:12:27.166 I/StdOutDevice(16172): colorFormat: 21
+12-09 18:12:27.166 I/StdOutDevice(16172): profile/level: 1/256
+12-09 18:12:27.166 I/StdOutDevice(16172): profile/level: 8/256
+12-09 18:12:27.166 I/StdOutDevice(16172): profile/level: 1/512
+12-09 18:12:27.166 I/StdOutDevice(16172): profile/level: 8/512
+12-09 18:12:27.166 I/StdOutDevice(16172): profile/level: 1/2048
+12-09 18:12:27.166 I/StdOutDevice(16172): profile/level: 8/2048
+12-09 18:12:27.166 I/StdOutDevice(16172): profile/level: 1/4096
+12-09 18:12:27.167 I/StdOutDevice(16172): profile/level: 8/4096
+12-09 18:12:27.167 I/StdOutDevice(16172): dimensions: [96, 1920]x[96, 1920]
+12-09 18:12:27.167 I/StdOutDevice(16172): framerates: [0, 960]
+12-09 18:12:27.167 I/StdOutDevice(16172): c2.android.avc.encoder
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 2135033992
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 19
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 21
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 20
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 39
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 2130708361
+12-09 18:12:27.167 I/StdOutDevice(16172): profile/level: 1/16384
+12-09 18:12:27.167 I/StdOutDevice(16172): profile/level: 65536/16384
+12-09 18:12:27.167 I/StdOutDevice(16172): profile/level: 2/16384
+12-09 18:12:27.167 I/StdOutDevice(16172): dimensions: [16, 1808]x[16, 1808]
+12-09 18:12:27.167 I/StdOutDevice(16172): framerates: [0, 960]
+12-09 18:12:27.167 I/StdOutDevice(16172): OMX.google.h264.encoder
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 2135033992
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 19
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 21
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 20
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 39
+12-09 18:12:27.167 I/StdOutDevice(16172): colorFormat: 2130708361
+12-09 18:12:27.168 I/StdOutDevice(16172): profile/level: 1/16384
+12-09 18:12:27.168 I/StdOutDevice(16172): profile/level: 65536/16384
+12-09 18:12:27.168 I/StdOutDevice(16172): profile/level: 2/16384
+12-09 18:12:27.169 I/StdOutDevice(16172): dimensions: [16, 1808]x[16, 1808]
+12-09 18:12:27.169 I/StdOutDevice(16172): framerates: [0, 960]
+12-09 18:12:27.170 W/StdOutDevice(16172): Error getting media profiles
+12-09 18:12:27.189 I/StdOutDevice(16172): Width: 1168 Height: 528
+12-09 18:12:27.189 I/StdOutDevice(16172): Bitrate: 1000000
+12-09 18:12:27.189 I/StdOutDevice(16172): Frame rate: 30
+12-09 18:12:27.190 I/StdOutDevice(16172): Creating encoder
+12-09 18:12:27.190 W/AString (16172): ctor got NULL, using empty string instead
+12-09 18:12:27.190 D/MediaCodec(16172): createByType,mime is:video/avc
+12-09 18:12:27.199 I/ACodec  (16172): mIsVivoLogEnable = 0
+12-09 18:12:27.202 I/OMXClient(16172): IOmx service obtained
+12-09 18:12:27.296 I/StdOutDevice(16172): Created encoder: OMX.MTK.VIDEO.ENCODER.AVC
+12-09 18:12:27.296 I/StdOutDevice(16172): Configuring encoder
+12-09 18:12:27.297 W/OMXUtils(16172): do not know color format 0x7f000200 = 2130706944
+12-09 18:12:27.298 W/OMXUtils(16172): do not know color format 0x7f000789 = 2130708361
+12-09 18:12:27.298 I/MtkACodecExt(16172): setViLTEParameters, width: 1168
+12-09 18:12:27.299 I/MtkACodecExt(16172): setViLTEParameters, height: 528
+12-09 18:12:27.299 I/ACodec  (16172): setupAVCEncoderParameters with [profile: High] [level: Level41]
+12-09 18:12:27.300 I/ACodec  (16172): [OMX.MTK.VIDEO.ENCODER.AVC] cannot encode HDR static metadata. Ignoring.
+12-09 18:12:27.300 I/ACodec  (16172): setupVideoEncoder succeeded
+12-09 18:12:27.300 I/MtkACodecExt(16172): setViLTEParameters, width: 1168
+12-09 18:12:27.300 I/MtkACodecExt(16172): setViLTEParameters, height: 528
+12-09 18:12:27.300 I/ACodec_roi(16172): + setRoiParameters 239
+12-09 18:12:27.300 I/ACodec_roi(16172): - setRoiParameters 245
+12-09 18:12:27.301 W/OMXUtils(16172): do not know color format 0x7f000789 = 2130708361
+12-09 18:12:27.303 I/StdOutDevice(16172): Creating input surface
+12-09 18:12:27.306 W/H2BGraphicBufferProducer(16172): getConsumerUsage is not fully supported
+12-09 18:12:27.308 I/StdOutDevice(16172): Starting Encoder
+12-09 18:12:27.325 I/StdOutDevice(16172): Surface ready
+12-09 18:12:27.325 I/StdOutDevice(16172): Encoder ready
+12-09 18:12:27.325 E/StdOutDevice(16172): Created surface
+12-09 18:12:27.327 I/StdOutDevice(16172): Writer started.
+12-09 18:12:27.327 I/Vysor   (16172): Created display
+12-09 18:12:27.355 I/VysorControl(16172): virtual display registered
+12-09 18:12:27.369 D/ACodec  (16172): dataspace changed to 0x10c10000 (R:2(Limited), P:1(BT709_5), M:1(BT709_5), T:3(SMPTE170M)) (R:2(Limited), S:1(BT709), T:3(SMPTE_170M))
+12-09 18:12:27.378 I/StdOutDevice(16172): MediaCodec.INFO_OUTPUT_FORMAT_CHANGED
+12-09 18:12:27.379 I/StdOutDevice(16172): output width: 1168
+12-09 18:12:27.379 I/StdOutDevice(16172): output height: 528
+12-09 18:12:27.381 I/StdOutDevice(16172): Got first buffer
+12-09 18:12:27.394 I/VysorControl(16172): video socket command {"type":"sync-frame"}
+12-09 18:12:27.394 I/StdOutDevice(16172): Bitrate: 1000000
+12-09 18:12:27.396 I/ACodec_roi(16172): + setRoiParameters 239
+12-09 18:12:27.396 I/ACodec_roi(16172): - setRoiParameters 245
+12-09 18:12:27.397 I/ACodec_roi(16172): + setRoiParameters 239
+12-09 18:12:27.397 I/ACodec_roi(16172): - setRoiParameters 245
