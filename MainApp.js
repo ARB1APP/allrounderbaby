@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, StatusBar, Dimensions } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, Easing } from 'react-native-reanimated';
-import { StatusBar } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const isTablet = SCREEN_WIDTH >= 600;
 
 const MainApp = ({ navigation }) => {
     const isDarkMode = useColorScheme() === 'dark';
@@ -121,26 +123,27 @@ const styles = StyleSheet.create({
         backgroundColor: '#000',
     },
     welcomeTitleText: {
-        fontSize: 40,
+        fontSize: isTablet ? 48 : 40,
         margin: 10,
         fontFamily: 'Lexend-VariableFont_wght',
         color: '#000725',
         fontStyle: 'normal',
     },
     image: {
-        height: '60%',
+        height: isTablet ? '55%' : '60%',
         width: '100%',
         marginTop: 0,
-        borderBottomRightRadius: 150,
+        borderBottomRightRadius: isTablet ? 200 : 150,
     },
     startAppText: {
-        marginTop: 50,
-        fontSize: 24,
+        marginTop: isTablet ? 60 : 50,
+        fontSize: isTablet ? 28 : 24,
         color: '#000',
         fontStyle: 'italic',
         fontFamily: 'Lexend-VariableFont_wght',
         textAlign: 'center',
         fontWeight: 'bold',
+        paddingHorizontal: 20,
     },
     highlightText: {
         color: '#000',
@@ -149,7 +152,7 @@ const styles = StyleSheet.create({
     },
     excitedLink: {
         marginTop: 10,
-        fontSize: 16,
+        fontSize: isTablet ? 18 : 16,
         color: '#000',
         fontFamily: 'Lexend-VariableFont_wght',
         textAlign: 'center',
@@ -157,8 +160,9 @@ const styles = StyleSheet.create({
     },
     customButton: {
         marginTop: 40,
-        width: '90%',
-        height: 50,
+        width: isTablet ? '60%' : '90%',
+        maxWidth: 500,
+        height: isTablet ? 56 : 50,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -180,7 +184,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: '#fff',
-        fontSize: 16,
+        fontSize: isTablet ? 18 : 16,
         fontFamily: 'Lexend-VariableFont_wght',
         fontWeight: 'bold',
     },

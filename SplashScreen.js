@@ -1,4 +1,3 @@
-// SplashScreen.js
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Video from 'react-native-video';

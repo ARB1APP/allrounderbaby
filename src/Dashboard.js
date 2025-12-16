@@ -4,12 +4,13 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from './config/api';
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
-const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+const url = BASE_URL;
 
 const formatDuration = (totalSeconds) => {
     if (isNaN(totalSeconds) || totalSeconds < 0) return "--:--";
@@ -495,7 +496,6 @@ const Dashboard = ({ navigation }) => {
 
                 const lastStepOfPrereq = prereqConfig.finalGroupedData[prereqConfig.finalGroupedData.length - 1];
                 const lastStepNumber = lastStepOfPrereq.stepNumber;
-console.log(userId, lastStepNumber, deviceKey);
                 const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}&DeviceKey=${deviceKey}`;
                 try {
                     const response = await fetch(DETAILS_ENDPOINT, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });

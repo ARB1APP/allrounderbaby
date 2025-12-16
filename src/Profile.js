@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Dimensions, useColorScheme, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions } from '@react-navigation/native';
+import { BASE_URL } from './config/api';
 
 const AppColors = {
     light: {
@@ -52,7 +53,7 @@ const AppColors = {
     }
 };
 
-const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+const url = BASE_URL;
 
 const Profile = ({ navigation }) => {
     const isDarkMode = useColorScheme() === 'dark';
@@ -67,37 +68,52 @@ const Profile = ({ navigation }) => {
                     try {
             const token = await AsyncStorage.getItem('token');
             const userId = await AsyncStorage.getItem('userId');
-            const deviceKey = await AsyncStorage.getItem('deviceKey');
+            const deviceId = await AsyncStorage.getItem('deviceId');
 
             if (!userId) {
                 console.warn('userId not found in AsyncStorage. Clearing local session anyway.');
                 await clearLocalSessionAndNavigate();
                 return;
             }
-            if (!deviceKey) {
-                console.warn('deviceKey not found in AsyncStorage. Clearing local session anyway.');
+            if (!deviceId) {
+                console.warn('deviceId not found in AsyncStorage. Clearing local session anyway.');
                 await clearLocalSessionAndNavigate();
                 return;
             }
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            
+            try {
+                const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceId)}`;
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
 
-            const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceKey)}`;
-            const response = await fetch(endpoint, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server-side logout failed:', errorText);
+                    Alert.alert(
+                        "Logout Warning",
+                        "Failed to log out from the server, but your local session has been cleared."
+                    );
                 }
-            });
-
-                        if (!response.ok) {
-                            const errorText = await response.text();
-                            console.error('Server-side logout failed:', errorText);
-                            Alert.alert(
-                                "Logout Warning",
-                                "Failed to log out from the server, but your local session has been cleared."
-                            );
-                        }
-                        await clearLocalSessionAndNavigate();
+            } catch (fetchError) {
+                clearTimeout(timeoutId);
+                if (fetchError.name === 'AbortError') {
+                    console.error('Logout request timed out');
+                } else {
+                    console.error('Logout fetch error:', fetchError);
+                }
+            }
+            
+            await clearLocalSessionAndNavigate();
                     } catch (error) {
                         console.error('Error during logout process:', error);
                         Alert.alert("Logout Error", "An unexpected error occurred during logout. Clearing local session as a fallback.");
@@ -114,10 +130,16 @@ const Profile = ({ navigation }) => {
             const keysToRemove = [
                 'token', 
                 'userId', 
+                'deviceKey',
+                'sessionId',
+                'Name',
+                'userEmail',
+                'phoneNumber',
                 'completedSteps', 
                 'topicCompletionTimes', 
                 'middleLevelCompletionTime', 
-                'advancedLevelCompletionTime'
+                'advancedLevelCompletionTime',
+                'userProgress'
             ];
 
             if (rememberPreference !== 'true') {

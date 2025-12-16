@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Dashboard from '../src/Dashboard';
@@ -8,28 +8,6 @@ import Profile from '../src/Profile';
 const Tab = createBottomTabNavigator();
 
 const HomeTabs = () => {
-
-  const [otp, setOtp] = useState(null);
-  const [playbackInfo, setPlaybackInfo] = useState(null);
-
-  useEffect(() => {
-    const fetchVdoCipherData = async () => {
-      
-      try {
-        const videoId = "c88fb7568e814d0e852f74387fe9aa61";
-        const response = await fetch(`https://dev.vdocipher.com/api/videos/${videoId}`); 
-        const data = await response.json();
-        setOtp(data.otp);
-        setPlaybackInfo(data.playbackInfo);
-      } catch (error) {
-        console.error('Error fetching VdoCipher data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVdoCipherData();
-  }, [videoId]);
 
   return (
     <Tab.Navigator

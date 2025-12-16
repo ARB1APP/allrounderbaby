@@ -15,7 +15,9 @@ import {
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+import { BASE_URL } from './config/api';
+
+const url = BASE_URL;
 
 const ReferralHistory = ({ navigation }) => {
   const isDarkMode = useColorScheme() === 'dark';

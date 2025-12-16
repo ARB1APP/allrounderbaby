@@ -2,6 +2,7 @@ import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
 import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from './SplashScreen';
 import MainApp from './MainApp';
@@ -34,9 +35,11 @@ import NextGoal from './src/NextGoal';
 import AboutUs from './src/AboutUs';
 import CashbackforFeedbackConditions from './src/CashbackforFeedbackConditions';
 import Trails from './src/Trails';
+import { BASE_URL } from './src/config/api';
 
 const Drawer = createDrawerNavigator();
-const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+const Stack = createNativeStackNavigator();
+const url = BASE_URL;
 export const navigationRef = createNavigationContainerRef();
 
 const LightThemeColors = {
@@ -177,23 +180,31 @@ const App = () => {
   const styles = createAppStyles(currentThemeColors);
 
   useEffect(() => {
+    let isMounted = true;
     const checkAuthStatus = async () => {
       try {
         const firstTime = await AsyncStorage.getItem('first_time_opened');
         const token = await AsyncStorage.getItem('token');
-        if (!firstTime) {
-          setInitialRoute('Splash');
-        } else if (token) {
-          setInitialRoute('Home');
-        } else {
-          setInitialRoute('Login');
+        if (isMounted) {
+          if (!firstTime) {
+            setInitialRoute('Splash');
+          } else if (token) {
+            setInitialRoute('Home');
+          } else {
+            setInitialRoute('Login');
+          }
         }
       } catch (error) {
         console.error('AsyncStorage error:', error);
-        setInitialRoute('Login');
+        if (isMounted) {
+          setInitialRoute('Login');
+        }
       }
     };
     checkAuthStatus();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleVideoEnd = async () => {
@@ -227,33 +238,48 @@ const App = () => {
   }, []);
 
   const handleGlobalLogout = useCallback(
-    async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const userId = await AsyncStorage.getItem('userId');
-        const deviceKey = await AsyncStorage.getItem('deviceKey');
-        if (!userId) {
-         await clearLocalSessionAndNavigate();
-          return;
-        }
-        if (!deviceKey) {
-          await clearLocalSessionAndNavigate();
-          return;
-        }
-        const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceKey)}`;
-        const response = await fetch(endpoint, {
-          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          Alert.alert("Logout Warning", "Failed to log out from the server. Your local session has been cleared.");
-        }
-        await clearLocalSessionAndNavigate();
-      } catch (error) {
-        console.error('Error during logout process:', error);
-        Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
-        await clearLocalSessionAndNavigate();
-      }
+    () => {
+      Alert.alert(
+        "Logout",
+        "Are you sure you want to log out?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "OK",
+            onPress: async () => {
+              try {
+                const token = await AsyncStorage.getItem('token');
+                const userId = await AsyncStorage.getItem('userId');
+                const deviceKey = await AsyncStorage.getItem('deviceKey');
+                if (!userId) {
+                  await clearLocalSessionAndNavigate();
+                  return;
+                }
+                if (!deviceKey) {
+                  await clearLocalSessionAndNavigate();
+                  return;
+                }
+                const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceKey)}`;
+                const response = await fetch(endpoint, {
+                  headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+                });
+                if (!response.ok) {
+                  const errorText = await response.text();
+                  Alert.alert("Logout Warning", "Failed to log out from the server. Your local session has been cleared.");
+                }
+                await clearLocalSessionAndNavigate();
+              } catch (error) {
+                console.error('Error during logout process:', error);
+                Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
+                await clearLocalSessionAndNavigate();
+              }
+            }
+          }
+        ]
+      );
     },
     [clearLocalSessionAndNavigate]
   );
@@ -262,6 +288,14 @@ const App = () => {
     headerStyle: { backgroundColor: theme.headerBackground, borderBottomColor: theme.headerBorderColor },
     headerTintColor: theme.headerTintColor,
   });
+
+  const LoginStack = () => (
+    <Stack.Navigator screenOptions={getHeaderOptions(currentThemeColors)}>
+      <Stack.Screen name="LoginPage" component={LoginPage} options={{ headerShown: false }} />
+      <Stack.Screen name="Terms of Service" component={TermsofService} options={{ headerShown: true, title: 'Terms of Service' }} />
+      <Stack.Screen name="Privacy Policy" component={PrivacyPolicy} options={{ headerShown: true, title: 'Privacy Policy' }} />
+    </Stack.Navigator>
+  );
 
   const renderDrawerNavigator = useCallback(
     (initialRouteName) => (
@@ -273,7 +307,7 @@ const App = () => {
         screenOptions={getHeaderOptions(currentThemeColors)}
       >
         <Drawer.Screen name="MainApp" component={MainApp} options={{ headerShown: false, swipeEnabled: false, unmountOnBlur: true }} />
-        <Drawer.Screen name="Login" component={LoginPage} options={{ headerShown: false, swipeEnabled: false, unmountOnBlur: true }} />
+        <Drawer.Screen name="Login" component={LoginStack} options={{ headerShown: false, swipeEnabled: false, unmountOnBlur: true }} />
         <Drawer.Screen name="Home" component={Dashboard} options={{ unmountOnBlur: true }} />
         <Drawer.Screen name="My Profile" component={Profile} options={{ unmountOnBlur: true }} />
         <Drawer.Screen name="About Us" component={AboutUs} options={{ headerShown: true, swipeEnabled: true, unmountOnBlur: true }} />

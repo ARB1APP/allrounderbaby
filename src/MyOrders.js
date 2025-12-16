@@ -292,12 +292,6 @@ const MyOrders = ({ navigation }) => {
                  returnKeyType="done"
               />
             </View>
-            {/* <View style={styles.bankBox}>
-              <Text style={styles.bankLinkedLabel}>Invoice Download Option</Text>
-              <TouchableOpacity style={styles.downloadButton}>
-                 <Text style={styles.downloadButtonText}>Download Invoice</Text>
-              </TouchableOpacity>
-            </View> */}
 
           </View>
         </ScrollView>

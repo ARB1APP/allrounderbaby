@@ -8,6 +8,7 @@ import {
   Linking,
   useColorScheme,
   StatusBar,
+  SafeAreaView,
   Platform,
 } from 'react-native';
 
@@ -102,7 +103,7 @@ const GetHelp = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle={theme.statusBarContent}
         backgroundColor={theme.screenBackground}
@@ -123,7 +124,7 @@ const GetHelp = ({ navigation }) => {
           Your parenting journey matters to us! 🌟✨
         </Text>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
