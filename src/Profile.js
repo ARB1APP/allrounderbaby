@@ -68,7 +68,7 @@ const Profile = ({ navigation }) => {
                     try {
             const token = await AsyncStorage.getItem('token');
             const userId = await AsyncStorage.getItem('userId');
-            const deviceId = await AsyncStorage.getItem('deviceId');
+            const deviceId = await AsyncStorage.getItem('deviceKey');
 
             if (!userId) {
                 console.warn('userId not found in AsyncStorage. Clearing local session anyway.');
@@ -211,17 +211,8 @@ const Profile = ({ navigation }) => {
                         iconSource={require('../img/earningmoney.png')}
                         title="My Earnings"
                         subtitle={
-                            <View style={{ alignItems: 'center' }}>
-                                <Text
-                                    style={[
-                                        styles.infoSubtitle,
-                                        {
-                                            color: theme.textSecondary,
-                                            fontSize: 14,
-                                            textAlign: 'center',
-                                        },
-                                    ]}
-                                >
+                            <View >
+                                <Text>
                                     Refer more, Earn more !!
                                 </Text>
                             </View>
@@ -233,17 +224,8 @@ const Profile = ({ navigation }) => {
                         iconSource={require('../img/cart.png')}
                         title="My Orders"
                         subtitle={
-                            <View style={{ alignItems: 'center' }}>
-                                <Text
-                                    style={[
-                                        styles.infoSubtitle,
-                                        {
-                                            color: theme.textSecondary,
-                                            fontSize: 14,
-                                            textAlign: 'center',
-                                        },
-                                    ]}
-                                >
+                            <View>
+                                <Text>
                                     View order history
                                 </Text>
                             </View>
@@ -258,17 +240,8 @@ const Profile = ({ navigation }) => {
                         iconSource={require('../img/help.png')}
                         title="Get Help"
                         subtitle={
-                            <View style={{ alignItems: 'center' }}>
-                                <Text
-                                    style={[
-                                        styles.infoSubtitle,
-                                        {
-                                            color: theme.textSecondary,
-                                            fontSize: 14,
-                                            textAlign: 'center',
-                                        },
-                                    ]}
-                                >
+                            <View>
+                                <Text>
                                     Chat With Support
                                 </Text>
                             </View>
@@ -283,16 +256,8 @@ const Profile = ({ navigation }) => {
                         iconSource={require('../img/starfive.png')}
                         title="Rate us 5 stars on the store"
                         subtitle={
-                            <View style={{ alignItems: 'center' }}>
-                                <Text
-                                    style={[
-                                        styles.infoSubtitle,
-                                        {
-                                            color: theme.textSecondary,
-                                            fontSize: 15,
-                                        },
-                                    ]}
-                                >
+                            <View>
+                                <Text>
                                     Encourage users to leave a positive review
                                 </Text>
                             </View>

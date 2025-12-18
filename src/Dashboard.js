@@ -133,6 +133,31 @@ const Dashboard = ({ navigation }) => {
     const backgroundStyle = { backgroundColor: isDarkMode ? '#2a3144' : Colors.white };
     const textColorModal = { color: isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)' }
     const textColorModalPara = { color: isDarkMode ? Colors.white : '#2a3144' }
+
+    useEffect(() => {
+        const backAction = () => {
+            if (navigation.isFocused()) {
+                Alert.alert("Hold on!", "Are you sure you want to exit the app?", [
+                    {
+                        text: "Cancel",
+                        onPress: () => null,
+                        style: "cancel"
+                    },
+                    { text: "YES", onPress: () => BackHandler.exitApp() }
+                ]);
+                return true;
+            }
+            return false;
+        };
+
+        const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+        );
+
+        return () => backHandler.remove();
+    }, [navigation]);
+
     const groupVideosByApiStep = (videoApiResponse) => {
         if (!videoApiResponse?.rows?.length) return [];
         const groups = {};

@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, S
 import CheckBox from 'react-native-check-box';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import NetInfo from '@react-native-community/netinfo';
-import { useRoute, useFocusEffect } from '@react-navigation/native';
+import { useRoute, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { BASE_URL } from './config/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -47,16 +47,16 @@ const LoginPage = ({ navigation }) => {
     const handleRememberMeChange = () => setRememberMe((prev) => !prev);
 
     const handlePress = async () => {
-        const getDeviceId = async () => {
-            let deviceId = await AsyncStorage.getItem('deviceId');
-            if (!deviceId) {
-                deviceId = Date.now().toString(36) + Math.random().toString(36).substring(2);
-                await AsyncStorage.setItem('deviceId', deviceId);
-                console.log('Generated new deviceId:', deviceId);
+        const getDevicekey = async () => {
+            let devicekey = await AsyncStorage.getItem('devicekey');
+            if (!devicekey) {
+                devicekey = Date.now().toString(36) + Math.random().toString(36).substring(2);
+                await AsyncStorage.setItem('devicekey', devicekey);
+                console.log('Generated new devicekey:', devicekey);
             } else {
-                console.log('Using existing deviceId:', deviceId);
+                console.log('Using existing devicekey:', devicekey);
             }
-            return deviceId;
+            return devicekey;
            
         };
 
@@ -94,11 +94,11 @@ const LoginPage = ({ navigation }) => {
                 return;
             }
 
-            const deviceId = await getDeviceId();
-            const API_URL = `${url}Login/LoginMobileUser?username=${encodeURIComponent(trimmedUsername)}&password=${encodeURIComponent(trimmedPassword)}&deviceId=${encodeURIComponent(deviceId)}`;
+            const devicekey = await getDevicekey();
+            const API_URL = `${url}Login/LoginMobileUser?username=${encodeURIComponent(trimmedUsername)}&password=${encodeURIComponent(trimmedPassword)}&deviceId=${encodeURIComponent(devicekey)}`;
             
-            console.log('Calling login API for user:', trimmedUsername);
-            console.log('Device ID:', deviceId);
+          //  console.log('Calling login API for user:', trimmedUsername);
+            //console.log('Device ID:', devicekey);
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -118,9 +118,7 @@ const LoginPage = ({ navigation }) => {
             }
             
             if (!response.ok) {
-                console.error('Login API failed with status:', response.status);
                 const errorData = await response.json().catch(() => ({}));
-                console.error('Error details:', errorData);
                 setPasswordError(errorData.message || '❗Invalid username or password.');
                 setIsLoggingIn(false);
                 return;
@@ -130,12 +128,12 @@ const LoginPage = ({ navigation }) => {
 
             if (data?.data && data.code === 200) {
                 console.log('Login successful for user:', trimmedUsername);
-                console.log('Device ID:', deviceId);
+                console.log('Device ID:', data.data.deviceKey);
                 console.log('User ID received:', data.data.userID);
                 console.log('Token received:', data.data.token ? 'Yes' : 'No');
                 console.log('Session ID will be generated');
                 
-                await AsyncStorage.setItem('deviceId', deviceId);
+                await AsyncStorage.setItem('deviceKey', data.data.deviceKey || devicekey);
                 await AsyncStorage.setItem('token', data.data.token);
                 await AsyncStorage.setItem('userId', data.data.userID.toString());
                 const sessionId = Math.random().toString(36).substring(2, 15);
@@ -165,7 +163,12 @@ const LoginPage = ({ navigation }) => {
                 }
 
                 if (navigation) {
-                    navigation.navigate('Home', { screen: 'Dashboard' });
+                    // navigation.dispatch(
+                    //     CommonActions.reset({
+                    //         index: 0,
+                    //         routes: [{ name: 'Home' }],
+                    //     })
+                    // );
                 } else {
                     console.warn("navigation prop is not available!");
                 }
@@ -240,22 +243,23 @@ const LoginPage = ({ navigation }) => {
 
                 if (route.params?.logout) {
                      try {
+                        debugger;
                         console.log('Logout initiated');
                         const rememberPreference = await AsyncStorage.getItem('rememberMePreference');
-                        const deviceId = await AsyncStorage.getItem('deviceId');
+                        const devicekey = await AsyncStorage.getItem('deviceKey');
                         const userId = await AsyncStorage.getItem('userId');
                         const token = await AsyncStorage.getItem('token');
                         const sessionId = await AsyncStorage.getItem('sessionId');
                         
-                        console.log('Device ID:', deviceId);
+                        console.log('Device ID:', devicekey);
                         console.log('Remember preference:', rememberPreference);
                         console.log('User ID:', userId);
                         console.log('Session ID:', sessionId);
                         
-                        if (userId && token && deviceId) {
+                        if (userId && token && devicekey) {
                             try {
                                 console.log('Calling logout API...');
-                                const LOGOUT_API_URL = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceId)}`;
+                                const LOGOUT_API_URL = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(devicekey)}`;
                                 
                                 const logoutController = new AbortController();
                                 const logoutTimeoutId = setTimeout(() => logoutController.abort(), 15000);
@@ -432,14 +436,14 @@ const LoginPage = ({ navigation }) => {
                                 By logging in, you agree to company’s{' '}
                                 <Text
                                     style={[styles.linkUnderline, { color: isDarkMode ? '#2754f7ff' : '#1434A4' }]}
-                                    onPress={() => navigation.navigate('Terms of Service')}
+                                  //  onPress={() => navigation.navigate('Privacy Policy')}
                                 >
                                     Terms and Conditions
                                 </Text>
                                 {' '}and{' '}
                                 <Text
                                     style={[styles.linkUnderline, { color: isDarkMode ? '#2754f7ff' : '#1434A4' }]}
-                                    onPress={() => navigation.navigate('Privacy Policy')}
+                                  onPress={() => navigation.navigate('PrivacyPolicywithoutLog')}
                                 >
                                     Privacy Policy
                                 </Text>
