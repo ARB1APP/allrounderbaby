@@ -1,23 +1,29 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, ScrollView, StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, ScrollView, StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, Dimensions, } from 'react-native';
 import CheckBox from 'react-native-check-box';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import NetInfo from '@react-native-community/netinfo';
-import { useRoute, useFocusEffect } from '@react-navigation/native';
+import { useRoute, useFocusEffect, CommonActions } from '@react-navigation/native';
+import { BASE_URL } from './config/api';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const isTablet = SCREEN_WIDTH >= 600;
+const contentMaxWidth = isTablet ? 500 : SCREEN_WIDTH * 0.9;
 
 const LoginPage = ({ navigation }) => {
     const isDarkMode = useColorScheme() === 'dark';
     const backgroundStyle = {
         backgroundColor: isDarkMode ? '#2a3144' : Colors.white,
     };
-    const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+
+    const url = BASE_URL;
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [usernameError, setUsernameError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [termsAccepted, setTermsAccepted] = useState(true);
-    const [rememberMe, setRememberMe] = useState(true);
+    const [rememberMe, setRememberMe] = useState(false);
     const [isLoadingCredentials, setIsLoadingCredentials] = useState(true);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const emailTextPosition = useRef(new Animated.Value(-300)).current;
@@ -41,13 +47,16 @@ const LoginPage = ({ navigation }) => {
     const handleRememberMeChange = () => setRememberMe((prev) => !prev);
 
     const handlePress = async () => {
-        const getDeviceId = async () => {
-            let deviceId = await AsyncStorage.getItem('deviceId');
-            if (!deviceId) {
-                deviceId = Date.now().toString(36) + Math.random().toString(36).substring(2);
-                await AsyncStorage.setItem('deviceId', deviceId);
+        const getDevicekey = async () => {
+            let devicekey = await AsyncStorage.getItem('devicekey');
+            if (!devicekey) {
+                devicekey = Date.now().toString(36) + Math.random().toString(36).substring(2);
+                await AsyncStorage.setItem('devicekey', devicekey);
+                console.log('Generated new devicekey:', devicekey);
+            } else {
+                console.log('Using existing devicekey:', devicekey);
             }
-            return deviceId;
+            return devicekey;
            
         };
 
@@ -66,12 +75,15 @@ const LoginPage = ({ navigation }) => {
                 return;
             }
 
-            if (username === "" || username === null) {
+            const trimmedUsername = username?.trim();
+            const trimmedPassword = password?.trim();
+            
+            if (!trimmedUsername) {
                 setUsernameError('❗Please enter username.');
                 setIsLoggingIn(false);
                 return;
             }
-            if (password === "" || password === null) {
+            if (!trimmedPassword) {
                 setPasswordError('❗Please enter password.');
                 setIsLoggingIn(false);
                 return;
@@ -82,16 +94,52 @@ const LoginPage = ({ navigation }) => {
                 return;
             }
 
-            const deviceId = await getDeviceId();
-            const API_URL = `${url}Login/LoginMobileUser?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&deviceId=${encodeURIComponent(deviceId)}`;
-            const response = await fetch(API_URL);
+            const devicekey = await getDevicekey();
+            const API_URL = `${url}Login/LoginMobileUser?username=${encodeURIComponent(trimmedUsername)}&password=${encodeURIComponent(trimmedPassword)}&deviceId=${encodeURIComponent(devicekey)}`;
+            
+          //  console.log('Calling login API for user:', trimmedUsername);
+            //console.log('Device ID:', devicekey);
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            
+            let response;
+            try {
+                response = await fetch(API_URL, { signal: controller.signal });
+                clearTimeout(timeoutId);
+            } catch (fetchError) {
+                clearTimeout(timeoutId);
+                if (fetchError.name === 'AbortError') {
+                    Alert.alert('Request Timeout', 'The login request took too long. Please try again.');
+                    setIsLoggingIn(false);
+                    return;
+                }
+                throw fetchError;
+            }
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                setPasswordError(errorData.message || '❗Invalid username or password.');
+                setIsLoggingIn(false);
+                return;
+            }
+            
             const data = await response.json();
 
-            if (response.ok && data?.data && data.code === 200) {
+            if (data?.data && data.code === 200) {
+                console.log('Login successful for user:', trimmedUsername);
+                console.log('Device ID:', data.data.deviceKey);
+                console.log('User ID received:', data.data.userID);
+                console.log('Token received:', data.data.token ? 'Yes' : 'No');
+                console.log('Session ID will be generated');
+                
+                await AsyncStorage.setItem('deviceKey', data.data.deviceKey || devicekey);
                 await AsyncStorage.setItem('token', data.data.token);
                 await AsyncStorage.setItem('userId', data.data.userID.toString());
                 const sessionId = Math.random().toString(36).substring(2, 15);
                 await AsyncStorage.setItem('sessionId', sessionId);
+                console.log('Session created:', sessionId);
+                console.log('Login API call completed successfully');
                 const { firstName, lastName, emailAddress, phoneNumber, deviceKey } = data.data || {};
                 if (firstName && lastName) {
                     await AsyncStorage.setItem('Name', `${firstName} ${lastName}`);
@@ -99,12 +147,15 @@ const LoginPage = ({ navigation }) => {
                 if (emailAddress) await AsyncStorage.setItem('userEmail', emailAddress);
                 if (phoneNumber) await AsyncStorage.setItem('phoneNumber', phoneNumber);
                 if (deviceKey) await AsyncStorage.setItem('deviceKey', deviceKey);
+                
                 if (rememberMe) {
-                    await AsyncStorage.setItem('rememberedUsername', username);
-                    await AsyncStorage.setItem('rememberedPassword', password);
+                    console.log('Remember Me: Saving credentials');
+                    await AsyncStorage.setItem('rememberedUsername', trimmedUsername);
+                    await AsyncStorage.setItem('rememberedPassword', trimmedPassword);
                     await AsyncStorage.setItem('termsAccepted', 'true');
                     await AsyncStorage.setItem('rememberMePreference', 'true');
                 } else {
+                    console.log('Remember Me: Clearing saved credentials');
                     await AsyncStorage.removeItem('rememberedUsername');
                     await AsyncStorage.removeItem('rememberedPassword');
                     await AsyncStorage.removeItem('termsAccepted');
@@ -112,7 +163,12 @@ const LoginPage = ({ navigation }) => {
                 }
 
                 if (navigation) {
-                    navigation.navigate('Home', { screen: 'Dashboard' });
+                    // navigation.dispatch(
+                    //     CommonActions.reset({
+                    //         index: 0,
+                    //         routes: [{ name: 'Home' }],
+                    //     })
+                    // );
                 } else {
                     console.warn("navigation prop is not available!");
                 }
@@ -156,14 +212,16 @@ const LoginPage = ({ navigation }) => {
                 const termsAcceptedStorage = await AsyncStorage.getItem('termsAccepted');
 
                 if (rememberPreference === 'true' && rememberedUsername && rememberedPassword) {
+                    console.log('Loading saved credentials');
                     setUsername(rememberedUsername);
                     setPassword(rememberedPassword);
                     setRememberMe(true);
                     setTermsAccepted(termsAcceptedStorage === 'true');
                 } else {
+                    console.log('No saved credentials found');
                     setUsername('');
                     setPassword('');
-                    setRememberMe(true);
+                    setRememberMe(false);
                     setTermsAccepted(true);
                 }
 
@@ -185,22 +243,83 @@ const LoginPage = ({ navigation }) => {
 
                 if (route.params?.logout) {
                      try {
-                        await AsyncStorage.removeItem('rememberedUsername');
-                        await AsyncStorage.removeItem('rememberedPassword');
-                        await AsyncStorage.removeItem('termsAccepted');
-                        await AsyncStorage.removeItem('rememberMePreference');
-                        await AsyncStorage.removeItem('token');
-                        await AsyncStorage.removeItem('sessionId');
-                        await AsyncStorage.removeItem('deviceKey');
-                        await AsyncStorage.removeItem('userId');
-                        await AsyncStorage.removeItem('completedSteps');
-                        await AsyncStorage.removeItem('topicCompletionTimes');
-                        await AsyncStorage.removeItem('middleLevelCompletionTime');
-                        await AsyncStorage.removeItem('advancedLevelCompletionTime');
-
-                        setUsername('');
-                        setPassword('');
-                        setRememberMe(false);
+                        debugger;
+                        console.log('Logout initiated');
+                        const rememberPreference = await AsyncStorage.getItem('rememberMePreference');
+                        const devicekey = await AsyncStorage.getItem('deviceKey');
+                        const userId = await AsyncStorage.getItem('userId');
+                        const token = await AsyncStorage.getItem('token');
+                        const sessionId = await AsyncStorage.getItem('sessionId');
+                        
+                        console.log('Device ID:', devicekey);
+                        console.log('Remember preference:', rememberPreference);
+                        console.log('User ID:', userId);
+                        console.log('Session ID:', sessionId);
+                        
+                        if (userId && token && devicekey) {
+                            try {
+                                console.log('Calling logout API...');
+                                const LOGOUT_API_URL = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(devicekey)}`;
+                                
+                                const logoutController = new AbortController();
+                                const logoutTimeoutId = setTimeout(() => logoutController.abort(), 15000);
+                                
+                                let logoutResponse;
+                                try {
+                                    logoutResponse = await fetch(LOGOUT_API_URL, {
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`,
+                                            'Accept': 'application/json',
+                                        },
+                                        signal: logoutController.signal,
+                                    });
+                                    clearTimeout(logoutTimeoutId);
+                                } catch (logoutFetchError) {
+                                    clearTimeout(logoutTimeoutId);
+                                    if (logoutFetchError.name === 'AbortError') {
+                                        console.warn('Logout API timeout, proceeding with local cleanup');
+                                    } else {
+                                        throw logoutFetchError;
+                                    }
+                                }
+                                
+                                if (logoutResponse && logoutResponse.ok) {
+                                    console.log('Server logout successful');
+                                } else if (logoutResponse) {
+                                    console.warn('Server logout failed, proceeding with local cleanup');
+                                }
+                            } catch (apiError) {
+                                console.error('Logout API error:', apiError);
+                            }
+                        }
+                        
+                        const keysToRemove = [
+                            'token',
+                            'sessionId',
+                            'deviceKey',
+                            'userId',
+                            'completedSteps',
+                            'topicCompletionTimes',
+                            'middleLevelCompletionTime',
+                            'advancedLevelCompletionTime',
+                            'Name',
+                            'userEmail',
+                            'phoneNumber'
+                        ];
+                        
+                        if (rememberPreference !== 'true') {
+                            keysToRemove.push(
+                                'rememberedUsername',
+                                'rememberedPassword',
+                                'termsAccepted',
+                                'rememberMePreference'
+                            );
+                            setUsername('');
+                            setPassword('');
+                            setRememberMe(false);
+                        }
+                        
+                        await AsyncStorage.multiRemove(keysToRemove);
                         setTermsAccepted(true);
 
                     } catch (error) {
@@ -217,7 +336,7 @@ const LoginPage = ({ navigation }) => {
             handleLogout();
             return () => {
             };
-        }, [route.params?.logout])
+        }, [route.params?.logout, navigation, url, isLoadingCredentials])
     );
 
 
@@ -317,14 +436,14 @@ const LoginPage = ({ navigation }) => {
                                 By logging in, you agree to company’s{' '}
                                 <Text
                                     style={[styles.linkUnderline, { color: isDarkMode ? '#2754f7ff' : '#1434A4' }]}
-                                    onPress={() => navigation.navigate('Terms of Service')}
+                                  //  onPress={() => navigation.navigate('Privacy Policy')}
                                 >
                                     Terms and Conditions
                                 </Text>
                                 {' '}and{' '}
                                 <Text
                                     style={[styles.linkUnderline, { color: isDarkMode ? '#2754f7ff' : '#1434A4' }]}
-                                    onPress={() => navigation.navigate('Privacy Policy')}
+                                  onPress={() => navigation.navigate('PrivacyPolicywithoutLog')}
                                 >
                                     Privacy Policy
                                 </Text>
@@ -376,19 +495,21 @@ const styles = StyleSheet.create({
         paddingBottom: 30,
     },
     image: {
-        height: 130,
+        height: isTablet ? 160 : 130,
         marginTop: 10,
         marginBottom: '5%',
     },
     startAppText: {
         marginTop: 15,
         marginBottom: 15,
-        fontSize: 16,
+        fontSize: isTablet ? 18 : 16,
         color: '#000000',
         fontFamily: 'Lexend-VariableFont_wght',
     },
     fieldset: {
-        width: '90%',
+        width: isTablet ? contentMaxWidth : '90%',
+        maxWidth: 500,
+        alignSelf: 'center',
         borderColor: '#ced4da',
         borderWidth: 1,
         paddingHorizontal: 10,
@@ -406,24 +527,28 @@ const styles = StyleSheet.create({
         position: 'relative',
         top: 0,
         left: 0,
-        width: '90%',
+        width: isTablet ? contentMaxWidth : '90%',
+        maxWidth: 500,
+        alignSelf: 'center',
         color: '#000000',
         fontFamily: 'Lexend-VariableFont_wght',
-        fontSize: 14,
+        fontSize: isTablet ? 16 : 14,
         paddingHorizontal: 5,
         marginBottom: 2,
-
     },
     input: {
-        height: 45,
+        height: isTablet ? 52 : 45,
         paddingHorizontal: 10,
         color: '#333',
+        fontSize: isTablet ? 16 : 14,
         fontFamily: 'Lexend-VariableFont_wght',
     },
     customButton: {
         marginTop: 25,
-        width: '90%',
-        height: 50,
+        width: isTablet ? contentMaxWidth : '90%',
+        maxWidth: 500,
+        alignSelf: 'center',
+        height: isTablet ? 56 : 50,
         borderRadius: 5,
         backgroundColor: '#1434A4',
         justifyContent: 'center',
@@ -442,12 +567,14 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: '#FFFFFF',
-        fontSize: 16,
+        fontSize: isTablet ? 18 : 16,
         fontWeight: 'bold',
         fontFamily: 'Lexend-VariableFont_wght',
     },
     checkboxesContainer: {
-        width: '90%',
+        width: isTablet ? contentMaxWidth : '90%',
+        maxWidth: 500,
+        alignSelf: 'center',
         marginTop: 25,
     },
     checkboxContainer: {
@@ -500,8 +627,10 @@ const styles = StyleSheet.create({
         color: '#DC143C',
         fontWeight: 'bold',
         marginTop: 5,
-        fontSize: 14,
-        width: '90%',
+        fontSize: isTablet ? 15 : 14,
+        width: isTablet ? contentMaxWidth : '90%',
+        maxWidth: 500,
+        alignSelf: 'center',
         textAlign: 'left',
         paddingHorizontal: 5,
         fontFamily: 'Lexend-VariableFont_wght',

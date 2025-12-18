@@ -4,12 +4,13 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from './config/api';
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
-const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+const url = BASE_URL;
 
 const formatDuration = (totalSeconds) => {
     if (isNaN(totalSeconds) || totalSeconds < 0) return "--:--";
@@ -132,6 +133,31 @@ const Dashboard = ({ navigation }) => {
     const backgroundStyle = { backgroundColor: isDarkMode ? '#2a3144' : Colors.white };
     const textColorModal = { color: isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)' }
     const textColorModalPara = { color: isDarkMode ? Colors.white : '#2a3144' }
+
+    useEffect(() => {
+        const backAction = () => {
+            if (navigation.isFocused()) {
+                Alert.alert("Hold on!", "Are you sure you want to exit the app?", [
+                    {
+                        text: "Cancel",
+                        onPress: () => null,
+                        style: "cancel"
+                    },
+                    { text: "YES", onPress: () => BackHandler.exitApp() }
+                ]);
+                return true;
+            }
+            return false;
+        };
+
+        const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+        );
+
+        return () => backHandler.remove();
+    }, [navigation]);
+
     const groupVideosByApiStep = (videoApiResponse) => {
         if (!videoApiResponse?.rows?.length) return [];
         const groups = {};
@@ -495,7 +521,6 @@ const Dashboard = ({ navigation }) => {
 
                 const lastStepOfPrereq = prereqConfig.finalGroupedData[prereqConfig.finalGroupedData.length - 1];
                 const lastStepNumber = lastStepOfPrereq.stepNumber;
-console.log(userId, lastStepNumber, deviceKey);
                 const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}&DeviceKey=${deviceKey}`;
                 try {
                     const response = await fetch(DETAILS_ENDPOINT, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });

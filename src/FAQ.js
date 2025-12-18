@@ -4,8 +4,9 @@ import {
   Text,
   View,
   ScrollView,
-  TouchableOpacity,
-  Image,
+  SafeAreaView,
+  StatusBar,
+  useColorScheme,
 } from 'react-native';
 
 const styles = StyleSheet.create({
@@ -96,6 +97,11 @@ const styles = StyleSheet.create({
 });
 
 const FAQ = ({ navigation }) => {
+  const isDarkMode = useColorScheme() === 'dark';
+  const backgroundStyle = {
+    backgroundColor: isDarkMode ? '#2a3144' : '#f1f2f2',
+  };
+  
   const faqData = [
     { q: 'How does the Cashback for Feedback work?', a: 'Submit genuine feedback through our website form. Our team reviews it, and if approved based on quality, you receive cashback up to ₹1,000 (or specified amount) within 1-60 days.' },
     { q: 'How does the Refer and Earn program work?', a: 'Share your unique referral code. When someone signs up using your code and completes the required action (e.g., makes a purchase, subscribes), you both earn rewards as specified in the program terms.' },
@@ -106,18 +112,22 @@ const FAQ = ({ navigation }) => {
   ];
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, backgroundStyle]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={backgroundStyle.backgroundColor}
+      />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Frequently Asked Questions</Text>
+        <Text style={[styles.title, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>Frequently Asked Questions</Text>
 
         {faqData.map((item, index) => (
-          <View key={index} style={styles.faqItem}>
-            <Text style={styles.faqQuestion}>Q: {item.q}</Text>
-            <Text style={styles.faqAnswer}>A: {item.a}</Text>
+          <View key={index} style={[styles.faqItem, { backgroundColor: isDarkMode ? '#3d4450' : '#FFFFFF' }]}>
+            <Text style={[styles.faqQuestion, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>Q: {item.q}</Text>
+            <Text style={[styles.faqAnswer, { color: isDarkMode ? '#CBD5E0' : '#4A5568' }]}>A: {item.a}</Text>
           </View>
         ))}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

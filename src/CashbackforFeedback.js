@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import LinearGradient from 'react-native-linear-gradient';
+import { BASE_URL } from './config/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -69,7 +70,7 @@ const darkThemeColors = {
   elevation: 0,
 };
 
-const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+const url = BASE_URL;
 
 const createCashbackStyles = (theme) => StyleSheet.create({
   container: {
@@ -104,7 +105,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     fontSize: 17,
     textAlign: 'center',
     fontWeight: '600',
-    color: '#1A202C', // Force dark text for readability on light gradient
+    color: '#1A202C',
     lineHeight: 24,
   },
   gradientHeaderSubText: {

@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { BASE_URL } from './config/api';
 
 const lightThemeColors = {
   screenBackground: '#F0F2F5',
@@ -373,7 +374,7 @@ const MyEarnings = ({ navigation }) => {
   const [feedbackEarnings, setFeedbackEarnings] = useState('0.00');
   const [pendingReferralCount, setPendingReferralCount] = useState(2);
 
-  const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+  const url = BASE_URL;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -579,8 +580,11 @@ const MyEarnings = ({ navigation }) => {
   };
 
   const handleFeedbackLinkPress = () => {
-    const feedbackUrl = 'https://example.com/submit-feedback';
-    Linking.openURL(feedbackUrl).catch(err => console.error("Couldn't load page", err));
+    const feedbackUrl = 'https://allrounderbaby.com/feedback';
+    Linking.openURL(feedbackUrl).catch(err => {
+      console.error("Couldn't load page", err);
+      Alert.alert('Error', 'Unable to open feedback page. Please try again later.');
+    });
   };
 
 

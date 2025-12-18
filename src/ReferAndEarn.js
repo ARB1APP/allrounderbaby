@@ -20,8 +20,9 @@ import {
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import LinearGradient from 'react-native-linear-gradient';
+import { BASE_URL } from './config/api';
+
 const { width, height } = Dimensions.get('window');
 
 const lightThemeColors = {
@@ -92,7 +93,7 @@ const darkThemeColors = {
   elevation: 0,
 };
 
-const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+const url = BASE_URL;
 
 const ReferAndEarn = ({ navigation }) => {
   const colorScheme = useColorScheme();
@@ -296,7 +297,6 @@ const ReferAndEarn = ({ navigation }) => {
         message: `An unexpected error occurred: ${error.message}`
       };
     } finally {
-      // setIsVideoLoading(false);
     }
   };
 

@@ -11,7 +11,6 @@ import {
   BackHandler,
   Platform,
 } from 'react-native';
-import { blue } from 'react-native-reanimated/lib/typescript/Colors';
 
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
@@ -262,18 +261,9 @@ const CashbackforFeedbackConditions = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
-           {/* <View style={[styles.importantDetailsBox, { marginTop: 10 }]}>
-                <Text style={styles.headerTitle}>Get ₹1,000 / $10 Cashback </Text>
-                <Text style={styles.headerTitle}><Text style={styles.headerTitl}>for your genuine</Text> Feedback!</Text>
-              </View> */}
       <View style={styles.sectionDivider} />
 
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-         {/* <View style={styles.importantDetailsBox}>
-        <Text style={styles.introParagraph}>
-           Your opinion matters! 💖 Help us improve <Text style={styles.emphasisText}>AllrounderBaby.com</Text> and <Text style={styles.emphasisText}>get rewarded</Text> with up to <Text style={styles.emphasisText}>₹1,000 / $10 / €10</Text> cashback! 💰
-        </Text>
-        </View> */}
      
   <View style={styles.importantDetailsBox}>
            <Text  style={[

@@ -14,7 +14,9 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from "@react-native-community/netinfo";
-const url = 'https://allrounderbaby-czh8hubjgpcxgrc7.canadacentral-01.azurewebsites.net/api/';
+import { BASE_URL } from './config/api';
+
+const url = BASE_URL;
 import Orientation from 'react-native-orientation-locker';
 
 const VideoPlayerScreen = () => {
@@ -123,38 +125,74 @@ const VideoPlayerScreen = () => {
       console.error("A network error occurred while updating video progress:", e);
       Alert.alert("Network Error", "A network error occurred while saving your progress. Please check your connection.");
     }
-  }, [progressUpdated, videoId, currentTime, language, step, totalDuration, otp, playbackInfo]);
+  }, [videoId, currentTime, language, step, totalDuration, otp, playbackInfo, stage_name]);
 
+  // Stop video when screen loses focus
   useFocusEffect(
     useCallback(() => {
-      setIsLoading(true);
-      setError(null);
+      // Reset on focus
       progressUpdated.current = false;
 
       return () => {
+        // Cleanup when navigating away
         if (playerRef.current) {
           try {
             if (typeof playerRef.current.pause === 'function') {
               playerRef.current.pause();
             }
-            if (typeof playerRef.current.release === 'function') {
-              playerRef.current.release();
+            if (typeof playerRef.current.stop === 'function') {
+              playerRef.current.stop();
             }
           } catch (e) {
-            console.error('Cleanup: Error pausing or releasing VdoPlayerView:', e);
-          } finally {
-            playerRef.current = null;
+            console.error('Cleanup: Error stopping video:', e);
           }
         }
       };
     }, [])
   );
 
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (playerRef.current) {
+        try {
+          if (typeof playerRef.current.pause === 'function') {
+            playerRef.current.pause();
+          }
+          if (typeof playerRef.current.stop === 'function') {
+            playerRef.current.stop();
+          }
+          if (typeof playerRef.current.release === 'function') {
+            playerRef.current.release();
+          }
+        } catch (e) {
+          console.error('Unmount: Error cleaning up video player:', e);
+        } finally {
+          playerRef.current = null;
+        }
+      }
+    };
+  }, []);
+
   const handleLoaded = useCallback(() => {
     setIsLoading(false);
   }, []);
 
   const backAction = useCallback(async () => {
+    // Stop video before navigating back
+    if (playerRef.current) {
+      try {
+        if (typeof playerRef.current.pause === 'function') {
+          playerRef.current.pause();
+        }
+        if (typeof playerRef.current.stop === 'function') {
+          playerRef.current.stop();
+        }
+      } catch (e) {
+        console.error('Error stopping video on back:', e);
+      }
+    }
+    
     await updateVideoProgress(false);
     Orientation.lockToPortrait();
     if (cameFrom === 'Dashboard') {
@@ -168,6 +206,20 @@ const VideoPlayerScreen = () => {
   }, [navigation, cameFrom, updateVideoProgress]);
 
   const handleEnded = useCallback(async () => {
+    // Stop video after it ends
+    if (playerRef.current) {
+      try {
+        if (typeof playerRef.current.pause === 'function') {
+          playerRef.current.pause();
+        }
+        if (typeof playerRef.current.stop === 'function') {
+          playerRef.current.stop();
+        }
+      } catch (e) {
+        console.error('Error stopping video on end:', e);
+      }
+    }
+    
     await updateVideoProgress(true);
     if (cameFrom === 'Dashboard') {
       navigation.navigate('Home');
