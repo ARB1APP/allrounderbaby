@@ -413,18 +413,15 @@ const ReferAndEarnConditions = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-        if (navigation.canGoBack()) {
-            navigation.navigate('Refer and Earn');
-        } else {
-        }
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.goBack();
         return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-
-    return () => {
-        backHandler.remove();
-    };
+    return () => backHandler.remove();
   }, [navigation]);
  
 

@@ -148,8 +148,12 @@ const ReferAndEarn = ({ navigation }) => {
         setIsLanguageModalVisible(false);
         return true;
       }
-      navigation.navigate('Home');
-      return true;
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      // defer to global handler (returns false) so app-level handler can exit the app
+      return false;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
@@ -756,24 +760,7 @@ const ReferAndEarn = ({ navigation }) => {
           </Pressable>
         </Pressable>
       )}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
-          <Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Cashback for Feedback')}>
-          <Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint, textAlign: 'center' }]}>Cashback for Feedback</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: theme.bottomNavActiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavActiveTint }]}>Refer & Earn</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('My Profile')}>
-          <Image source={require('../img/proflie.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>My Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Bottom tab handled by HomeTabs; removed duplicate local bottom nav */}
     </View>
   );
 };

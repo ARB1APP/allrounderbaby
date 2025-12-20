@@ -242,20 +242,17 @@ const CashbackforFeedbackConditions = ({ navigation }) => {
   const styles = createCashbackStyles(theme);
   const isDarkMode = useColorScheme() === 'dark';
 
-       useEffect(() => {
+  useEffect(() => {
     const backAction = () => {
-        if (navigation.canGoBack()) {
-            navigation.navigate('Cashback for Feedback');
-        } else {
-        }
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.goBack();
         return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-
-    return () => {
-        backHandler.remove();
-    };
+    return () => backHandler.remove();
   }, [navigation]);
  
   return (

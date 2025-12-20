@@ -30,6 +30,7 @@ const TermsofService = ({ navigation }) => {
   }, [navigation]);
 
   return (
+<>
     <View style={[styles.container, backgroundStyle]}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View style={[
@@ -912,6 +913,7 @@ const TermsofService = ({ navigation }) => {
         </View>
       </ScrollView>
     </View>
+  </>
   );
 };
 

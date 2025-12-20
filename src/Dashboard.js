@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Modal, Alert, BackHandler, StatusBar, ActivityIndicator, Pressable, useColorScheme } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Modal, Alert, StatusBar, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler } from 'react-native';
+import { useNavigation, useRoute, CommonActions, useIsFocused } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -105,6 +105,8 @@ const CategoryButton = ({ image, title, onPress, isOpen }) => (
 
 
 const Dashboard = ({ navigation }) => {
+    const isFocused = useIsFocused();
+    const route = useRoute();
     const [token, setToken] = useState(null);
     const [userId, setUserID] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -134,29 +136,55 @@ const Dashboard = ({ navigation }) => {
     const textColorModal = { color: isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)' }
     const textColorModalPara = { color: isDarkMode ? Colors.white : '#2a3144' }
 
+    // Back navigation handled centrally in App.js
+    // Double-back-to-exit when on Home: first back shows toast, second within 2s exits
+    const lastBackPressed = useRef(0);
     useEffect(() => {
-        const backAction = () => {
-            if (navigation.isFocused()) {
-                Alert.alert("Hold on!", "Are you sure you want to exit the app?", [
-                    {
-                        text: "Cancel",
-                        onPress: () => null,
-                        style: "cancel"
-                    },
-                    { text: "YES", onPress: () => BackHandler.exitApp() }
-                ]);
+        // Double-back-to-exit: first press shows toast, second press within 2s exits the app
+        const onBackPress = () => {
+            if (!isFocused) return false;
+            const now = Date.now();
+            if (lastBackPressed.current && now - lastBackPressed.current < 2000) {
+                // use centralized exit helper
+                try {
+                    const { exitApp } = require('./utils/exitApp');
+                    exitApp();
+                } catch (e) {
+                    BackHandler.exitApp();
+                }
                 return true;
             }
-            return false;
+            lastBackPressed.current = now;
+            if (Platform.OS === 'android') {
+                ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+            }
+            return true;
         };
 
-        const backHandler = BackHandler.addEventListener(
-            "hardwareBackPress",
-            backAction
-        );
+        const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        return () => sub.remove();
+    }, [isFocused]);
 
-        return () => backHandler.remove();
-    }, [navigation]);
+    // Ensure unauthenticated users cannot access Dashboard — redirect to Login if token missing
+    useEffect(() => {
+        const verifyAuth = async () => {
+            try {
+                const tokenVal = await AsyncStorage.getItem('token');
+                if (!tokenVal) {
+                    navigation.dispatch(
+                        CommonActions.reset({
+                            index: 0,
+                            routes: [{ name: 'Login' }],
+                        })
+                    );
+                }
+            } catch (err) {
+                console.error('Auth verify error on Dashboard:', err);
+            }
+        };
+        if (isFocused) verifyAuth();
+        return () => { isActive = false; };
+    }, [isFocused, navigation]);
 
     const groupVideosByApiStep = (videoApiResponse) => {
         if (!videoApiResponse?.rows?.length) return [];
@@ -977,8 +1005,22 @@ const Dashboard = ({ navigation }) => {
                 {renderLevelModal()}
             </View>
 
-            {isModalVisible && selectedStepGroup && (<View style={styles.modalLikeContainer}><Pressable style={[styles.modalContent, backgroundStyle]} onPress={(e) => e.stopPropagation()}><View style={styles.modalContentMainDiv}><Text style={[styles.modalTitle, textColorModal]}>Select Language</Text><TouchableOpacity onPress={closeLanguageModal}><Text style={[styles.modalContentClose, textColorModalPara]}>✕</Text></TouchableOpacity></View><View style={styles.borderLine} /><Text style={[styles.modalText, textColorModalPara]}>In which language would you like to watch this video?</Text><View style={styles.modalButtons}><TouchableOpacity style={[styles.modalButton, !selectedStepGroup.hindiVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.hindiVideo.id, selectedStepGroup.stepNumber, 'hindi')} disabled={!selectedStepGroup.hindiVideo}><Text style={styles.modalButtonText}>Hindi</Text></TouchableOpacity><TouchableOpacity style={[styles.modalButton, !selectedStepGroup.englishVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.englishVideo.id, selectedStepGroup.stepNumber, 'english')} disabled={!selectedStepGroup.englishVideo}><Text style={styles.modalButtonText}>English</Text></TouchableOpacity></View></Pressable></View>)}
-            <View style={[styles.bottomNav, backgroundStyle]}><TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}><Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: isDarkMode ? '#60b5f6' : 'rgba(20, 52, 164, 1)' }]} /><Text style={[styles.navTextActive, { color: isDarkMode ? '#60b5f6' : '#1434a4' }]}>Home</Text></TouchableOpacity><TouchableOpacity style={[styles.navItem, styles.inactive]} onPress={() => navigation.navigate('Cashback for Feedback')}><Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: 'gray' }]} /><Text style={styles.navText}>Cashback for Feedback</Text></TouchableOpacity><TouchableOpacity style={[styles.navItem, styles.inactive]} onPress={() => navigation.navigate('Refer and Earn')}><Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: 'gray' }]} /><Text style={styles.navText}>Refer & Earn</Text></TouchableOpacity><TouchableOpacity style={[styles.navItem, styles.inactive]} onPress={() => navigation.navigate('My Profile')}><Image source={require('../img/proflie.png')} style={[styles.navIcon, { tintColor: 'gray' }]} /><Text style={styles.navText}>My Profile</Text></TouchableOpacity></View>
+            {isModalVisible && selectedStepGroup && (
+                <View style={styles.modalLikeContainer}>
+                    <Pressable style={[styles.modalContent, backgroundStyle]} onPress={(e) => e.stopPropagation()}>
+                        <View style={styles.modalContentMainDiv}>
+                            <Text style={[styles.modalTitle, textColorModal]}>Select Language</Text>
+                            <TouchableOpacity onPress={closeLanguageModal}><Text style={[styles.modalContentClose, textColorModalPara]}>✕</Text></TouchableOpacity>
+                        </View>
+                        <View style={styles.borderLine} />
+                        <Text style={[styles.modalText, textColorModalPara]}>In which language would you like to watch this video?</Text>
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity style={[styles.modalButton, !selectedStepGroup.hindiVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.hindiVideo.id, selectedStepGroup.stepNumber, 'hindi')} disabled={!selectedStepGroup.hindiVideo}><Text style={styles.modalButtonText}>Hindi</Text></TouchableOpacity>
+                            <TouchableOpacity style={[styles.modalButton, !selectedStepGroup.englishVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.englishVideo.id, selectedStepGroup.stepNumber, 'english')} disabled={!selectedStepGroup.englishVideo}><Text style={styles.modalButtonText}>English</Text></TouchableOpacity>
+                        </View>
+                    </Pressable>
+                </View>
+            )}
             {isVideoLoading && (<View style={styles.modalLikeContainer}><ActivityIndicator size="large" color="#FFFFFF" /><Text style={styles.loadingText}>Loading...</Text></View>)}
         </View>
     );

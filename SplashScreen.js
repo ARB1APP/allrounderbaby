@@ -1,19 +1,24 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import Video from 'react-native-video';
 import { StatusBar } from 'react-native';
 
-const SplashScreen = ({ onVideoEnd }) => {
+const SplashScreen = ({ onVideoEnd, onSkip }) => {
   return (
     <View style={styles.container}>
        <StatusBar backgroundColor="#111" barStyle="light-content" />
       <Video
-        source={require('./assets/splash_video.mp4')} 
+        source={require('./assets/splash_video.mp4')}
         style={styles.video}
         resizeMode="stretch"
-        onEnd={onVideoEnd} 
-        repeat={false} 
+        onEnd={onVideoEnd}
+        repeat={false}
       />
+      {onSkip ? (
+        <TouchableOpacity style={styles.skipOverlay} activeOpacity={0.8} onPress={onSkip} accessibilityLabel="splash-skip">
+          <Text style={styles.skipText}>Tap to continue</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 };
