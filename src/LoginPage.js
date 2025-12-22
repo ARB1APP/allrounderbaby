@@ -13,6 +13,7 @@ import { BASE_URL } from './config/api';
 
 const NEW_LAUNCH_IMAGE = require('../img/newlaunchscreen.png');
 
+
 const _keychainModuleName = 'react-native-keychain';
 let Keychain = null;
 try { Keychain = require(_keychainModuleName); } catch (e) { Keychain = null; }
@@ -75,6 +76,23 @@ const LoginPage = ({ navigation }) => {
         };
         loadCredentials();
     }, []);
+
+    // Tell the app to hide the global footer while this screen is focused
+    useEffect(() => {
+        try {
+            if (isFocused) {
+                navigation.setParams && navigation.setParams({ hideFooter: true });
+            } else {
+                navigation.setParams && navigation.setParams({ hideFooter: true });
+            }
+        } catch (e) {
+            // ignore
+        }
+        // also clear on unmount
+        return () => {
+            try { navigation.setParams && navigation.setParams({ hideFooter: false }); } catch (e) {}
+        };
+    }, [isFocused]);
 
     useEffect(() => {
         const onBackPress = async () => {

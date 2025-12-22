@@ -1,12 +1,13 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 
 const StarTracker = ({ navigation }) => { 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScreenScroll contentContainerStyle={{ flexGrow: 1 }}>
         <Text style={styles.text}>No Data Found</Text>
-      </ScrollView>
+      </ScreenScroll>
     </View>
   );
 };

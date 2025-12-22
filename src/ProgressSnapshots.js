@@ -32,9 +32,9 @@ const ProgressSnapshots = ({ navigation }) => {
 
   return (
     <View style={[styles.container, backgroundStyle]}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScreenScroll contentContainerStyle={{ flexGrow: 1 }}>
         <Text style={[styles.text, { color: isDarkMode ? Colors.white : Colors.black } ]}>Progress Snapshots</Text>
-      </ScrollView>
+      </ScreenScroll>
     </View>
   );
 };

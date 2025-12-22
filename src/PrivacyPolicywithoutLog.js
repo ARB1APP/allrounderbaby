@@ -1,15 +1,45 @@
 
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, useColorScheme, Linking } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, useColorScheme, Linking, BackHandler, StatusBar, Alert } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 
 const PrivacyPolicywithoutLog = () => {
   const isDarkMode = useColorScheme() === 'dark';
+  const navigation = useNavigation();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const backAction = () => {
+        console.log('PrivacyPolicywithoutLog: hardware back press');
+        try {
+          if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+            navigation.goBack();
+          } else if (navigation && typeof navigation.reset === 'function') {
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          } else {
+            Alert.alert('Navigation', 'Unable to navigate back.');
+          }
+        } catch (e) {
+          console.warn('Back action error', e);
+          Alert.alert('Navigation error', 'Could not navigate back.');
+        }
+        return true;
+      };
+
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+      return () => {
+        backHandler.remove();
+        StatusBar.setHidden(false);
+      };
+    }, [navigation])
+  );
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#2a3144' : '#fff',
   };
   return (
     <View style={[styles.container, backgroundStyle]}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScreenScroll contentContainerStyle={styles.scrollContainer}>
          <View  style={[
                 styles.sectionContainer,
                 { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, 
@@ -740,7 +770,7 @@ const PrivacyPolicywithoutLog = () => {
               </Text>
             </View>
             </View>     
-  </ScrollView>
+  </ScreenScroll>
     </View>
 
   );

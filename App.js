@@ -1,7 +1,8 @@
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler } from 'react-native';
+import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from './SplashScreen';
@@ -97,8 +98,8 @@ const createAppStyles = (theme) =>
     headerContainer: { alignItems: 'center', justifyContent: 'center', backgroundColor: theme.drawerHeaderBackground, borderBottomWidth: 1, borderBottomColor: theme.drawerBorderColor, paddingBottom: 12 },
     logo: { height: 100, resizeMode: 'contain' },
     drawerItemsContainer: { paddingVertical: 10 },
-    drawerItem: { height: 50 },
-    drawerItemLabel: { fontSize: 16, fontFamily: 'Lexend-VariableFont_wght' },
+    drawerItem: { height: 56, justifyContent: 'center', paddingVertical: 0 },
+    drawerItemLabel: { fontSize: 16, fontFamily: 'Lexend-VariableFont_wght', paddingVertical: 0, textAlignVertical: 'center' },
     footerContainer: { marginTop: 'auto', padding: 10, borderTopWidth: 1, borderTopColor: theme.drawerBorderColor, alignItems: 'center', backgroundColor: theme.drawerContentBackground },
     footerText: { fontSize: 12, color: theme.drawerFooterText, fontFamily: 'Lexend-VariableFont_wght' },
   });
@@ -188,6 +189,8 @@ export const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
                   tintColor: isDrawerItemFocused(item, props)
                     ? theme.drawerItemActiveIconTint
                     : theme.drawerItemInactiveIconTint,
+                  alignSelf: 'center',
+                  marginTop: 0,
                 }}
               />
             )}
@@ -208,6 +211,14 @@ const App = () => {
   const currentThemeColors = colorScheme === 'dark' ? DarkThemeColors : LightThemeColors;
   const navigationTheme = colorScheme === 'dark' ? AppDarkTheme : AppLightTheme;
   const styles = createAppStyles(currentThemeColors);
+  const [activeFooter, setActiveFooter] = useState('Home');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const { width } = Dimensions.get('window');
+  const footerIconSize = Math.round(Math.max(18, Math.min(32, width * 0.06)));
+  const footerHeight = Math.round(Math.max(56, width * 0.12));
+  const footerFontSize = Math.round(Math.max(10, Math.min(14, width * 0.03)));
+  const prevDrawerOpenRef = React.useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -375,11 +386,11 @@ const App = () => {
     }
   };
 
-  const clearLocalSessionAndNavigate = useCallback(async () => {
+  const clearLocalSessionAndNavigate = useCallback( () => {
     try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('userId');
-      await AsyncStorage.removeItem('username');
+       AsyncStorage.removeItem('token');
+       AsyncStorage.removeItem('userId');
+       AsyncStorage.removeItem('username');
       isLoggedInRef.current = false;
 
       try {
@@ -387,14 +398,14 @@ const App = () => {
         if (navigationRef.isReady()) {
           if (typeof navigationRef.resetRoot === 'function') {
             try {
-              await navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login' }] });
+               navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login' }] });
             } catch (e) {
-              await navigationRef.dispatch(
+               navigationRef.dispatch(
                 CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] })
               );
             }
           } else {
-            await navigationRef.dispatch(
+             navigationRef.dispatch(
               CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] })
             );
           }
@@ -456,16 +467,16 @@ const App = () => {
             text: "OK",
             onPress: async () => {
               try {
-                
+                debugger;
                 const token = await AsyncStorage.getItem('token');
                 const userId = await AsyncStorage.getItem('userId');
                 const deviceKey = await AsyncStorage.getItem('deviceKey');
                 if (!userId) {
-                  await clearLocalSessionAndNavigate();
+                   clearLocalSessionAndNavigate();
                   return;
                 }
                 if (!deviceKey) {
-                  await clearLocalSessionAndNavigate();
+                   clearLocalSessionAndNavigate();
                   return;
                 }
                 const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceKey)}`;
@@ -476,11 +487,11 @@ const App = () => {
                   const errorText = await response.text();
                   Alert.alert("Logout Warning", "Failed to log out from the server. Your local session has been cleared.");
                 }
-                await clearLocalSessionAndNavigate();
+                 clearLocalSessionAndNavigate();
               } catch (error) {
                 console.error('Error during logout process:', error);
                 Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
-                await clearLocalSessionAndNavigate();
+                 clearLocalSessionAndNavigate();
               }
             }
           }
@@ -567,6 +578,56 @@ const App = () => {
     [currentThemeColors, handleGlobalLogout]
   );
 
+  const stylesGlobal = StyleSheet.create({
+    footerWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
+    footerInner: { width: '100%', flexDirection: 'row',
+      backgroundColor: '#fff', height: footerHeight,
+      borderRadius: 0, alignItems: 'center',
+      justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee' },
+    footerItem: { alignItems: 'center', justifyContent: 'center' },
+    footerIcon: { width: footerIconSize, height: footerIconSize, tintColor: '#888' },
+    footerLabel: { fontSize: footerFontSize, color: '#666', marginTop: 6 },
+  });
+
+  const FooterBar = () => {
+    const navigateTo = async (routeName) => {
+      try {
+        skipNavigationGuards.current = true;
+        if (navigationRef.isReady()) navigationRef.navigate(routeName);
+      } catch (e) {
+        // ignore
+      } finally {
+        skipNavigationGuards.current = false;
+      }
+    };
+
+    return (
+      <View style={stylesGlobal.footerWrap} pointerEvents="box-none">
+        <View style={stylesGlobal.footerInner}>
+          <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Home')}>
+            <Image source={require('./img/home.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Home' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Home' ? currentThemeColors.primary : '#666' }]}>Home</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Cashback for Feedback')}>
+            <Image source={require('./img/feedbacktab.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Cashback for Feedback' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Cashback for Feedback' ? currentThemeColors.primary : '#666' }]}>Cashback</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Refer and Earn')}>
+            <Image source={require('./img/usersgroup.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#666' }]}>Refer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('My Profile')}>
+            <Image source={require('./img/proflie.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'My Profile' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'My Profile' ? currentThemeColors.primary : '#666' }]}>Profile</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
   if (!initialRoute) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: currentThemeColors.background }}>
@@ -577,13 +638,101 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <NavigationContainer ref={navigationRef} theme={navigationTheme} onReady={onNavigationReady}>
+      <NavigationContainer
+        ref={navigationRef}
+        theme={navigationTheme}
+        onReady={onNavigationReady}
+        onStateChange={() => {
+          try {
+            if (!navigationRef.isReady()) return;
+            const rootState = typeof navigationRef.getRootState === 'function' ? navigationRef.getRootState() : null;
+
+            // update footer active name
+            if (rootState && rootState.routes && typeof rootState.index === 'number') {
+              const top = rootState.routes[rootState.index];
+              if (top && top.name) {
+                setActiveFooter(top.name);
+              }
+            } else {
+              const r = navigationRef.getCurrentRoute();
+              if (r && r.name) setActiveFooter(r.name);
+            }
+
+            // detect if drawer is currently open by inspecting history entries
+            const detectDrawerOpen = (state) => {
+              if (!state) return false;
+              try {
+                // prefer history-based detection: look for a drawer history entry with status 'open'
+                if (Array.isArray(state.history) && state.history.length) {
+                  const drawerEntry = state.history.slice().reverse().find(h => h && h.type === 'drawer');
+                  if (drawerEntry) {
+                    // some RN versions include a `status` field
+                    if (drawerEntry.status === 'open') return true;
+                    // other versions may mark the drawer entry presence only when open
+                    if (typeof drawerEntry.status === 'undefined') return true;
+                  }
+                }
+
+                // check direct boolean flag if present
+                if (state.isDrawerOpen) return true;
+
+                // traverse into active child route
+                const idx = typeof state.index === 'number' ? state.index : 0;
+                const route = state.routes && state.routes[idx];
+                if (route && route.state) return detectDrawerOpen(route.state);
+              } catch (e) {
+                // ignore
+              }
+              return false;
+            };
+
+            const drawerOpen = detectDrawerOpen(rootState);
+            if (prevDrawerOpenRef.current !== !!drawerOpen) {
+              console.log('[App] drawerOpen changed ->', !!drawerOpen);
+              prevDrawerOpenRef.current = !!drawerOpen;
+            }
+            setIsDrawerOpen(!!drawerOpen);
+
+          } catch (e) {
+            // ignore
+          }
+        }}
+      >
         {initialRoute === 'Splash' ? (
           <SplashScreen onVideoEnd={handleVideoEnd} onSkip={() => setInitialRoute('Login')} />
         ) : (
           renderDrawerNavigator(initialRoute)
         )}
       </NavigationContainer>
+      {(() => {
+        const guestFooterPages = ['Login', 'LoginPage', 'Splash', 'VideoPlayerScreen', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
+        try {
+          if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
+            const rootState = navigationRef.getRootState && navigationRef.getRootState();
+            if (rootState) {
+              // traverse active route chain to collect names and check params
+              const activeNames = [];
+              let state = rootState;
+              let hideFooterParam = false;
+              while (state) {
+                const idx = typeof state.index === 'number' ? state.index : 0;
+                const route = state.routes && state.routes[idx];
+                if (!route) break;
+                  activeNames.push(route.name);
+                  // if any active route has params.hideFooter === true, hide the footer
+                  if (route.params && route.params.hideFooter) hideFooterParam = true;
+                  state = route.state;
+              }
+                const isGuest = activeNames.some(n => guestFooterPages.includes(n));
+                if (isGuest || hideFooterParam) return null;
+                if (isDrawerOpen) return null;
+            }
+          }
+        } catch (e) {
+          // ignore and fallback
+        }
+        return !guestFooterPages.includes(activeFooter) ? <FooterBar /> : null;
+      })()}
     </SafeAreaView>
   );
 };

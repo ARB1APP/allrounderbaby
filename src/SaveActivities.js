@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, useColorScheme } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const SaveActivities = ({ navigation }) => { 
@@ -10,9 +11,9 @@ const SaveActivities = ({ navigation }) => {
   };
   return (
     <View style={[styles.container, backgroundStyle]}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScreenScroll contentContainerStyle={{ flexGrow: 1 }}>
         <Text style={[styles.text, { color: isDarkMode ? Colors.white : Colors.black } ]}>Save Activities</Text>
-      </ScrollView>
+      </ScreenScroll>
     </View>
   );
 };

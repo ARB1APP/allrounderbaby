@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, BackHandler, StatusBar, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, BackHandler, StatusBar, useColorScheme } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const RateStarsStore = ({ navigation }) => { 
@@ -30,9 +31,9 @@ const RateStarsStore = ({ navigation }) => {
 
   return (
     <View style={[styles.container, backgroundStyle]}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScreenScroll contentContainerStyle={{ flexGrow: 1 }}>
         <Text style={[styles.text, { color: isDarkMode ? Colors.white : Colors.black }]}>Rate us 5 stars on the store</Text>
-      </ScrollView>
+      </ScreenScroll>
     </View>
   );
 };

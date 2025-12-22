@@ -1,14 +1,44 @@
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, useColorScheme } from 'react-native';
+import React, { useMemo, useEffect } from 'react';
+import { View, Text, StyleSheet, useColorScheme, BackHandler, StatusBar, Alert } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 
 const TermsofServicewithoutLog = () => {
   const colorScheme = useColorScheme && useColorScheme();
   const isDarkMode = colorScheme === 'dark';
   const backgroundStyle = useMemo(() => ({ backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }), [isDarkMode]);
+  const navigation = useNavigation();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const backAction = () => {
+        console.log('TermsofServicewithoutLog: hardware back press');
+        try {
+          if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+            navigation.goBack();
+          } else if (navigation && typeof navigation.reset === 'function') {
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          } else {
+            Alert.alert('Navigation', 'Unable to navigate back.');
+          }
+        } catch (e) {
+          console.warn('Back action error', e);
+          Alert.alert('Navigation error', 'Could not navigate back.');
+        }
+        return true;
+      };
+
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+      return () => {
+        backHandler.remove();
+        StatusBar.setHidden(false);
+      };
+    }, [navigation])
+  );
 
   return (
     <View style={[styles.container, backgroundStyle]}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScreenScroll contentContainerStyle={{ flexGrow: 1 }}>
               <View style={[
                   styles.sectionContainer,
                   { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
@@ -887,7 +917,7 @@ const TermsofServicewithoutLog = () => {
             </View>
   
           </View>
-        </ScrollView>
+        </ScreenScroll>
       </View>
       );
     };

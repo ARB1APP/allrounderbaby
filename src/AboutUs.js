@@ -3,13 +3,14 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
+  
   BackHandler,
   Image,
   StatusBar,
   useColorScheme,
   Platform,
 } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
@@ -176,7 +177,7 @@ const AboutUs = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <View style={[
           styles.sectionContainer,
           { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
@@ -471,7 +472,7 @@ const AboutUs = ({ navigation }) => {
             Let’s raise joyful, confident, curious, and compassionate children—together. 🎉✨
           </Text>
         </View>
-      </ScrollView>
+      </ScreenScroll>
     </View>
   );
 };

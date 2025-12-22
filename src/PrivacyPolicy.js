@@ -3,7 +3,6 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
   Image,
   BackHandler,
@@ -11,6 +10,7 @@ import {
   useColorScheme,
 
 } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const styles = StyleSheet.create({
@@ -236,7 +236,7 @@ const PrivacyPolicy = ({ navigation }) => {
   return (
   
     <View style={[styles.container, backgroundStyle]}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScreenScroll contentContainerStyle={styles.scrollContainer}>
          <View  style={[
                 styles.sectionContainer,
                 { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, 
@@ -967,7 +967,7 @@ const PrivacyPolicy = ({ navigation }) => {
               </Text>
             </View>
             </View>     
-  </ScrollView>
+  </ScreenScroll>
     </View>
        
   );

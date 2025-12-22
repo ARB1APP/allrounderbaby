@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Dimensions, useColorScheme, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, Dimensions, useColorScheme, Alert } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions } from '@react-navigation/native';
-import { navigationRef } from '../App';
+import { navigationRef, skipNavigationGuards, isLoggedInRef } from '../App';
 import { BASE_URL } from './config/api';
 // Load Keychain dynamically (avoid crash if native module not linked)
 let Keychain = null;
@@ -170,20 +171,27 @@ const Profile = ({ navigation }) => {
             }
             
             // Use app-wide navigationRef to ensure we reset the root navigator
-            if (navigationRef?.isReady && navigationRef.isReady()) {
-                navigationRef.dispatch(
-                    CommonActions.reset({
-                        index: 0,
-                        routes: [{ name: 'Login', params: { logout: true } }],
-                    })
-                );
-            } else {
-                navigation.dispatch(
-                    CommonActions.reset({
-                        index: 0,
-                        routes: [{ name: 'Login', params: { logout: true } }],
-                    })
-                );
+            try {
+                // ensure global navigation guards are bypassed for this reset
+                skipNavigationGuards.current = true;
+                // mark global logged-in ref as false so navigation guards treat user as logged out
+                try { isLoggedInRef.current = false; } catch (e) { /* ignore if not available */ }
+
+                if (navigationRef?.isReady && navigationRef.isReady()) {
+                    try {
+                        await navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login', params: { logout: true } }] });
+                    } catch (e) {
+                        navigationRef.dispatch(
+                            CommonActions.reset({ index: 0, routes: [{ name: 'Login', params: { logout: true } }] })
+                        );
+                    }
+                } else {
+                    navigation.dispatch(
+                        CommonActions.reset({ index: 0, routes: [{ name: 'Login', params: { logout: true } }] })
+                    );
+                }
+            } finally {
+                skipNavigationGuards.current = false;
             }
         } catch (localError) {
             console.error('Error clearing local storage:', localError);
@@ -232,7 +240,7 @@ const Profile = ({ navigation }) => {
     }, [navigation]);
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <ScrollView contentContainerStyle={styles.scrollContentContainer}>
+            <ScreenScroll contentContainerStyle={styles.scrollContentContainer}>
                 <View style={styles.header}>
                     <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>My Profile</Text>
                 </View>
@@ -322,7 +330,7 @@ const Profile = ({ navigation }) => {
                     <Text style={[styles.logoutText, { color: isDarkMode ? AppColors.dark.textPrimary : AppColors.light.card }]}>Logout</Text>
                 </TouchableOpacity>
 
-            </ScrollView>
+            </ScreenScroll>
 
             {/* Bottom tab handled by HomeTabs; removed duplicate local bottom nav */}
         </View>
