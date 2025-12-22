@@ -82,25 +82,13 @@ import {
 
 ### 3. **Updated Screens**
 
-#### ✅ MainApp.js (Welcome Screen)
-- Responsive image height: 55% (tablet) / 60% (phone)
-- Responsive text sizes: 28px (tablet) / 24px (phone)
-- Button width: 60% (tablet) / 90% (phone)
-- Max button width: 500px for tablets
-- Larger border radius on tablets
+#### ✅ Welcome Screen (removed)
+This welcome screen has been removed from the project; responsive patterns are preserved in the style guide.
 
 #### ✅ LoginPage.js
-- Content max width: 500px on tablets
-- Centered content with `alignSelf: 'center'`
-- Input height: 52px (tablet) / 45px (phone)
-- Button height: 56px (tablet) / 50px (phone)
-- Font sizes scaled: +2px on tablets
-- All form fields centered and constrained
-
+#### ✅ Login Form (removed)
+The login screen was removed from the project; patterns for responsive forms remain in this guide.
 #### ✅ Dashboard.js
-- Dynamic image widths using `Dimensions.get('window')`
-- Responsive: `width: width - 20` (adapts to all screens)
-- Modal width: `width * 0.8` (80% of screen)
 - Nested images: `width: width - 48`, `height: height / 2.8`
 
 #### ✅ Profile.js
@@ -362,7 +350,7 @@ useEffect(() => {
 
 ## 📦 Files Modified for Responsiveness
 
-1. ✅ [`MainApp.js`](MainApp.js) - Welcome screen
+1. ✅ Welcome screen (removed)
 2. ✅ [`src/LoginPage.js`](src/LoginPage.js) - Login form
 3. ✅ [`src/Community.js`](src/Community.js) - Community screen
 4. ✅ [`src/FAQ.js`](src/FAQ.js) - FAQ screen

@@ -347,12 +347,22 @@ const CashbackforFeedback = () => {
 
   useEffect(() => {
     const backAction = () => {
-      navigation.navigate('Home');
-      return true;
+      // If any modal is open, close it first
+      if (isLanguageModalVisible) {
+        setIsLanguageModalVisible(false);
+        return true;
+      }
+      // Prefer native stack back if possible
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      // Let the central app-level handler handle exiting the app
+      return false;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
-  }, [navigation]);
+  }, [navigation, isLanguageModalVisible]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -764,24 +774,7 @@ const CashbackforFeedback = () => {
         </Pressable>
       )}
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
-          <Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavActiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavActiveTint }]}>Cashback for Feedback</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Refer and Earn')}>
-          <Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Refer & Earn</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('My Profile')}>
-          <Image source={require('../img/proflie.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>My Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Bottom tab handled by HomeTabs; removed duplicate local bottom nav */}
     </View>
   );
 };

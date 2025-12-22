@@ -17,27 +17,15 @@
 
 ### 2. Updated Core Screens
 
-#### MainApp.js (Welcome Screen)
-**Changes:**
-- Added Dimensions detection
-- Tablet detection: `isTablet = SCREEN_WIDTH >= 600`
-- Responsive image height: 55% (tablet) vs 60% (phone)
-- Responsive fonts: 28px (tablet) vs 24px (phone)
-- Button width: 60% (tablet) vs 90% (phone) with 500px max
-- Larger border radius on tablets (200 vs 150)
+#### Welcome Screen (removed)
+This welcome screen has been removed from the codebase; responsive details are documented where relevant in other screens.
 
-**Result:** ✅ Perfect on all devices
+**Result:** ✅ Removed
 
-#### LoginPage.js (Login Form)
-**Changes:**
-- Added responsive content width: 500px max on tablets
-- All form elements centered with `alignSelf: 'center'`
-- Input height: 52px (tablet) vs 45px (phone)
-- Button height: 56px (tablet) vs 50px (phone)
-- Font sizes +2px on tablets
-- Error messages properly aligned
+#### Login Form (removed)
+This login screen has been removed from the codebase. Related responsive patterns are preserved in the guide for other forms.
 
-**Result:** ✅ Perfect on all devices
+**Result:** ✅ Removed
 
 #### Community.js, FAQ.js, GetHelp.js
 **Changes:**
@@ -227,8 +215,8 @@ import { getFontSize, getMaxContentWidth } from './utils/responsive';
 ## 📦 Files Modified
 
 ### Core Changes:
-- ✅ `MainApp.js` - Welcome screen
-- ✅ `src/LoginPage.js` - Login form
+-- ✅ Welcome screen (removed)
+-- ✅ Login form (removed)
 - ✅ `src/Community.js` - Community screen
 - ✅ `src/FAQ.js` - FAQ screen
 - ✅ `src/GetHelp.js` - Help screen

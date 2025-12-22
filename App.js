@@ -1,24 +1,26 @@
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator } from 'react-native';
+import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from './SplashScreen';
-import MainApp from './MainApp';
 import LoginPage from './src/LoginPage';
 import Dashboard from './src/Dashboard';
 import ChasCashbackforFeedback from './src/CashbackforFeedback';
 import ReferAndEarn from './src/ReferAndEarn';
 import Profile from './src/Profile';
-import VideoPlayerScreen from './src/VideoPlayerScreen';
+import VideoPlayerScreen from './src/VideoPlayerScreen'; 
 import ReferAndEarnConditions from './src/ReferAndEarnConditions';
 import ReferralHistory from './src/ReferralHistory';
 import MyOrders from './src/MyOrders';
 import MyEarnings from './src/MyEarnings';
 import AppVersion from './src/AppVersion';
 import PrivacyPolicy from './src/PrivacyPolicy';
+import PrivacyPolicywithoutLog from './src/PrivacyPolicywithoutLog';
 import TermsofService from './src/TermsofService';
+import TermsofServicewithoutLog from './src/TermsofServicewithoutLog';
 import RateStarsStore from './src/RateStarsStore';
 import Community from './src/Community';
 import FAQ from './src/FAQ';
@@ -36,11 +38,13 @@ import AboutUs from './src/AboutUs';
 import CashbackforFeedbackConditions from './src/CashbackforFeedbackConditions';
 import Trails from './src/Trails';
 import { BASE_URL } from './src/config/api';
+import { exitApp } from './src/utils/exitApp';
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
 const url = BASE_URL;
 export const navigationRef = createNavigationContainerRef();
+export const skipNavigationGuards = { current: false };
 
 const LightThemeColors = {
   background: '#FFFFFF',
@@ -94,13 +98,13 @@ const createAppStyles = (theme) =>
     headerContainer: { alignItems: 'center', justifyContent: 'center', backgroundColor: theme.drawerHeaderBackground, borderBottomWidth: 1, borderBottomColor: theme.drawerBorderColor, paddingBottom: 12 },
     logo: { height: 100, resizeMode: 'contain' },
     drawerItemsContainer: { paddingVertical: 10 },
-    drawerItem: { height: 50 },
-    drawerItemLabel: { fontSize: 16, fontFamily: 'Lexend-VariableFont_wght' },
+    drawerItem: { height: 56, justifyContent: 'center', paddingVertical: 0 },
+    drawerItemLabel: { fontSize: 16, fontFamily: 'Lexend-VariableFont_wght', paddingVertical: 0, textAlignVertical: 'center' },
     footerContainer: { marginTop: 'auto', padding: 10, borderTopWidth: 1, borderTopColor: theme.drawerBorderColor, alignItems: 'center', backgroundColor: theme.drawerContentBackground },
     footerText: { fontSize: 12, color: theme.drawerFooterText, fontFamily: 'Lexend-VariableFont_wght' },
   });
 
-const drawerItems = [
+export const drawerItems = [
   { key: "home", label: "Home", navigateTo: "Home", icon: require('./img/home.png'), iconSize: { width: 24, height: 24 } },
   { key: "profile", label: "My Profile", navigateTo: "My Profile", icon: require('./img/proflie.png'), iconSize: { width: 24, height: 24 } },
   { key: "about", label: "About Us", navigateTo: "About Us", icon: require('./img/about.png'), iconSize: { width: 22, height: 22 } },
@@ -125,7 +129,7 @@ const isDrawerItemFocused = (item, props) => {
   return false;
 };
 
-const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
+export const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
   const styles = useMemo(() => createAppStyles(theme), [theme]);
   return (
     <DrawerContentScrollView {...props} style={styles.drawerContentScrollView} contentContainerStyle={{ flex: 1 }}>
@@ -137,11 +141,37 @@ const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
           <DrawerItem
             key={item.key}
             label={item.label}
-            onPress={() =>
-              item.label === 'Logout'
-                ? handleLogout()
-                : props.navigation.navigate(item.navigateTo, { source: item.label })
-            }
+            accessibilityLabel={`drawer-item-${item.key}`}
+            onPress={async () => {
+              if (item.label === 'Logout') {
+                handleLogout();
+                return;
+              }
+
+              const guestPages = ['Login', 'LoginPage', 'Splash', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
+              try {
+                const token = await AsyncStorage.getItem('token');
+                const isLoggedIn = !!token;
+                const target = item.navigateTo === 'Home' ? 'Home' : item.navigateTo;
+
+                if (isLoggedIn && guestPages.includes(target)) {
+                  Alert.alert('Access Restricted', 'Please logout before accessing this page.');
+                  return;
+                }
+
+                if (!isLoggedIn && !guestPages.includes(target)) {
+                  Alert.alert('Login Required', 'Please login to access this page.', [
+                    { text: 'OK', onPress: () => props.navigation.navigate('Login') },
+                  ]);
+                  return;
+                }
+
+                props.navigation.navigate(target, { source: item.label });
+              } catch (err) {
+                console.error('Navigation error:', err);
+                props.navigation.navigate(item.navigateTo, { source: item.label });
+              }
+            }}
             style={styles.drawerItem}
             focused={isDrawerItemFocused(item, props)}
             activeBackgroundColor={theme.drawerItemActiveBackground}
@@ -159,6 +189,8 @@ const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
                   tintColor: isDrawerItemFocused(item, props)
                     ? theme.drawerItemActiveIconTint
                     : theme.drawerItemInactiveIconTint,
+                  alignSelf: 'center',
+                  marginTop: 0,
                 }}
               />
             )}
@@ -174,25 +206,41 @@ const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
 
 const App = () => {
   const [initialRoute, setInitialRoute] = useState(null);
+  const isLoggedInRef = React.useRef(false);
   const colorScheme = useColorScheme();
   const currentThemeColors = colorScheme === 'dark' ? DarkThemeColors : LightThemeColors;
   const navigationTheme = colorScheme === 'dark' ? AppDarkTheme : AppLightTheme;
   const styles = createAppStyles(currentThemeColors);
+  const [activeFooter, setActiveFooter] = useState('Home');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const { width } = Dimensions.get('window');
+  const footerIconSize = Math.round(Math.max(18, Math.min(32, width * 0.06)));
+  const footerHeight = Math.round(Math.max(56, width * 0.12));
+  const footerFontSize = Math.round(Math.max(10, Math.min(14, width * 0.03)));
+  const prevDrawerOpenRef = React.useRef(false);
 
   useEffect(() => {
     let isMounted = true;
     const checkAuthStatus = async () => {
       try {
+        
         const firstTime = await AsyncStorage.getItem('first_time_opened');
         const token = await AsyncStorage.getItem('token');
-        if (isMounted) {
-          if (!firstTime) {
-            setInitialRoute('Splash');
-          } else if (token) {
-            setInitialRoute('Home');
-          } else {
-            setInitialRoute('Login');
-          }
+        const userId = await AsyncStorage.getItem('userId');
+        const isid = userId ? userId : null;
+        const isFirstTime = firstTime === 'true';
+        const hasToken = !!token;
+        isLoggedInRef.current = hasToken;
+
+        if (!isMounted) return;
+
+        if (!isFirstTime && !hasToken) {
+          setInitialRoute('Splash');
+        } else if (hasToken) {
+          setInitialRoute('Home');
+        } else {
+          setInitialRoute('Login');
         }
       } catch (error) {
         console.error('AsyncStorage error:', error);
@@ -201,40 +249,208 @@ const App = () => {
         }
       }
     };
+
     checkAuthStatus();
+
     return () => {
       isMounted = false;
     };
   }, []);
+  const updateLoggedOutState = useCallback(() => {
+    isLoggedInRef.current = false;
+  }, []);
+
+  const onNavigationReady = React.useCallback(async () => {
+    const guestPages = ['Login', 'LoginPage', 'Splash', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
+
+    if (!navigationRef.isReady()) return;
+
+    try {
+      const origNavigate = navigationRef.navigate.bind(navigationRef);
+      navigationRef.navigate = async (...args) => {
+        if (skipNavigationGuards.current) return origNavigate(...args);
+        try {
+          const token = await AsyncStorage.getItem('token');
+          const isLoggedIn = !!token || isLoggedInRef.current;
+          let name = null;
+          if (typeof args[0] === 'string') name = args[0];
+          else if (typeof args[0] === 'object' && args[0]?.name) name = args[0].name;
+          if (isLoggedIn && name && guestPages.includes(name)) {
+            Alert.alert('Access Restricted', 'Please logout before accessing this page.');
+            return;
+          }
+
+          // If not logged in, block protected pages (not in guestPages)
+          if (!isLoggedIn && name && !guestPages.includes(name)) {
+            Alert.alert('Login Required', 'Please login to access this page.');
+            // redirect to Login
+            try { origNavigate('Login'); } catch (e) { }
+            return;
+          }
+        } catch (e) {
+          // ignore
+        }
+        return origNavigate(...args);
+      };
+    } catch (e) {
+      // ignore
+    }
+
+    try {
+      const origDispatch = navigationRef.dispatch.bind(navigationRef);
+      navigationRef.dispatch = async (action) => {
+        if (skipNavigationGuards.current) return origDispatch(action);
+        try {
+          const token = await AsyncStorage.getItem('token');
+          const isLoggedIn = !!token || isLoggedInRef.current;
+
+          const containsGuestRoute = (act) => {
+            if (!act) return false;
+            const payload = act.payload || act;
+            if (payload && Array.isArray(payload.routes)) {
+              return payload.routes.some(r => guestPages.includes(r.name));
+            }
+            if (payload && payload.name) return guestPages.includes(payload.name);
+            if (act?.route && act.route.name) return guestPages.includes(act.route.name);
+            return false;
+          };
+
+          const containsProtectedRoute = (act) => {
+            if (!act) return false;
+            const payload = act.payload || act;
+            if (payload && Array.isArray(payload.routes)) {
+              return payload.routes.some(r => !guestPages.includes(r.name));
+            }
+            if (payload && payload.name) return !guestPages.includes(payload.name);
+            if (act?.route && act.route.name) return !guestPages.includes(act.route.name);
+            return false;
+          };
+
+          if (isLoggedIn && containsGuestRoute(action)) {
+            Alert.alert('Access Restricted', 'Please logout before accessing this page.');
+            return;
+          }
+
+          if (!isLoggedIn && containsProtectedRoute(action)) {
+            Alert.alert('Login Required', 'Please login to access this page.');
+            try { navigationRef.navigate('Login'); } catch (e) { }
+            return;
+          }
+        } catch (e) {
+        }
+        return origDispatch(action);
+      };
+    } catch (e) {
+    }
+
+    try {
+        if (typeof navigationRef.resetRoot === 'function') {
+        const origResetRoot = navigationRef.resetRoot.bind(navigationRef);
+        navigationRef.resetRoot = async (state) => {
+          if (skipNavigationGuards.current) return origResetRoot(state);
+          try {
+            const token = await AsyncStorage.getItem('token');
+            const isLoggedIn = !!token || isLoggedInRef.current;
+            if (state && Array.isArray(state.routes)) {
+              const hasGuest = state.routes.some(r => guestPages.includes(r.name));
+              if (isLoggedIn && hasGuest) {
+                Alert.alert('Access Restricted', 'Please logout before accessing this page.');
+                return;
+              }
+              const hasProtected = state && Array.isArray(state.routes) && state.routes.some(r => !guestPages.includes(r.name));
+              if (!isLoggedIn && hasProtected) {
+                Alert.alert('Login Required', 'Please login to access this page.');
+                try { navigationRef.navigate('Login'); } catch (e) { }
+                return;
+              }
+            }
+          } catch (e) {
+          }
+          return origResetRoot(state);
+        };
+      }
+    } catch (e) {
+    }
+  }, []);
+
 
   const handleVideoEnd = async () => {
     try {
       await AsyncStorage.setItem('first_time_opened', 'true');
       const token = await AsyncStorage.getItem('token');
-      setInitialRoute(token ? 'Home' : 'Login');
+
+      setInitialRoute('Login');
     } catch (error) {
       console.error('AsyncStorage error setting first_time_opened:', error);
       setInitialRoute('Login');
     }
   };
 
-  const clearLocalSessionAndNavigate = useCallback(async (navigation) => {
+  const clearLocalSessionAndNavigate = useCallback( () => {
     try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('userId');
-      await AsyncStorage.removeItem('username');
-      if (navigationRef.isReady()) {
-        navigationRef.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-        })
-      );
+       AsyncStorage.removeItem('token');
+       AsyncStorage.removeItem('userId');
+       AsyncStorage.removeItem('username');
+      isLoggedInRef.current = false;
+
+      try {
+        skipNavigationGuards.current = true;
+        if (navigationRef.isReady()) {
+          if (typeof navigationRef.resetRoot === 'function') {
+            try {
+               navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login' }] });
+            } catch (e) {
+               navigationRef.dispatch(
+                CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] })
+              );
+            }
+          } else {
+             navigationRef.dispatch(
+              CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] })
+            );
+          }
+        }
+      } finally {
+        skipNavigationGuards.current = false;
       }
     } catch (localError) {
       console.error('Error clearing local storage:', localError);
-      Alert.alert("Local Session Error", "Failed to clear local session data. Please restart the app.");
+      Alert.alert('Local Session Error', 'Failed to clear local session data. Please restart the app.');
     }
+  }, []);
+
+  useEffect(() => {
+        const onBackPress = () => {
+      try {
+        if (!navigationRef.isReady()) return false;
+        const rootState = navigationRef.getRootState && navigationRef.getRootState();
+        const rootRoute = rootState && rootState.routes && rootState.routes[rootState.index] && rootState.routes[rootState.index].name;
+
+        const current = navigationRef.getCurrentRoute && navigationRef.getCurrentRoute();
+
+        const tabRootNames = ['HomeTab', 'CashbackTab', 'ReferEarnTab', 'ProfileTab'];
+
+        const isOnTabRoot = (rootRoute === 'Home') && (current && tabRootNames.includes(current.name));
+
+        if (isOnTabRoot && isLoggedInRef.current) {
+          try { exitApp(); } catch (e) { BackHandler.exitApp(); }
+          return true;
+        }
+
+        if (navigationRef.canGoBack()) {
+          navigationRef.goBack();
+          return true;
+        }
+
+        try { exitApp(); } catch (e) { BackHandler.exitApp(); }
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => backHandler.remove();
   }, []);
 
   const handleGlobalLogout = useCallback(
@@ -251,15 +467,16 @@ const App = () => {
             text: "OK",
             onPress: async () => {
               try {
+                debugger;
                 const token = await AsyncStorage.getItem('token');
                 const userId = await AsyncStorage.getItem('userId');
                 const deviceKey = await AsyncStorage.getItem('deviceKey');
                 if (!userId) {
-                  await clearLocalSessionAndNavigate();
+                   clearLocalSessionAndNavigate();
                   return;
                 }
                 if (!deviceKey) {
-                  await clearLocalSessionAndNavigate();
+                   clearLocalSessionAndNavigate();
                   return;
                 }
                 const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceKey)}`;
@@ -270,11 +487,11 @@ const App = () => {
                   const errorText = await response.text();
                   Alert.alert("Logout Warning", "Failed to log out from the server. Your local session has been cleared.");
                 }
-                await clearLocalSessionAndNavigate();
+                 clearLocalSessionAndNavigate();
               } catch (error) {
                 console.error('Error during logout process:', error);
                 Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
-                await clearLocalSessionAndNavigate();
+                 clearLocalSessionAndNavigate();
               }
             }
           }
@@ -292,54 +509,124 @@ const App = () => {
   const LoginStack = () => (
     <Stack.Navigator screenOptions={getHeaderOptions(currentThemeColors)}>
       <Stack.Screen name="LoginPage" component={LoginPage} options={{ headerShown: false }} />
-      <Stack.Screen name="Terms of Service" component={TermsofService} options={{ headerShown: true, title: 'Terms of Service' }} />
-      <Stack.Screen name="Privacy Policy" component={PrivacyPolicy} options={{ headerShown: true, title: 'Privacy Policy' }} />
+      <Stack.Screen name="TermsofServicewithoutLog" component={TermsofServicewithoutLog} options={{ headerShown: true, title: 'Terms of Service' }} />
+      <Stack.Screen name="PrivacyPolicywithoutLog" component={PrivacyPolicywithoutLog} options={{ headerShown: true, title: 'Privacy Policy' }} />
     </Stack.Navigator>
   );
 
   const renderDrawerNavigator = useCallback(
     (initialRouteName) => (
       <Drawer.Navigator
-       initialRouteName={initialRouteName}
+        initialRouteName={initialRouteName}
         drawerContent={(props) => (
           <CustomDrawerContent {...props} theme={currentThemeColors} handleLogout={handleGlobalLogout} />
         )}
         screenOptions={getHeaderOptions(currentThemeColors)}
       >
-        <Drawer.Screen name="MainApp" component={MainApp} options={{ headerShown: false, swipeEnabled: false, unmountOnBlur: true }} />
-        <Drawer.Screen name="Login" component={LoginStack} options={{ headerShown: false, swipeEnabled: false, unmountOnBlur: true }} />
-        <Drawer.Screen name="Home" component={Dashboard} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="My Profile" component={Profile} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="About Us" component={AboutUs} options={{ headerShown: true, swipeEnabled: true, unmountOnBlur: true }} />
-        <Drawer.Screen name="Cashback for Feedback" component={ChasCashbackforFeedback} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Refer and Earn" component={ReferAndEarn} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="VideoPlayerScreen" component={VideoPlayerScreen} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Refer and Earn conditiions" component={ReferAndEarnConditions} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Referral History" component={ReferralHistory} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="My Orders" component={MyOrders} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="My Earnings" component={MyEarnings} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="App Version" component={AppVersion} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Privacy Policy" component={PrivacyPolicy} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Terms of Service" component={TermsofService} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Community" component={Community} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="FAQ" component={FAQ} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Restore Purchases" component={RestorePurchases} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Photo Permission" component={PhotoPermission} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="My Notifications" component={MyNotifications} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Progress Snapshots" component={ProgressSnapshots} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="My Referrals" component={MyReferrals} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Save Activities" component={SaveActivities} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Medals" component={Medals} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Star Tracker" component={StarTracker} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Trails" component={Trails} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Next Goal" component={NextGoal} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Cashback for Feedback Conditions" component={CashbackforFeedbackConditions} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Rate us / Update App" component={RateStarsStore} options={{ unmountOnBlur: true }} />
-        <Drawer.Screen name="Get Help" component={GetHelp} options={{ unmountOnBlur: true }} />
+        <Drawer.Screen
+          name="Home"
+          component={Dashboard}
+          options={{}}
+          listeners={({ navigation }) => ({
+            beforeRemove: (e) => {
+              try {
+                if (isLoggedInRef.current && e && e.data && e.data.action && e.data.action.type) {
+                  const t = e.data.action.type;
+                    if (t === 'GO_BACK' || t === 'POP') {
+                    e.preventDefault();
+                    try { exitApp(); } catch (err2) { BackHandler.exitApp(); }
+                  }
+                }
+              } catch (err) {
+                // fallback: do nothing
+              }
+            },
+          })}
+        />
+        <Drawer.Screen name="Login" component={LoginStack} options={{ headerShown: false, swipeEnabled: false }} />
+        <Drawer.Screen name="My Profile" component={Profile} options={{}} />
+        <Drawer.Screen name="About Us" component={AboutUs} options={{ headerShown: true, swipeEnabled: true }} />
+        <Drawer.Screen name="Cashback for Feedback" component={ChasCashbackforFeedback} options={{}} />
+        <Drawer.Screen name="Refer and Earn" component={ReferAndEarn} options={{}} />
+        <Drawer.Screen name="VideoPlayerScreen" component={VideoPlayerScreen} options={{}} />
+        <Drawer.Screen name="Refer and Earn conditiions" component={ReferAndEarnConditions} options={{}} />
+        <Drawer.Screen name="Referral History" component={ReferralHistory} options={{}} />
+        <Drawer.Screen name="My Orders" component={MyOrders} options={{}} />
+        <Drawer.Screen name="My Earnings" component={MyEarnings} options={{}} />
+        <Drawer.Screen name="App Version" component={AppVersion} options={{}} />
+        <Drawer.Screen name="Privacy Policy" component={PrivacyPolicy} options={{}} />
+        <Drawer.Screen name="Terms of Service" component={TermsofService} options={{}} />
+        <Drawer.Screen name="TermsofServicewithoutLog" component={TermsofServicewithoutLog} options={{ title: 'Terms of Service' }} />
+        <Drawer.Screen name="PrivacyPolicywithoutLog" component={PrivacyPolicywithoutLog} options={{ title: 'Privacy Policy' }} />
+        <Drawer.Screen name="Community" component={Community} options={{}} />
+        <Drawer.Screen name="FAQ" component={FAQ} options={{}} />
+        <Drawer.Screen name="Restore Purchases" component={RestorePurchases} options={{}} />
+        <Drawer.Screen name="Photo Permission" component={PhotoPermission} options={{}} />
+        <Drawer.Screen name="My Notifications" component={MyNotifications} options={{}} />
+        <Drawer.Screen name="Progress Snapshots" component={ProgressSnapshots} options={{}} />
+        <Drawer.Screen name="My Referrals" component={MyReferrals} options={{}} />
+        <Drawer.Screen name="Save Activities" component={SaveActivities} options={{}} />
+        <Drawer.Screen name="Medals" component={Medals} options={{}} />
+        <Drawer.Screen name="Star Tracker" component={StarTracker} options={{}} />
+        <Drawer.Screen name="Trails" component={Trails} options={{}} />
+        <Drawer.Screen name="Next Goal" component={NextGoal} options={{}} />
+        <Drawer.Screen name="Cashback for Feedback Conditions" component={CashbackforFeedbackConditions} options={{}} />
+        <Drawer.Screen name="Rate us / Update App" component={RateStarsStore} options={{}} />
+        <Drawer.Screen name="Get Help" component={GetHelp} options={{}} />
       </Drawer.Navigator>
     ),
     [currentThemeColors, handleGlobalLogout]
   );
+
+  const stylesGlobal = StyleSheet.create({
+    footerWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
+    footerInner: { width: '100%', flexDirection: 'row',
+      backgroundColor: '#fff', height: footerHeight,
+      borderRadius: 0, alignItems: 'center',
+      justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee' },
+    footerItem: { alignItems: 'center', justifyContent: 'center' },
+    footerIcon: { width: footerIconSize, height: footerIconSize, tintColor: '#888' },
+    footerLabel: { fontSize: footerFontSize, color: '#666', marginTop: 6 },
+  });
+
+  const FooterBar = () => {
+    const navigateTo = async (routeName) => {
+      try {
+        skipNavigationGuards.current = true;
+        if (navigationRef.isReady()) navigationRef.navigate(routeName);
+      } catch (e) {
+        // ignore
+      } finally {
+        skipNavigationGuards.current = false;
+      }
+    };
+
+    return (
+      <View style={stylesGlobal.footerWrap} pointerEvents="box-none">
+        <View style={stylesGlobal.footerInner}>
+          <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Home')}>
+            <Image source={require('./img/home.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Home' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Home' ? currentThemeColors.primary : '#666' }]}>Home</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Cashback for Feedback')}>
+            <Image source={require('./img/feedbacktab.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Cashback for Feedback' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Cashback for Feedback' ? currentThemeColors.primary : '#666' }]}>Cashback</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Refer and Earn')}>
+            <Image source={require('./img/usersgroup.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#666' }]}>Refer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('My Profile')}>
+            <Image source={require('./img/proflie.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'My Profile' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'My Profile' ? currentThemeColors.primary : '#666' }]}>Profile</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
 
   if (!initialRoute) {
     return (
@@ -351,13 +638,101 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+      <NavigationContainer
+        ref={navigationRef}
+        theme={navigationTheme}
+        onReady={onNavigationReady}
+        onStateChange={() => {
+          try {
+            if (!navigationRef.isReady()) return;
+            const rootState = typeof navigationRef.getRootState === 'function' ? navigationRef.getRootState() : null;
+
+            // update footer active name
+            if (rootState && rootState.routes && typeof rootState.index === 'number') {
+              const top = rootState.routes[rootState.index];
+              if (top && top.name) {
+                setActiveFooter(top.name);
+              }
+            } else {
+              const r = navigationRef.getCurrentRoute();
+              if (r && r.name) setActiveFooter(r.name);
+            }
+
+            // detect if drawer is currently open by inspecting history entries
+            const detectDrawerOpen = (state) => {
+              if (!state) return false;
+              try {
+                // prefer history-based detection: look for a drawer history entry with status 'open'
+                if (Array.isArray(state.history) && state.history.length) {
+                  const drawerEntry = state.history.slice().reverse().find(h => h && h.type === 'drawer');
+                  if (drawerEntry) {
+                    // some RN versions include a `status` field
+                    if (drawerEntry.status === 'open') return true;
+                    // other versions may mark the drawer entry presence only when open
+                    if (typeof drawerEntry.status === 'undefined') return true;
+                  }
+                }
+
+                // check direct boolean flag if present
+                if (state.isDrawerOpen) return true;
+
+                // traverse into active child route
+                const idx = typeof state.index === 'number' ? state.index : 0;
+                const route = state.routes && state.routes[idx];
+                if (route && route.state) return detectDrawerOpen(route.state);
+              } catch (e) {
+                // ignore
+              }
+              return false;
+            };
+
+            const drawerOpen = detectDrawerOpen(rootState);
+            if (prevDrawerOpenRef.current !== !!drawerOpen) {
+              console.log('[App] drawerOpen changed ->', !!drawerOpen);
+              prevDrawerOpenRef.current = !!drawerOpen;
+            }
+            setIsDrawerOpen(!!drawerOpen);
+
+          } catch (e) {
+            // ignore
+          }
+        }}
+      >
         {initialRoute === 'Splash' ? (
-          <SplashScreen onVideoEnd={handleVideoEnd} />
+          <SplashScreen onVideoEnd={handleVideoEnd} onSkip={() => setInitialRoute('Login')} />
         ) : (
           renderDrawerNavigator(initialRoute)
         )}
       </NavigationContainer>
+      {(() => {
+        const guestFooterPages = ['Login', 'LoginPage', 'Splash', 'VideoPlayerScreen', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
+        try {
+          if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
+            const rootState = navigationRef.getRootState && navigationRef.getRootState();
+            if (rootState) {
+              // traverse active route chain to collect names and check params
+              const activeNames = [];
+              let state = rootState;
+              let hideFooterParam = false;
+              while (state) {
+                const idx = typeof state.index === 'number' ? state.index : 0;
+                const route = state.routes && state.routes[idx];
+                if (!route) break;
+                  activeNames.push(route.name);
+                  // if any active route has params.hideFooter === true, hide the footer
+                  if (route.params && route.params.hideFooter) hideFooterParam = true;
+                  state = route.state;
+              }
+                const isGuest = activeNames.some(n => guestFooterPages.includes(n));
+                if (isGuest || hideFooterParam) return null;
+                if (isDrawerOpen) return null;
+            }
+          }
+        } catch (e) {
+          // ignore and fallback
+        }
+        return !guestFooterPages.includes(activeFooter) ? <FooterBar /> : null;
+      })()}
     </SafeAreaView>
   );
 };

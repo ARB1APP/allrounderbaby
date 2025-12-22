@@ -1,12 +1,13 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 
 const Trails = ({ navigation }) => { 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScreenScroll contentContainerStyle={{ flexGrow: 1 }}>
         <Text style={styles.text}>Trails</Text>
-      </ScrollView>
+      </ScreenScroll>
     </View>
   );
 };

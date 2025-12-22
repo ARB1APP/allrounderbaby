@@ -1,8 +1,22 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Dimensions, useColorScheme, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, Dimensions, useColorScheme, Alert } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions } from '@react-navigation/native';
+import { navigationRef, skipNavigationGuards, isLoggedInRef } from '../App';
 import { BASE_URL } from './config/api';
+// Load Keychain dynamically (avoid crash if native module not linked)
+let Keychain = null;
+try {
+    Keychain = require('react-native-keychain');
+} catch (e) {
+    Keychain = null;
+}
+const keychainAvailable = Keychain && (
+    typeof Keychain.getGenericPasswordForOptions === 'function' ||
+    typeof Keychain.setGenericPasswordForOptions === 'function' ||
+    (typeof Keychain.getGenericPassword === 'function' && typeof Keychain.setGenericPassword === 'function')
+);
 
 const AppColors = {
     light: {
@@ -71,12 +85,12 @@ const Profile = ({ navigation }) => {
             const deviceId = await AsyncStorage.getItem('deviceKey');
 
             if (!userId) {
-                console.warn('userId not found in AsyncStorage. Clearing local session anyway.');
+                // userId missing: clear local session and continue (silent fallback)
                 await clearLocalSessionAndNavigate();
                 return;
             }
             if (!deviceId) {
-                console.warn('deviceId not found in AsyncStorage. Clearing local session anyway.');
+                // deviceId missing: clear local session and continue (silent fallback)
                 await clearLocalSessionAndNavigate();
                 return;
             }
@@ -147,13 +161,38 @@ const Profile = ({ navigation }) => {
             }
 
             await AsyncStorage.multiRemove(keysToRemove);
+            // Clear Keychain credentials when available and user didn't select "remember me"
+            try {
+                if (keychainAvailable && rememberPreference !== 'true') {
+                    await Keychain.resetGenericPassword({ service: 'loginCredentials' });
+                }
+            } catch (kcErr) {
+                console.warn('Failed to reset Keychain during logout', kcErr);
+            }
             
-            navigation.dispatch(
-                CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Login', params: { logout: true } }],
-                })
-            );
+            // Use app-wide navigationRef to ensure we reset the root navigator
+            try {
+                // ensure global navigation guards are bypassed for this reset
+                skipNavigationGuards.current = true;
+                // mark global logged-in ref as false so navigation guards treat user as logged out
+                try { isLoggedInRef.current = false; } catch (e) { /* ignore if not available */ }
+
+                if (navigationRef?.isReady && navigationRef.isReady()) {
+                    try {
+                        await navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login', params: { logout: true } }] });
+                    } catch (e) {
+                        navigationRef.dispatch(
+                            CommonActions.reset({ index: 0, routes: [{ name: 'Login', params: { logout: true } }] })
+                        );
+                    }
+                } else {
+                    navigation.dispatch(
+                        CommonActions.reset({ index: 0, routes: [{ name: 'Login', params: { logout: true } }] })
+                    );
+                }
+            } finally {
+                skipNavigationGuards.current = false;
+            }
         } catch (localError) {
             console.error('Error clearing local storage:', localError);
             Alert.alert("Local Session Error", "Failed to clear local session data. Please restart the app.");
@@ -185,9 +224,23 @@ const Profile = ({ navigation }) => {
             </TouchableOpacity>
         );
     };
+
+    // Ensure consistent Android hardware back behaviour: prefer goBack, else defer to central handler
+    React.useEffect(() => {
+        const backAction = () => {
+            if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+                navigation.goBack();
+                return true;
+            }
+            // Let app-level handler decide (exit app when appropriate)
+            return false;
+        };
+        const sub = require('react-native').BackHandler.addEventListener('hardwareBackPress', backAction);
+        return () => sub.remove();
+    }, [navigation]);
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <ScrollView contentContainerStyle={styles.scrollContentContainer}>
+            <ScreenScroll contentContainerStyle={styles.scrollContentContainer}>
                 <View style={styles.header}>
                     <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>My Profile</Text>
                 </View>
@@ -277,26 +330,9 @@ const Profile = ({ navigation }) => {
                     <Text style={[styles.logoutText, { color: isDarkMode ? AppColors.dark.textPrimary : AppColors.light.card }]}>Logout</Text>
                 </TouchableOpacity>
 
-            </ScrollView>
+            </ScreenScroll>
 
-            <View style={[styles.bottomNav, { backgroundColor: theme.bottomNavBackground, borderTopColor: theme.border }]}>
-                <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
-                    <Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-                    <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Home</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Cashback for Feedback')}>
-                    <Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-                    <Text style={[styles.navText, { color: theme.bottomNavInactiveTint, textAlign: 'center' }]}>Cashback for Feedback</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Refer and Earn')}>
-                    <Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-                    <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Refer & Earn</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.navItem}>
-                    <Image source={require('../img/proflie.png')} style={[styles.navIcon, { tintColor: theme.bottomNavActiveTint }]} />
-                    <Text style={[styles.navTextActive, { color: theme.bottomNavActiveTint }]}>My Profile</Text>
-                </TouchableOpacity>
-            </View>
+            {/* Bottom tab handled by HomeTabs; removed duplicate local bottom nav */}
         </View>
     );
 };

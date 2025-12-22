@@ -1,240 +1,43 @@
+
 import React, { useEffect } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Image,
-  BackHandler,
-  StatusBar,
-  useColorScheme,
-
-} from 'react-native';
+import { View, Text, StyleSheet, useColorScheme, Linking, BackHandler, StatusBar, Alert } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 
-const styles = StyleSheet.create({
-   information: {
-    flex: 1,
-    padding: 10,
-    marginTop: 15,
-    backgroundColor: '#E0F7FA', 
-  },
-  infoListItem: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    borderColor: '#4CAF50',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333', 
-    marginBottom: 5,
-  },
-  leadText: {
-    fontSize: 14,
-    color: '#555',
-    lineHeight: 20,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#f1f2f2', 
-  },
-  scrollContainer: {
-     flexGrow: 1,
-     paddingBottom: 0,
-     paddingHorizontal: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 25,
-    color: '#000000',   
-  },
-  sectionHeader: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginTop: -10,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  paragraph: {
-    fontSize: 15,
-    color: '#333333', 
-    lineHeight: 23,
-    marginBottom: 15,
-    textAlign: 'justify',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    paddingVertical: 10,
-    width: '100%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10,
-    borderTopWidth: 0,
-  },
-  navItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  navIcon: {
-    width: 25,
-    height: 25,
-    resizeMode: 'contain',
-  },
-  activeIcon: {
-    tintColor: 'rgba(20, 52, 164, 1)', 
-  },
-  inactiveIcon: {
-    tintColor: 'gray', 
-  },
-  navTextActive: {
-    color: 'rgba(20, 52, 164, 1)',
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  navText: {
-    color: 'gray', 
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-
-   contentContainer: {
-    flexDirection: 'row',
-  },
-  mainContent: {
-    flex: 1,
-  },
-  mainContentPadding: {
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  pageTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    marginTop: 20,
-    color: '#1434a4',
-    paddingHorizontal: 20,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#1434a4',
-    paddingHorizontal: 10,
-  },
-  leadText: {
-     fontSize: 15,
-    lineHeight: 24,
-    marginBottom: 15,
-    color: '#666',
-    paddingHorizontal: 15,
-  },
-  boldText: {
-    fontWeight: 'bold',
-  },
-  linkText: {
-    color: '#007bff',
-    textDecorationLine: 'underline',
-  },
-  marginBottom0: {
-    marginBottom: 0,
-  },
-  highlightBox: {
-    backgroundColor: '#e9f7ef',
-    padding: 15,
-    borderRadius: 8,
-    borderLeftWidth: 5,
-    borderLeftColor: '#28a745',
-    marginVertical: 20,
-  },
-  infoList: {
-    marginTop: 10,
-  },
-  infoListItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 15,
-  },
-  infoListItemContent: {
-    marginLeft: -8,
-    flex: 1,
-
-  },
-  grievanceCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-
-  
-});
-
-const PrivacyPolicy = ({ navigation }) => {
+const PrivacyPolicywithoutLog = () => {
   const isDarkMode = useColorScheme() === 'dark';
+  const navigation = useNavigation();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const backAction = () => {
+        console.log('PrivacyPolicywithoutLog: hardware back press');
+        try {
+          if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+            navigation.goBack();
+          } else if (navigation && typeof navigation.reset === 'function') {
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          } else {
+            Alert.alert('Navigation', 'Unable to navigate back.');
+          }
+        } catch (e) {
+          console.warn('Back action error', e);
+          Alert.alert('Navigation error', 'Could not navigate back.');
+        }
+        return true;
+      };
+
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+      return () => {
+        backHandler.remove();
+        StatusBar.setHidden(false);
+      };
+    }, [navigation])
+  );
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? '#2a3144' : Colors.white,
+    backgroundColor: isDarkMode ? '#2a3144' : '#fff',
   };
-  
-  const policyContent = [
-    { type: 'header', text: 'Introduction' },
-    { type: 'paragraph', text: 'Welcome to Allrounderbaby.com. We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about our policy, or our practices with regards to your personal information, please contact us.' },
-    { type: 'header', text: 'Information We Collect' },
-    { type: 'paragraph', text: 'We collect personal information that you voluntarily provide to us when registering at the App, expressing an interest in obtaining information about us or our products and services, when participating in activities on the App or otherwise contacting us.' },
-    { type: 'paragraph', text: 'The personal information that we collect depends on the context of your interactions with us and the App, the choices you make and the products and features you use. The personal information we collect can include the following: Name, Email Address, Phone Number, Child\'s Information (if provided), Payment Data (processed securely by third parties).' },
-    { type: 'header', text: 'How We Use Your Information' },
-    { type: 'paragraph', text: 'We use personal information collected via our App for a variety of business purposes described below. We process your personal information for these purposes in reliance on our legitimate business interests, in order to enter into or perform a contract with you, with your consent, and/or for compliance with our legal obligations.' },
-
-  ];
-     useEffect(() => {
-            const backAction = () => {
-                if (navigation.canGoBack()) {
-                    navigation.navigate('My Profile');
-                } else {
-
-                  }
-                return true;
-            };
-    
-            const backHandler = BackHandler.addEventListener(
-                'hardwareBackPress',
-                backAction
-            );
-    
-            return () => {
-                backHandler.remove();
-                StatusBar.setHidden(false);
-            };
-        }, [navigation]);
-
   return (
-  
     <View style={[styles.container, backgroundStyle]}>
       <ScreenScroll contentContainerStyle={styles.scrollContainer}>
          <View  style={[
@@ -969,9 +772,101 @@ const PrivacyPolicy = ({ navigation }) => {
             </View>     
   </ScreenScroll>
     </View>
-       
+
   );
 };
 
+const styles = StyleSheet.create({
+  information: {
+    flex: 1,
+    padding: 10,
+    marginTop: 15,
+    backgroundColor: '#E0F7FA',
+  },
+  infoListItem: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    borderColor: '#4CAF50',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  leadText: {
+    fontSize: 15,
+    lineHeight: 24,
+    marginBottom: 15,
+    color: '#666',
+    paddingHorizontal: 15,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#f1f2f2',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 0,
+    paddingHorizontal: 10,
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginTop: -10,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    marginTop: 20,
+    color: '#1434a4',
+    paddingHorizontal: 20,
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  linkText: {
+    color: '#007bff',
+    textDecorationLine: 'underline',
+  },
+  marginBottom0: {
+    marginBottom: 0,
+  },
+  highlightBox: {
+    backgroundColor: '#e9f7ef',
+    padding: 15,
+    borderRadius: 8,
+    borderLeftWidth: 5,
+    borderLeftColor: '#28a745',
+    marginVertical: 20,
+  },
+  infoList: {
+    marginTop: 10,
+  },
+  infoListItemContent: {
+    marginLeft: -8,
+    flex: 1,
+  },
+  grievanceCard: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+});
 
-export default PrivacyPolicy;
+
+export default PrivacyPolicywithoutLog;

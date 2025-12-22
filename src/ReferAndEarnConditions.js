@@ -15,6 +15,7 @@ import {
   StatusBar,
   BackHandler,
 } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
@@ -48,7 +49,6 @@ const lightThemeColors = {
 
 const darkThemeColors = {
   screenBackground: '#1A202C',
-  cardBackground: '#2D3748',
   modalBackground: '#2D3748',
   textPrimary: '#E2E8F0',
   textSecondary: '#A0AEC0',
@@ -151,7 +151,6 @@ const createReferAndEarnConditionsStyles = (theme) => StyleSheet.create({
   },
   secondaryButton: {
     flex: 1,
-    backgroundColor: theme.cardBackground,
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
@@ -413,25 +412,22 @@ const ReferAndEarnConditions = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-        if (navigation.canGoBack()) {
-            navigation.navigate('Refer and Earn');
-        } else {
-        }
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.goBack();
         return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-
-    return () => {
-        backHandler.remove();
-    };
+    return () => backHandler.remove();
   }, [navigation]);
  
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
 
 
   <View style={styles.sectionDivider} />
@@ -541,7 +537,7 @@ const ReferAndEarnConditions = ({ navigation }) => {
                   </Text>
             </Text>
         </View>
-      </ScrollView>
+      </ScreenScroll>
     </View>
     
   );

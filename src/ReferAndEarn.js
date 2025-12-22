@@ -3,7 +3,7 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
+  
   TouchableOpacity,
   Image,
   Clipboard,
@@ -18,6 +18,7 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
@@ -148,8 +149,12 @@ const ReferAndEarn = ({ navigation }) => {
         setIsLanguageModalVisible(false);
         return true;
       }
-      navigation.navigate('Home');
-      return true;
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      // defer to global handler (returns false) so app-level handler can exit the app
+      return false;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
@@ -489,7 +494,7 @@ const ReferAndEarn = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <LinearGradient
           colors={['#FFF8E5', '#FFFDEB']}
           style={[styles.importantDetailsBox, { marginTop: 10, color: isDarkMode ? '#fff' : '#003366'}]}>
@@ -672,7 +677,7 @@ const ReferAndEarn = ({ navigation }) => {
         <TouchableOpacity onPress={onPressKnowMoreButton} style={styles.linkButton}>
           <Text style={styles.linkText}>{showDetails ? 'Know less' : 'Know more'}</Text>
         </TouchableOpacity>
-      </ScrollView> 
+      </ScreenScroll>
       {isLanguageModalVisible && selectedVideoGroup && (
         <Pressable style={styles.modalOverlay} onPress={() => setIsLanguageModalVisible(false)}>
           <Pressable style={styles.modalView} onPress={(e) => e.stopPropagation()}>
@@ -756,24 +761,7 @@ const ReferAndEarn = ({ navigation }) => {
           </Pressable>
         </Pressable>
       )}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
-          <Image source={require('../img/hometab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Cashback for Feedback')}>
-          <Image source={require('../img/feedbacktab.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint, textAlign: 'center' }]}>Cashback for Feedback</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Image source={require('../img/money.png')} style={[styles.navIcon, { tintColor: theme.bottomNavActiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavActiveTint }]}>Refer & Earn</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('My Profile')}>
-          <Image source={require('../img/proflie.png')} style={[styles.navIcon, { tintColor: theme.bottomNavInactiveTint }]} />
-          <Text style={[styles.navText, { color: theme.bottomNavInactiveTint }]}>My Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Bottom tab handled by HomeTabs; removed duplicate local bottom nav */}
     </View>
   );
 };

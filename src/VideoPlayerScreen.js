@@ -5,6 +5,7 @@ import {
   View,
   ActivityIndicator,
   BackHandler,
+  AppState,
   useColorScheme,
   StatusBar,
   Alert,
@@ -87,6 +88,7 @@ const VideoPlayerScreen = () => {
     };
 
     try {
+      
       const endpoint = `${url}User/User_Video_Data`;
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -279,6 +281,79 @@ const VideoPlayerScreen = () => {
       backHandler.remove();
     };
   }, [backAction]);
+
+  // Pause/stop player when app goes to background to prevent audio playing
+  useEffect(() => {
+    const handleAppStateChange = (nextState) => {
+      if (nextState === 'background' || nextState === 'inactive') {
+        (async () => {
+          if (playerRef.current) {
+            try {
+              if (typeof playerRef.current.pause === 'function') playerRef.current.pause();
+              if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
+              if (typeof playerRef.current.release === 'function') playerRef.current.release();
+            } catch (e) {
+              console.error('AppState: Error cleaning up video player:', e);
+            } finally {
+              playerRef.current = null;
+            }
+          }
+          try {
+            await updateVideoProgress(false);
+          } catch (e) {
+            console.error('AppState: Error saving progress:', e);
+          }
+        })();
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      try {
+        subscription.remove();
+      } catch (e) {
+        // fallback for older RN versions
+        AppState.removeEventListener && AppState.removeEventListener('change', handleAppStateChange);
+      }
+    };
+  }, [updateVideoProgress]);
+  
+  // Ensure player is stopped/released when the screen loses focus (blur)
+  useEffect(() => {
+    const onBlur = () => {
+      (async () => {
+        if (playerRef.current) {
+          try {
+            if (typeof playerRef.current.pause === 'function') {
+              playerRef.current.pause();
+            }
+            if (typeof playerRef.current.stop === 'function') {
+              playerRef.current.stop();
+            }
+            if (typeof playerRef.current.release === 'function') {
+              playerRef.current.release();
+            }
+          } catch (e) {
+            console.error('Blur: Error cleaning up video player:', e);
+          } finally {
+            playerRef.current = null;
+          }
+        }
+
+        try {
+          await updateVideoProgress(false);
+        } catch (e) {
+          console.error('Blur: Error saving progress:', e);
+        }
+
+        Orientation.lockToPortrait();
+      })();
+    };
+
+    const unsubscribe = navigation.addListener('blur', onBlur);
+    return unsubscribe;
+  }, [navigation, updateVideoProgress]);
+
 
   if (!otp || !playbackInfo) {
     return (

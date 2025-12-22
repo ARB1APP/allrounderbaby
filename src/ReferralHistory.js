@@ -3,7 +3,6 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
   Image,
   BackHandler,
@@ -12,6 +11,7 @@ import {
   StatusBar,
   ActivityIndicator,
 } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -157,7 +157,7 @@ const ReferralHistory = ({ navigation }) => {
   return (
     <View style={[styles.container, backgroundStyle]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={theme.screenBackground} />
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.header}>
             <TouchableOpacity onPress={handlereferAndearnBackpress} style={styles.backButton}>
                 <Image source={require('../img/arrowicon.png')} style={[styles.backIcon, { tintColor: theme.textPrimary }]} />
@@ -187,7 +187,7 @@ const ReferralHistory = ({ navigation }) => {
         ) : (
           <Text style={[styles.text, { color: theme.textSecondary }]}>No Data Found</Text>
         )}
-      </ScrollView>
+      </ScreenScroll>
     </View>
   );
 };

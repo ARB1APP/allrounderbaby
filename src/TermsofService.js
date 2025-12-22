@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, BackHandler, StatusBar, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, BackHandler, StatusBar, useColorScheme } from 'react-native';
+import ScreenScroll from './components/ScreenScroll';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const TermsofService = ({ navigation }) => {
@@ -30,8 +31,9 @@ const TermsofService = ({ navigation }) => {
   }, [navigation]);
 
   return (
+<>
     <View style={[styles.container, backgroundStyle]}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScreenScroll contentContainerStyle={{ flexGrow: 1 }}>
             <View style={[
                 styles.sectionContainer,
                 { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
@@ -910,8 +912,9 @@ const TermsofService = ({ navigation }) => {
           </View>
 
         </View>
-      </ScrollView>
+      </ScreenScroll>
     </View>
+  </>
   );
 };
 

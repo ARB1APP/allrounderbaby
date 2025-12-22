@@ -68,27 +68,8 @@ Test on: iPhone SE, iPhone 14, iPad
 
 ---
 
-### Welcome Screen (`MainApp.js`)
-Test on: All devices
-
-#### Small Phone:
-- [ ] Image height 60% of screen
-- [ ] Text "Start Early, Shine Always!" visible
-- [ ] Button width 90%
-- [ ] Button text readable
-
-#### Standard Phone:
-- [ ] Image curved border radius (150)
-- [ ] Text properly spaced
-- [ ] Button prominent
-
-#### Tablet:
-- [ ] Image height 55% (slightly less)
-- [ ] Larger border radius (200)
-- [ ] Text size increased (28px)
-- [ ] Button width 60% with max 500px
-- [ ] Button centered
-- [ ] More padding around text
+### Welcome Screen (removed)
+This welcome screen was removed from the codebase.
 
 ---
 
@@ -208,33 +189,7 @@ Buttons: Not stretched too wide
 
 ## ⚡ Automated Visual Regression Testing
 
-Consider setting up snapshot testing:
-
-```javascript
-// Example test
-import renderer from 'react-test-renderer';
-import LoginPage from '../src/LoginPage';
-
-it('renders correctly on small device', () => {
-  // Mock Dimensions to return small device size
-  jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
-    get: jest.fn().mockReturnValue({ width: 320, height: 568 }),
-  }));
-  
-  const tree = renderer.create(<LoginPage />).toJSON();
-  expect(tree).toMatchSnapshot();
-});
-
-it('renders correctly on tablet', () => {
-  // Mock Dimensions for tablet
-  jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
-    get: jest.fn().mockReturnValue({ width: 768, height: 1024 }),
-  }));
-  
-  const tree = renderer.create(<LoginPage />).toJSON();
-  expect(tree).toMatchSnapshot();
-});
-```
+Snapshot examples referencing the original `LoginPage` were removed because that screen is no longer present. Keep snapshot tests for active screens (Dashboard, Profile, etc.).
 
 ---
 
