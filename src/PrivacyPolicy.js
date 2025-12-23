@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   
 });
 
-const PrivacyPolicy = ({ navigation }) => {
+const PrivacyPolicy = ({ navigation, route }) => {
   const isDarkMode = useColorScheme() === 'dark';
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#2a3144' : Colors.white,
@@ -213,25 +213,28 @@ const PrivacyPolicy = ({ navigation }) => {
 
   ];
      useEffect(() => {
-            const backAction = () => {
-                if (navigation.canGoBack()) {
-                    navigation.navigate('My Profile');
-                } else {
+        const backAction = () => {
+          if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+            navigation.navigate('My Profile');
+            return true;
+          }
+          if (route && route.params && route.params.origin) {
+            navigation.navigate(route.params.origin);
+            return true;
+          }
+          return false;
+        };
 
-                  }
-                return true;
-            };
-    
-            const backHandler = BackHandler.addEventListener(
-                'hardwareBackPress',
-                backAction
-            );
-    
-            return () => {
-                backHandler.remove();
-                StatusBar.setHidden(false);
-            };
-        }, [navigation]);
+        const backHandler = BackHandler.addEventListener(
+          'hardwareBackPress',
+          backAction
+        );
+
+        return () => {
+          backHandler.remove();
+          StatusBar.setHidden(false);
+        };
+      }, [navigation]);
 
   return (
   

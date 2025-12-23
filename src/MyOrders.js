@@ -180,7 +180,7 @@ const createMyOrdersStyles = (theme) => StyleSheet.create({
   },
 });
 
-const MyOrders = ({ navigation }) => {
+const MyOrders = ({ navigation, route }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = createMyOrdersStyles(theme);
@@ -195,11 +195,15 @@ const MyOrders = ({ navigation }) => {
 
    useEffect(() => {
     const backAction = () => {
-        if (navigation.canGoBack()) {
-            navigation.navigate('My Profile');
-        } else {
-        }
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.navigate('My Profile');
         return true;
+      }
+      if (route && route.params && route.params.origin) {
+        navigation.navigate(route.params.origin);
+        return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener(

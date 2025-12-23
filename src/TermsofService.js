@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, BackHandler, StatusBar
 import ScreenScroll from './components/ScreenScroll';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
-const TermsofService = ({ navigation }) => {
+const TermsofService = ({ navigation, route }) => {
   const isDarkMode = useColorScheme() === 'dark';
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#2a3144' : Colors.white,
@@ -11,12 +11,16 @@ const TermsofService = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-      if (navigation.canGoBack()) {
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
         navigation.navigate('My Profile');
-      } else {
-
+        return true;
       }
-      return true;
+      // if opened via drawer, return to origin
+      if (route && route.params && route.params.origin) {
+        navigation.navigate(route.params.origin);
+        return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener(

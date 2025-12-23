@@ -14,10 +14,15 @@ const TermsofServicewithoutLog = () => {
       const backAction = () => {
         console.log('TermsofServicewithoutLog: hardware back press');
         try {
+          Alert.alert('Debug', 'Android back pressed on Terms of Service');
+        } catch (e) {
+          // ignore
+        }
+        try {
           if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
             navigation.goBack();
-          } else if (navigation && typeof navigation.reset === 'function') {
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          } else if (navigation && typeof navigation.navigate === 'function') {
+            navigation.navigate('Login');
           } else {
             Alert.alert('Navigation', 'Unable to navigate back.');
           }

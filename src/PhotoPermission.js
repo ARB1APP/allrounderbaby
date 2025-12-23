@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const PhotoPermission = ({ navigation }) => {
+const PhotoPermission = ({ navigation, route }) => {
   const handleRequestPermission = async () => {
     alert("Please grant Photo Library access in your device Settings.");
     Linking.openSettings();
@@ -140,12 +140,15 @@ const PhotoPermission = ({ navigation }) => {
 
    useEffect(() => {
           const backAction = () => {
-              if (navigation.canGoBack()) {
-                  navigation.navigate('My Profile');
-              } else {
-
-                 }
+            if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+              navigation.navigate('My Profile');
               return true;
+            }
+            if (route && route.params && route.params.origin) {
+              navigation.navigate(route.params.origin);
+              return true;
+            }
+            return false;
           };
   
           const backHandler = BackHandler.addEventListener(

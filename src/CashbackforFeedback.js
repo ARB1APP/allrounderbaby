@@ -357,6 +357,15 @@ const CashbackforFeedback = () => {
         navigation.goBack();
         return true;
       }
+      // If there's no back stack (screen opened as a drawer root), navigate to Home instead
+      try {
+        if (navigation && typeof navigation.navigate === 'function') {
+          navigation.navigate('Home');
+          return true;
+        }
+      } catch (e) {
+        // ignore and let app-level handler take over
+      }
       // Let the central app-level handler handle exiting the app
       return false;
     };

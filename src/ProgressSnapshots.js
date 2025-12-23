@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, useColorScheme, BackHandler, StatusBar } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
-const ProgressSnapshots = ({ navigation }) => { 
+const ProgressSnapshots = ({ navigation, route }) => { 
 
   const isDarkMode = useColorScheme() === 'dark';
   
@@ -11,13 +11,17 @@ const ProgressSnapshots = ({ navigation }) => {
     };
 
        useEffect(() => {
-              const backAction = () => {
-                  if (navigation.canGoBack()) {
-                      navigation.navigate('My Profile');
-                  } else {
-                  }
-                  return true;
-              };
+                 const backAction = () => {
+                      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+                        navigation.navigate('My Profile');
+                        return true;
+                      }
+                      if (route && route.params && route.params.origin) {
+                        navigation.navigate(route.params.origin);
+                        return true;
+                      }
+                      return false;
+                    };
       
               const backHandler = BackHandler.addEventListener(
                   'hardwareBackPress',

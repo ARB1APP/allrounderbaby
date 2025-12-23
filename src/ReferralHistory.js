@@ -19,7 +19,7 @@ import { BASE_URL } from './config/api';
 
 const url = BASE_URL;
 
-const ReferralHistory = ({ navigation }) => {
+const ReferralHistory = ({ navigation, route }) => {
   const isDarkMode = useColorScheme() === 'dark';
 
   const lightThemeColors = {
@@ -135,20 +135,24 @@ const ReferralHistory = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-      navigation.goBack();
-      return true; 
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      if (route && route.params && route.params.origin) {
+        navigation.navigate(route.params.origin);
+        return true;
+      }
+      return false;
     };
 
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction
-    );
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     return () => {
       backHandler.remove();
       StatusBar.setHidden(false);
     };
-  }, [navigation]);
+  }, [navigation, route]);
 
   const handlereferAndearnBackpress = () => {
     navigation.navigate('Refer and Earn');

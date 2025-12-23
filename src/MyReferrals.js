@@ -200,7 +200,7 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
   navText: { color: theme.inactiveNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
 });
 
-const MyReferrals = ({ navigation }) => {
+const MyReferrals = ({ navigation, route }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = createMyReferralsStyles(theme);
@@ -214,11 +214,15 @@ const MyReferrals = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-        if (navigation.canGoBack()) {
-            navigation.navigate('My Profile');
-        } else {
-        }
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.navigate('My Profile');
         return true;
+      }
+      if (route && route.params && route.params.origin) {
+        navigation.navigate(route.params.origin);
+        return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener(

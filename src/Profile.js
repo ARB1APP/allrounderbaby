@@ -69,7 +69,7 @@ const AppColors = {
 
 const url = BASE_URL;
 
-const Profile = ({ navigation }) => {
+const Profile = ({ navigation, route }) => {
     const isDarkMode = useColorScheme() === 'dark';
     const theme = isDarkMode ? AppColors.dark : AppColors.light;
 
@@ -232,12 +232,16 @@ const Profile = ({ navigation }) => {
                 navigation.goBack();
                 return true;
             }
+            if (route && route.params && route.params.origin) {
+                navigation.navigate(route.params.origin);
+                return true;
+            }
             // Let app-level handler decide (exit app when appropriate)
             return false;
         };
         const sub = require('react-native').BackHandler.addEventListener('hardwareBackPress', backAction);
         return () => sub.remove();
-    }, [navigation]);
+    }, [navigation, route]);
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenScroll contentContainerStyle={styles.scrollContentContainer}>

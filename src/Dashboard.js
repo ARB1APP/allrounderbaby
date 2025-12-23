@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Modal, Alert, StatusBar, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler } from 'react-native';
-import { useNavigation, useRoute, CommonActions, useIsFocused } from '@react-navigation/native';
+import { useRoute, CommonActions, useIsFocused } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from './config/api';
 
@@ -115,10 +114,11 @@ const Dashboard = ({ navigation }) => {
     const [completedSteps, setCompletedSteps] = useState({});
     const [openCategory, setOpenCategory] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [activeLevel, setActiveLevel] = useState(null); 
+    const [activeLevel, setActiveLevel] = useState(null);
     const [selectedStepGroup, setSelectedStepGroup] = useState(null);
     const [topicCompletionTimes, setTopicCompletionTimes] = useState({});
     const [unlockedStepsThreshold, setUnlockedStepsThreshold] = useState(0);
+    const [lastViewed, setLastViewed] = useState(null); // { categoryKey, stepNumber }
     const [levelToUnlock, setLevelToUnlock] = useState(null);
     const [middleLevelCompletionTime, setMiddleLevelCompletionTime] = useState(null);
     const [advancedLevelCompletionTime, setAdvancedLevelCompletionTime] = useState(null);
@@ -183,7 +183,8 @@ const Dashboard = ({ navigation }) => {
             }
         };
         if (isFocused) verifyAuth();
-        return () => { isActive = false; };
+        // no-op cleanup (no subscriptions to remove here)
+        return undefined;
     }, [isFocused, navigation]);
 
     const groupVideosByApiStep = (videoApiResponse) => {
@@ -308,6 +309,7 @@ const Dashboard = ({ navigation }) => {
                     await fetchUserProgress(storedUserId, storedToken);
                 }
                 await loadCompletedSteps();
+                await loadLastViewed();
                 await loadMiddleLevelCompletionTime();
                 await loadAdvancedLevelCompletionTime();
                 await loadTopicCompletionTimes();
@@ -321,9 +323,9 @@ const Dashboard = ({ navigation }) => {
 
         loadInitialData();
 
-           const unsubscribe = navigation.addListener('focus', () => {
+        const unsubscribe = navigation.addListener('focus', () => {
             loadInitialData();
-        }); 
+        });
 
         return unsubscribe;
     }, [navigation]);
@@ -378,11 +380,14 @@ const Dashboard = ({ navigation }) => {
                 result.data.forEach(item => {
                     if (item.total_views > 0) {
                         newCompletedSteps[`step${item.level_step}`] = true;
-                       if (item.level_step > highestCompletedStep) {
+                        if (item.level_step > highestCompletedStep) {
                             highestCompletedStep = item.level_step;
                         }
                     }
                 });
+                console.log("Highest completed step:", highestCompletedStep);
+                console.log("Progress by step:", progressByStep);
+                console.log("Fetched completed steps:", newCompletedSteps);
                 for (const categoryKey in masterConfig) {
                     const category = masterConfig[categoryKey];
                     if (category.finalGroupedData && !newTopicCompletionTimes[categoryKey]) {
@@ -429,6 +434,15 @@ const Dashboard = ({ navigation }) => {
             }
         } catch (error) {
             console.error("Failed to load topic completion times from storage", error);
+        }
+    };
+
+    const loadLastViewed = async () => {
+        try {
+            const saved = await AsyncStorage.getItem('lastViewed');
+            if (saved) setLastViewed(JSON.parse(saved));
+        } catch (err) {
+            console.error('Failed to load lastViewed from storage', err);
         }
     };
 
@@ -530,7 +544,7 @@ const Dashboard = ({ navigation }) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
         const config = masterConfig[categoryKey];
         if (!config) return false;
-         if (config.prerequisiteCategory) {
+        if (config.prerequisiteCategory) {
             const prereqConfig = masterConfig[config.prerequisiteCategory];
             if (prereqConfig) {
                 const isPrereqDataLoaded = await ensureCategoryDataIsLoaded(config.prerequisiteCategory);
@@ -568,7 +582,20 @@ const Dashboard = ({ navigation }) => {
                                     Alert.alert("Topic Locked", `Great progress! Your next topic will unlock in ${lockDurationHours} hours. Use this time to practice what you’ve learned so far.`);
                                     return false;
                                 } else {
-                                    Alert.alert("Topic Unlocked!", `Your next Topic is now unlocked. Start watching!`);
+                                    // Show the unlock message only once per topic/category
+                                    try {
+                                        const notifKey = 'topicUnlockNotified';
+                                        const notifiedJson = await AsyncStorage.getItem(notifKey);
+                                        const notified = notifiedJson ? JSON.parse(notifiedJson) : {};
+                                        if (!notified[categoryKey]) {
+                                            Alert.alert("Topic Unlocked!", `Your next Topic is now unlocked. Start watching!`);
+                                            notified[categoryKey] = true;
+                                            await AsyncStorage.setItem(notifKey, JSON.stringify(notified));
+                                        }
+                                    } catch (err) {
+                                        console.error('Failed to persist unlock notification flag:', err);
+                                        Alert.alert("Topic Unlocked!", `Your next Topic is now unlocked. Start watching!`);
+                                    }
                                 }
                             }
                         }
@@ -748,7 +775,7 @@ const Dashboard = ({ navigation }) => {
                         setMiddleLevelCompletionTime(completionTime);
                         try {
                             await AsyncStorage.setItem('middleLevelCompletionTime', completionTime.toISOString());
-                       } catch (error) {
+                        } catch (error) {
                             console.error('Failed to save middle level completion time:', error);
                         }
                     }
@@ -760,7 +787,7 @@ const Dashboard = ({ navigation }) => {
                         setAdvancedLevelCompletionTime(completionTime);
                         try {
                             await AsyncStorage.setItem('advancedLevelCompletionTime', completionTime.toISOString());
-                       } catch (error) {
+                        } catch (error) {
                             console.error('Failed to save advanced level completion time:', error);
                         }
                     }
@@ -773,6 +800,7 @@ const Dashboard = ({ navigation }) => {
                 language: language,
                 cameFrom: 'Dashboard',
                 step: step,
+                displayStep: selectedStepGroup?.displayStepNumber || selectedStepGroup?.apiStepNumber || selectedStepGroup?.stepNumber,
                 total_time: total_time,
                 stage_name: masterConfig[openCategory]?.name ?? 'Unknown'
             });
@@ -862,7 +890,7 @@ const Dashboard = ({ navigation }) => {
                     setIsVideoLoading(false);
                 }
             }
-            return true; 
+            return true;
         };
 
         const checkAndLoadPrerequisites = async (keys, levelName) => {
@@ -947,9 +975,9 @@ const Dashboard = ({ navigation }) => {
                         }
                     } catch (error) { console.error("Could not check foundation lock time", error); }
                 }
-            setActiveLevel(level);
+                setActiveLevel(level);
             }
-             return;
+            return;
         }
         if (level === 'advanced') {
             const foundationComplete = await checkAndLoadPrerequisites(foundationKeys, 'Foundation');
@@ -994,7 +1022,10 @@ const Dashboard = ({ navigation }) => {
     return (
         <View style={[styles.container, backgroundStyle]}>
             <View style={styles.imageContainer}>
-                <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                <ScrollView
+
+                    showsVerticalScrollIndicator={false}
+                >
                     <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(1)}><Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 5 }]}><Image source={require('../img/Intro1.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlay}><Text style={styles.text}>Introduction I</Text></View></Animated.View></TouchableOpacity>
                     <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(2)}><Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}><Image source={require('../img/Intro2.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlay}><Text style={styles.text}>Introduction II</Text></View></Animated.View></TouchableOpacity>
                     <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('foundation')}><Animated.View style={[styles.button, { transform: [{ scale: scale1 }], marginTop: 10 }]}><Image source={require('../img/foundationlevel.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlayTwo}><Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity: 0 }]} /><Text style={styles.text}>Foundation Level</Text><Animated.Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity }]} resizeMode="cover" /></View></Animated.View></TouchableOpacity>
@@ -1022,12 +1053,59 @@ const Dashboard = ({ navigation }) => {
                 </View>
             )}
             {isVideoLoading && (<View style={styles.modalLikeContainer}><ActivityIndicator size="large" color="#FFFFFF" /><Text style={styles.loadingText}>Loading...</Text></View>)}
+            {!activeLevel && !openCategory && !isModalVisible ? (
+                <TouchableOpacity
+                    style={styles.customButton}
+                    activeOpacity={0.7}
+                    accessibilityLabel="Last Viewed"
+                    onPress={async () => {
+                        try {
+                            if (openCategory) {
+                                await handleCategoryPress(openCategory);
+                                return;
+                            }
+
+                            const completedStepKeys = Object.keys(completedSteps || {}).filter(k => /^step\d+$/.test(k));
+                            const nonIntroSteps = completedStepKeys.map(k => parseInt(k.replace('step', ''), 10)).filter(n => n !== 90 && n !== 91);
+                            const lastStep = nonIntroSteps.length ? Math.max(...nonIntroSteps) : (unlockedStepsThreshold || 0);
+                            let targetCategory = null;
+                            if (lastStep > 0) {
+                                targetCategory = getCategoryFromStep(lastStep);
+                            }
+                            console.log('Last Viewed debug:', { completedStepKeys, nonIntroSteps, computedLastStep: lastStep, mappedCategory: targetCategory });
+
+                            if (!targetCategory) {
+                                console.warn('Last Viewed: no category mapped for step', lastStep, 'falling back to', foundationKeys[0]);
+                                targetCategory = foundationKeys[0];
+                            }
+                            let levelForCategory = 'foundation';
+                            if (middleKeys.includes(targetCategory)) levelForCategory = 'middle';
+                            else if (advancedKeys.includes(targetCategory)) levelForCategory = 'advanced';
+                            await handleLevelPress(levelForCategory);
+                            await ensureCategoryDataIsLoaded(targetCategory);
+                            await handleCategoryPress(targetCategory);
+                        } catch (err) {
+                            console.error('Arrow button handler error:', err);
+                        }
+                    }}
+                >
+                    <Text style={styles.arrowText}>Last Viewed</Text>
+                </TouchableOpacity>
+            ) : null}
         </View>
     );
 };
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F5FCFF', },
-    imageContainer: { flex: 1, flexDirection: 'column', alignItems: 'center', paddingVertical: 10, gap: 10 },
+    container: { flex: 1, backgroundColor: 'transparent', },
+    imageContainer: {
+        flex: 1,
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingVertical: 10,
+        gap: 10,
+        backgroundColor: 'transparent',
+    },
+
     button: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
     buttonNested: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
     image: { width: width - 20, height: 250, resizeMode: 'center', borderRadius: 5, },
@@ -1075,5 +1153,25 @@ const styles = StyleSheet.create({
     modalLikeContentBox: { width: '95%', maxHeight: '95%', backgroundColor: '#dee2e6', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5, },
     loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     handImage: { position: 'absolute', width: 50, height: 50, zIndex: 10 },
+    customButton: {
+        position: 'absolute',
+        bottom: 90,
+        right: 20,
+        backgroundColor: '#4DB6AC',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 6,
+        zIndex: 50,
+    },
+
+    arrowText: {
+        fontSize: 14,
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+
 });
 export default Dashboard;

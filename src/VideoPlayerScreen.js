@@ -33,6 +33,7 @@ const VideoPlayerScreen = () => {
     cameFrom,
     total_time,
     stage_name,
+    displayStep,
   } = route.params || {};
 
   const isDarkMode = useColorScheme() === 'dark';
@@ -83,7 +84,7 @@ const VideoPlayerScreen = () => {
       total_views: currentViews + 1,
       otp: otp,
       playback: playbackInfo,
-      stage_name: stage_name + " " + step,
+      stage_name: (stage_name ? stage_name : '') + " " + (typeof displayStep !== 'undefined' && displayStep !== null ? displayStep : step),
       deviceKey: deviceKey,
     };
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -100,7 +101,15 @@ const createAppStyles = (theme) =>
     drawerItemsContainer: { paddingVertical: 10 },
     drawerItem: { height: 56, justifyContent: 'center', paddingVertical: 0 },
     drawerItemLabel: { fontSize: 16, fontFamily: 'Lexend-VariableFont_wght', paddingVertical: 0, textAlignVertical: 'center' },
-    footerContainer: { marginTop: 'auto', padding: 10, borderTopWidth: 1, borderTopColor: theme.drawerBorderColor, alignItems: 'center', backgroundColor: theme.drawerContentBackground },
+    footerContainer: {
+      marginTop: 'auto',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderTopWidth: 1,
+      borderTopColor: theme.drawerBorderColor,
+      alignItems: 'center',
+      backgroundColor: theme.drawerContentBackground,
+    },
     footerText: { fontSize: 12, color: theme.drawerFooterText, fontFamily: 'Lexend-VariableFont_wght' },
   });
 
@@ -166,7 +175,18 @@ export const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
                   return;
                 }
 
-                props.navigation.navigate(target, { source: item.label });
+                // capture current focused route as origin so target can return here on back
+                let origin = null;
+                try {
+                  if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
+                    const current = navigationRef.getCurrentRoute && navigationRef.getCurrentRoute();
+                    origin = current && current.name ? current.name : null;
+                  }
+                } catch (e) {
+                  origin = null;
+                }
+
+                props.navigation.navigate(target, { source: item.label, origin });
               } catch (err) {
                 console.error('Navigation error:', err);
                 props.navigation.navigate(item.navigateTo, { source: item.label });
@@ -579,9 +599,9 @@ const App = () => {
   );
 
   const stylesGlobal = StyleSheet.create({
-    footerWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
+    footerWrap: { width: '100%', alignItems: 'center' },
     footerInner: { width: '100%', flexDirection: 'row',
-      backgroundColor: '#fff', height: footerHeight,
+      backgroundColor: '#fff',
       borderRadius: 0, alignItems: 'center',
       justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee' },
     footerItem: { alignItems: 'center', justifyContent: 'center' },
@@ -590,6 +610,8 @@ const App = () => {
   });
 
   const FooterBar = () => {
+    const insets = useSafeAreaInsets();
+    const bottomInset = insets?.bottom || (Platform.OS === 'android' ? 8 : 0);
     const navigateTo = async (routeName) => {
       try {
         skipNavigationGuards.current = true;
@@ -602,8 +624,8 @@ const App = () => {
     };
 
     return (
-      <View style={stylesGlobal.footerWrap} pointerEvents="box-none">
-        <View style={stylesGlobal.footerInner}>
+      <View style={[stylesGlobal.footerWrap, { paddingBottom: bottomInset, backgroundColor: 'transparent' }]}> 
+        <View style={[stylesGlobal.footerInner, { height: footerHeight }]}> 
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Home')}>
             <Image source={require('./img/home.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Home' ? currentThemeColors.primary : '#888' }]} />
             <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Home' ? currentThemeColors.primary : '#666' }]}>Home</Text>
@@ -638,6 +660,8 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <SafeAreaProvider>
+      <View style={{ flex: 1 }}>
       <NavigationContainer
         ref={navigationRef}
         theme={navigationTheme}
@@ -704,6 +728,7 @@ const App = () => {
           renderDrawerNavigator(initialRoute)
         )}
       </NavigationContainer>
+      </View>
       {(() => {
         const guestFooterPages = ['Login', 'LoginPage', 'Splash', 'VideoPlayerScreen', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
         try {
@@ -733,6 +758,7 @@ const App = () => {
         }
         return !guestFooterPages.includes(activeFooter) ? <FooterBar /> : null;
       })()}
+      </SafeAreaProvider>
     </SafeAreaView>
   );
 };

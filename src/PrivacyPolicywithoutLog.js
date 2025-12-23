@@ -13,10 +13,15 @@ const PrivacyPolicywithoutLog = () => {
       const backAction = () => {
         console.log('PrivacyPolicywithoutLog: hardware back press');
         try {
+          Alert.alert('Debug', 'Android back pressed on Privacy Policy');
+        } catch (e) {
+          // ignore
+        }
+        try {
           if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
             navigation.goBack();
-          } else if (navigation && typeof navigation.reset === 'function') {
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          } else if (navigation && typeof navigation.navigate === 'function') {
+            navigation.navigate('Login');
           } else {
             Alert.alert('Navigation', 'Unable to navigate back.');
           }

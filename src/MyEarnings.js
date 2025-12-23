@@ -357,7 +357,7 @@ const createMyEarningsStyles = (theme) => StyleSheet.create({
 });
 
 
-const MyEarnings = ({ navigation }) => {
+const MyEarnings = ({ navigation, route }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = createMyEarningsStyles(theme);
@@ -590,11 +590,15 @@ const MyEarnings = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-      if (navigation.canGoBack()) {
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
         navigation.navigate('My Profile');
-      } else {
+        return true;
       }
-      return true;
+      if (route && route.params && route.params.origin) {
+        navigation.navigate(route.params.origin);
+        return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener(
