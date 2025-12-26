@@ -1,13 +1,16 @@
 import React from 'react';
-import { ScrollView, Dimensions } from 'react-native';
+import { ScrollView, Dimensions, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const footerHeight = Math.round(Math.max(56, width * 0.12));
 
 const ScreenScroll = ({ children, contentContainerStyle, ...props }) => {
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets?.bottom || (Platform.OS === 'android' ? 8 : 0);
+
   return (
     <ScrollView
-      contentContainerStyle={[{ flexGrow: 1 }, contentContainerStyle, { paddingBottom: footerHeight + 12 }]}
       {...props}
     >
       {children}

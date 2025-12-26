@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { navigationRef } from '../App';
-import { View, Text, ScrollView, TouchableOpacity, ImageBackground, Image, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ImageBackground, Image, StyleSheet, Dimensions, SafeAreaView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 10;
@@ -11,29 +12,31 @@ const footerHeight = Math.round(Math.max(56, width * 0.12));
 const footerFontSize = Math.round(Math.max(10, Math.min(14, width * 0.03)));
 
 const FooterTab = ({ active, onPressTab }) => {
+	const insets = useSafeAreaInsets();
+	const bottomInset = insets?.bottom || (Platform.OS === 'android' ? 8 : 0);
 	return (
-		<View style={styles.footerWrap} pointerEvents="box-none">
-			<View style={styles.footerInner}>
+		<View style={[styles.footerWrap, { paddingBottom: bottomInset }]} pointerEvents="box-none">
+			<View style={[styles.footerInner, { backgroundColor: '#fff' }]}>
 				<TouchableOpacity style={styles.footerItem} onPress={() => onPressTab('Home')}>
 					<View style={[styles.iconBg, active === 'Home' && styles.iconBgActive]}>
-						<Image source={require('../img/home.png')} style={[styles.footerIcon, active === 'Home' && styles.footerIconActive]} />
+						<Image source={require('../img/home.png')} style={[styles.footerIcon, active === 'Home' && styles.footerIconActive, { tintColor: active === 'Home' ? '#1434A4' : '#666' }]} />
 					</View>
-					<Text style={[styles.footerLabel, active === 'Home' && styles.footerLabelActive]}>Home</Text>
+						<Text style={[styles.footerLabel, active === 'Home' && styles.footerLabelActive, { color: active === 'Home' ? '#1434A4' : '#666' }]}>Home</Text>
 				</TouchableOpacity>
 
 				<TouchableOpacity style={styles.footerItem} onPress={() => onPressTab('Cashback')}>
-					<Image source={require('../img/feedbacktab.png')} style={styles.footerIcon} />
-					<Text style={styles.footerLabel}>Cashback</Text>
+					<Image source={require('../img/feedbacktab.png')} style={[styles.footerIcon, { tintColor: '#666' }]} />
+					<Text style={[styles.footerLabel, { color: '#666' }]}>Cashback</Text>
 				</TouchableOpacity>
 
 				<TouchableOpacity style={styles.footerItem} onPress={() => onPressTab('Refer')}>
-					<Image source={require('../img/usersgroup.png')} style={styles.footerIcon} />
-					<Text style={styles.footerLabel}>Refer</Text>
+					<Image source={require('../img/usersgroup.png')} style={[styles.footerIcon, { tintColor: '#666' }]} />
+					<Text style={[styles.footerLabel, { color: '#666' }]}>Refer</Text>
 				</TouchableOpacity>
 
 				<TouchableOpacity style={styles.footerItem} onPress={() => onPressTab('Profile')}>
-					<Image source={require('../img/proflie.png')} style={styles.footerIcon} />
-					<Text style={styles.footerLabel}>Profile</Text>
+					<Image source={require('../img/proflie.png')} style={[styles.footerIcon, { tintColor: '#666' }]} />
+					<Text style={[styles.footerLabel, { color: '#666' }]}>Profile</Text>
 				</TouchableOpacity>
 			</View>
 		</View>
@@ -54,7 +57,6 @@ const Card = ({ title, image, onPress }) => (
 
 
 const PreviewHome = ({ navigation }) => {
-	// Hide this preview design on guest pages
 	try {
 		const guestPages = ['Login', 'LoginPage', 'Splash', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
 		if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
@@ -96,7 +98,7 @@ const PreviewHome = ({ navigation }) => {
 			<View style={styles.header}>
 				<Text style={styles.headerTitle}>Home</Text>
 			</View>
-			<ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: footerHeight + 12 }]}>
+			<ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 12 }]}>
 				{cards.map((c) => (
 					<Card key={c.key} title={c.title} image={c.image} onPress={() => navigation.navigate && navigation.navigate('VideoPlayerScreen')} />
 				))}
@@ -118,15 +120,15 @@ const styles = StyleSheet.create({
 	cardTitleWrap: { backgroundColor: 'rgba(20,52,164,0.95)', paddingVertical: 14, alignItems: 'center' },
 	cardTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
 	footerWrap: {  width: '100%', position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
-	footerInner: { width: '100%', flexDirection: 'row', backgroundColor: '#888', height: footerHeight,
+	footerInner: { width: '100%', flexDirection: 'row', height: footerHeight,
         borderRadius: 0, alignItems: 'center', justifyContent: 'space-around', 
         paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, 
         shadowRadius: 6, elevation: 4, borderTopWidth: 1, 
         borderTopColor: '#eee' },
 	footerItem: { alignItems: 'center', justifyContent: 'center' },
-	footerIcon: { width: footerIconSize, height: footerIconSize, tintColor: '#ffffff' },
-	footerIconActive: { tintColor: '#fff' },
-	footerLabel: { fontSize: footerFontSize, color: '#ffffff', marginTop: 6 },
+	footerIcon: { width: footerIconSize, height: footerIconSize },
+	footerIconActive: { tintColor: '#1434A4' },
+	footerLabel: { fontSize: footerFontSize, marginTop: 6 },
 	footerLabelActive: { color: '#1434A4', fontWeight: '700' },
 	iconBg: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
 	iconBgActive: { backgroundColor: '#1434A4' },

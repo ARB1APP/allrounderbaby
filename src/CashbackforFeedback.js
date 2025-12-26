@@ -73,84 +73,16 @@ const darkThemeColors = {
 const url = BASE_URL;
 
 const createCashbackStyles = (theme) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.screenBackground,
-  },
-  scrollViewContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 17,
-    textAlign: 'center',
-    marginHorizontal: 0,
-    marginTop: 0,
-    marginBottom: 0,
-    fontWeight: '600',
-    color: theme.textPrimary,
-    lineHeight: 24,
-  },
-  headerTitl: {
-    fontSize: 17,
-    textAlign: 'center',
-    marginHorizontal: 0,
-    marginTop: 0,
-    marginBottom: 0,
-    fontWeight: '400',
-    color: theme.textPrimary,
-    lineHeight: 24,
-  },
-  gradientHeaderText: {
-    fontSize: 17,
-    textAlign: 'center',
-    fontWeight: '600',
-    color: '#1A202C',
-    lineHeight: 24,
-  },
-  gradientHeaderSubText: {
-    fontWeight: '400',
-  },
-  Thumbnail: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: theme.borderColor,
-    marginHorizontal: 20,
-    marginVertical: 20,
-  },
-  introParagraph: {
-    marginHorizontal: 20,
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.textSecondary,
-    marginBottom: 5,
-  },
-  sectionHeader: {
-    marginHorizontal: 0,
-    marginTop: 0,
-    marginBottom: 12,
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  listItem: {
-    marginHorizontal: 10,
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.textSecondary,
-    marginBottom: 8,
-  },
-  emphasisText: {
-    fontWeight: '600',
-    color: theme.textPrimary,
-  },
-   emphasisTexts: {
-    fontWeight: '800',
-    color: theme.textPrimary,
-  },
-  importantDetailsBox: {
+  container: { flex: 1, backgroundColor: theme.screenBackground },
+  scrollViewContent: { flexGrow: 1, paddingBottom: 20 },
+  gradientHeaderText: { fontSize: 17, textAlign: 'center', fontWeight: '600', color: '#1A202C', lineHeight: 24 },
+  gradientHeaderSubText: { fontWeight: '400' },
+  Thumbnail: { fontSize: 16, lineHeight: 24 },
+  introParagraph: { marginHorizontal: 20, fontSize: 15, lineHeight: 22, color: theme.textSecondary, marginBottom: 5 },
+  sectionHeader: { marginHorizontal: 0, marginTop: 0, marginBottom: 12, fontSize: 24, fontWeight: '600' },
+
+
+   importantDetailsBox: {
     marginHorizontal: 20,
     marginTop: 0,
     padding: 15,
@@ -164,170 +96,27 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  detailPoint: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.textSecondary,
-    marginBottom: 10,
-    marginHorizontal: 10,
-  },
-  linkButton: {
-    alignSelf: 'flex-end',
-    marginHorizontal: 20,
-    marginTop: 15,
-    marginBottom: 20,
-  },
-  linkText: {
-    color: theme.linkColor,
-    textDecorationLine: 'underline',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  videoLinksContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 25,
-    backgroundColor: theme.cardBackground,
-    borderRadius: 10,
-    borderWidth: theme.elevation === 0 ? 1 : 0,
-    borderColor: theme.borderColor,
-    elevation: theme.elevation,
-    shadowColor: theme.bottomNavShadowColor,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    minHeight: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingMessageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  videoLinkItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    width: '100%',
-  },
-  videoLinkItemInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  videoIcon: {
-    width: 28,
-    height: 28,
-    marginRight: 12,
-  },
-  videoTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.textPrimary,
-  },
-  arrowIcon: {
-    width: 20,
-    height: 20,
-    tintColor: theme.iconColor,
-  },
-  videoItemDivider: {
-    height: 1,
-    backgroundColor: theme.borderColor,
-    marginHorizontal: 15,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: theme.bottomNavBackground,
-    paddingVertical: 10,
-    bottom: 0,
-    width: '100%',
-    shadowColor: theme.bottomNavShadowColor,
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 5,
-  },
-  navItem: {
-    alignItems: 'center',
-    paddingVertical: 5,
-  },
-  navIcon: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
-    marginBottom: 4,
-  },
-  navText: {
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: 'bold',
-  },
-  modalLikeContainer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  modalContent: {
-    backgroundColor: theme.cardBackground,
-    borderRadius: 10,
-    padding: 20,
-    width: '90%',
-    maxWidth: 380,
-  },
-  modalContentMainDiv: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingBottom: 0,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.accentColor,
-  },
-  modalContentClose: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.textMutedClose,
-  },
-  borderLine: {
-    borderBottomWidth: 1,
-    borderBottomColor: theme.borderColorD,
-    marginVertical: 10,
-  },
-  modalText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 20,
-    color: theme.textPrimaryModal,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  modalButton: {
-    backgroundColor: theme.accentColorbg,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    width: '45%',
-    alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5
-  },
-  modalButtonText: {
-    color: theme.cardBackgroundText, 
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  disabledButton: {
-    backgroundColor: theme.textMuted,
-  },
+  sectionDivider: { height: 1, backgroundColor: theme.borderColor, marginHorizontal: 20, marginVertical: 20 },
+  listItem: { marginHorizontal: 10, fontSize: 15, lineHeight: 22, color: theme.textSecondary, marginBottom: 8 },
+  detailPoint: { fontSize: 15, lineHeight: 22, color: theme.textSecondary, marginBottom: 10, marginHorizontal: 10 },
+  emphasisText: { fontWeight: '600', color: theme.textPrimary },
+  emphasisTexts: { fontWeight: '800', color: theme.textPrimary },
+  sectionLinkDivider: { marginHorizontal: 0 },
+  subListItem: { marginHorizontal: 10, fontSize: 15, lineHeight: 20, color: theme.textSecondary, marginBottom: 6 },
+  finalCallToAction: { fontSize: 16, textAlign: 'center', color: theme.textPrimary, fontWeight: '600' },
+  linkButton: { alignSelf: 'flex-end', marginHorizontal: 20, marginTop: 15, marginBottom: 20 },
+  linkText: { color: theme.linkColor, textDecorationLine: 'underline', fontSize: 15, fontWeight: '500' },
+  modalLikeContainer: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
+  modalContent: { backgroundColor: theme.cardBackground, borderRadius: 10, padding: 20, width: '90%', maxWidth: 380 },
+  modalContentMainDiv: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 0 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: theme.accentColor },
+  modalContentClose: { fontSize: 16, fontWeight: 'bold', color: theme.textMutedClose },
+  borderLine: { borderBottomWidth: 1, borderBottomColor: theme.borderColorD, marginVertical: 10 },
+  modalText: { fontSize: 16, textAlign: 'center', marginBottom: 20, color: theme.textPrimaryModal },
+  modalButtons: { flexDirection: 'row', justifyContent: 'space-around', width: '100%' },
+  modalButton: { backgroundColor: theme.accentColorbg, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, width: '45%', alignItems: 'center' },
+  modalButtonText: { color: theme.cardBackgroundText, fontSize: 16, fontWeight: 'bold' },
+  disabledButton: { backgroundColor: theme.textMuted },
 });
 
 const CashbackforFeedback = () => {
@@ -347,17 +136,21 @@ const CashbackforFeedback = () => {
 
   useEffect(() => {
     const backAction = () => {
-      // If any modal is open, close it first
       if (isLanguageModalVisible) {
         setIsLanguageModalVisible(false);
         return true;
       }
-      // Prefer native stack back if possible
       if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
         navigation.goBack();
         return true;
       }
-      // Let the central app-level handler handle exiting the app
+      try {
+        if (navigation && typeof navigation.navigate === 'function') {
+          navigation.navigate('Home');
+          return true;
+        }
+      } catch (e) {
+      }
       return false;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
@@ -773,10 +566,7 @@ const CashbackforFeedback = () => {
           </View>
         </Pressable>
       )}
-
-      {/* Bottom tab handled by HomeTabs; removed duplicate local bottom nav */}
-    </View>
+     </View>
   );
 };
-
 export default CashbackforFeedback;

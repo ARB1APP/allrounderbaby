@@ -1,7 +1,5 @@
 import { BackHandler, Platform, ToastAndroid, Alert } from 'react-native';
 
-// Centralized exit helper. Use `exitApp()` to exit immediately,
-// or `exitApp({ confirm: true })` to show a confirmation dialog.
 export const exitApp = ({ confirm = false, toastMessage = null } = {}) => {
     if (confirm) {
         Alert.alert(

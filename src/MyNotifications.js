@@ -35,7 +35,7 @@ const dark = {
 
 const popupDark = { bg: '#333', text: '#fff', allow: '#63B3ED', deny: '#ccc' };
 
-const NotificationSettings = ({ navigation }) => {
+const NotificationSettings = ({ navigation, route }) => {
   const mode = useColorScheme();
   const theme = mode === 'dark' ? dark : light;
   const popupTheme = mode === 'dark' ? popupDark : popupLight;
@@ -82,14 +82,21 @@ const NotificationSettings = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-      navigation.navigate('My Profile');
-      return true; 
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.navigate('My Profile');
+        return true;
+      }
+      if (route && route.params && route.params.origin) {
+        navigation.navigate(route.params.origin);
+        return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     return () => backHandler.remove();
-  }, [navigation]);
+  }, [navigation, route]);
 
   const handleToggleNotifications = async () => {
     if (!NOTIFICATION_PERMISSION) {

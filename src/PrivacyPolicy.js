@@ -14,118 +14,20 @@ import ScreenScroll from './components/ScreenScroll';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const styles = StyleSheet.create({
-   information: {
+  container: {
+    flex: 1,
+    backgroundColor: '#f1f2f2',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 0,
+    paddingHorizontal: 10,
+  },
+  information: {
     flex: 1,
     padding: 10,
     marginTop: 15,
-    backgroundColor: '#E0F7FA', 
-  },
-  infoListItem: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    borderColor: '#4CAF50',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333', 
-    marginBottom: 5,
-  },
-  leadText: {
-    fontSize: 14,
-    color: '#555',
-    lineHeight: 20,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#f1f2f2', 
-  },
-  scrollContainer: {
-     flexGrow: 1,
-     paddingBottom: 0,
-     paddingHorizontal: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 25,
-    color: '#000000',   
-  },
-  sectionHeader: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginTop: -10,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  paragraph: {
-    fontSize: 15,
-    color: '#333333', 
-    lineHeight: 23,
-    marginBottom: 15,
-    textAlign: 'justify',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    paddingVertical: 10,
-    width: '100%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10,
-    borderTopWidth: 0,
-  },
-  navItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  navIcon: {
-    width: 25,
-    height: 25,
-    resizeMode: 'contain',
-  },
-  activeIcon: {
-    tintColor: 'rgba(20, 52, 164, 1)', 
-  },
-  inactiveIcon: {
-    tintColor: 'gray', 
-  },
-  navTextActive: {
-    color: 'rgba(20, 52, 164, 1)',
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  navText: {
-    color: 'gray', 
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-
-   contentContainer: {
-    flexDirection: 'row',
-  },
-  mainContent: {
-    flex: 1,
-  },
-  mainContentPadding: {
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-  },
-  section: {
-    marginBottom: 20,
+    backgroundColor: '#E0F7FA',
   },
   pageTitle: {
     fontSize: 28,
@@ -135,6 +37,14 @@ const styles = StyleSheet.create({
     color: '#1434a4',
     paddingHorizontal: 20,
   },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginTop: -10,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -143,14 +53,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   leadText: {
-     fontSize: 15,
+    fontSize: 15,
     lineHeight: 24,
     marginBottom: 15,
     color: '#666',
     paddingHorizontal: 15,
-  },
-  boldText: {
-    fontWeight: 'bold',
   },
   linkText: {
     color: '#007bff',
@@ -167,9 +74,6 @@ const styles = StyleSheet.create({
     borderLeftColor: '#28a745',
     marginVertical: 20,
   },
-  infoList: {
-    marginTop: 10,
-  },
   infoListItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -178,25 +82,19 @@ const styles = StyleSheet.create({
   infoListItemContent: {
     marginLeft: -8,
     flex: 1,
-
   },
-  grievanceCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginTop: 10,
+  section: {
     marginBottom: 20,
   },
-
-  
+  /* container used around sections — defined to fix undefined usage */
+  sectionContainer: {
+    padding: 12,
+    borderRadius: 8,
+    margin: 12,
+  },
 });
 
-const PrivacyPolicy = ({ navigation }) => {
+const PrivacyPolicy = ({ navigation, route }) => {
   const isDarkMode = useColorScheme() === 'dark';
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#2a3144' : Colors.white,
@@ -213,25 +111,28 @@ const PrivacyPolicy = ({ navigation }) => {
 
   ];
      useEffect(() => {
-            const backAction = () => {
-                if (navigation.canGoBack()) {
-                    navigation.navigate('My Profile');
-                } else {
+        const backAction = () => {
+          if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+            navigation.navigate('My Profile');
+            return true;
+          }
+          if (route && route.params && route.params.origin) {
+            navigation.navigate(route.params.origin);
+            return true;
+          }
+          return false;
+        };
 
-                  }
-                return true;
-            };
-    
-            const backHandler = BackHandler.addEventListener(
-                'hardwareBackPress',
-                backAction
-            );
-    
-            return () => {
-                backHandler.remove();
-                StatusBar.setHidden(false);
-            };
-        }, [navigation]);
+        const backHandler = BackHandler.addEventListener(
+          'hardwareBackPress',
+          backAction
+        );
+
+        return () => {
+          backHandler.remove();
+          StatusBar.setHidden(false);
+        };
+      }, [navigation]);
 
   return (
   

@@ -116,67 +116,6 @@ const createMyEarningsStyles = (theme) => StyleSheet.create({
     borderColor: theme.cardBorder,
     borderWidth: Platform.OS === 'android' && theme.elevationCard === 0 ? 1 : 0,
   },
-  label: {
-    fontSize: 16,
-    color: theme.textMuted,
-    marginBottom: 2,
-  },
-  samillTitle: {
-    fontSize: 12,
-    textAlign: 'center',
-    color: theme.textMuted,
-    marginBottom: 10,
-  },
-  amount: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginVertical: 10,
-    color: theme.amountColor,
-  },
-  withdrawButton: {
-    backgroundColor: theme.buttonBackground,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    marginTop: 15,
-  },
-  withdrawButtonText: {
-    color: theme.buttonTextColor,
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  coinsTodayYesterday: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    gap: 15,
-  },
-  eranDetail: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  coinsValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 5,
-    color: theme.textPrimary,
-  },
-  coinsLabel: {
-    fontSize: 11,
-    color: theme.amountColor,
-    textAlign: 'center',
-    lineHeight: 15,
-  },
-  minWithdrawalText: {
-    fontSize: 12,
-    color: theme.textMuted,
-    textAlign: 'center',
-    marginTop: 20,
-    fontStyle: 'italic',
-  },
   transactionsSection: {
     marginHorizontal: 15,
     marginBottom: 20,
@@ -207,16 +146,6 @@ const createMyEarningsStyles = (theme) => StyleSheet.create({
     marginBottom: 8,
     color: theme.textPrimary,
   },
-  input: {
-    height: 45,
-    backgroundColor: theme.inputBackground,
-    borderColor: theme.inputBorderColor,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 14,
-    color: theme.inputText,
-  },
   disabledInput: {
     height: 45,
     backgroundColor: theme.disabledInputBackground,
@@ -227,22 +156,6 @@ const createMyEarningsStyles = (theme) => StyleSheet.create({
     fontSize: 14,
     color: theme.inputText,
   },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: theme.bottomNavBackground,
-    paddingVertical: 10,
-    width: '100%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  navItem: { alignItems: 'center', flex: 1, },
-  navIcon: { width: 25, height: 25, resizeMode: 'contain', },
-  activeIcon: { tintColor: theme.activeIconTint, },
-  inactiveIcon: { tintColor: theme.inactiveIconTint, },
-  navTextActive: { color: theme.activeNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
-  navText: { color: theme.inactiveNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
   earningsHeader: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -348,6 +261,10 @@ const createMyEarningsStyles = (theme) => StyleSheet.create({
   noteLabel: {
     fontWeight: 'bold',
   },
+  noteSubText: {
+    color: 'rgba(20, 52, 164, 1)',
+    fontSize: 14,
+  },
   noteparaText: {
     color: 'rgba(20, 52, 164, 1)',
     padding: 20,
@@ -357,7 +274,7 @@ const createMyEarningsStyles = (theme) => StyleSheet.create({
 });
 
 
-const MyEarnings = ({ navigation }) => {
+const MyEarnings = ({ navigation, route }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = createMyEarningsStyles(theme);
@@ -590,11 +507,15 @@ const MyEarnings = ({ navigation }) => {
 
   useEffect(() => {
     const backAction = () => {
-      if (navigation.canGoBack()) {
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
         navigation.navigate('My Profile');
-      } else {
+        return true;
       }
-      return true;
+      if (route && route.params && route.params.origin) {
+        navigation.navigate(route.params.origin);
+        return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener(

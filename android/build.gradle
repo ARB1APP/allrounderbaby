@@ -31,3 +31,11 @@ allprojects {
         maven { url "https://jitpack.io" }
     }
 }
+
+subprojects {
+    plugins.withType(org.jetbrains.kotlin.gradle.plugin.KotlinBasePluginWrapper) {
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { compileTask ->
+            compileTask.kotlinOptions.freeCompilerArgs = (compileTask.kotlinOptions.freeCompilerArgs ?: []) + ['-nowarn']
+        }
+    }
+}

@@ -3,18 +3,17 @@ import {
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
   BackHandler,
   AppState,
   useColorScheme,
   StatusBar,
   Alert,
+  NativeModules,
 } from 'react-native';
 import { VdoPlayerView } from 'vdocipher-rn-bridge';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from "@react-native-community/netinfo";
 import { BASE_URL } from './config/api';
 
 const url = BASE_URL;
@@ -33,6 +32,7 @@ const VideoPlayerScreen = () => {
     cameFrom,
     total_time,
     stage_name,
+    displayStep,
   } = route.params || {};
 
   const isDarkMode = useColorScheme() === 'dark';
@@ -83,7 +83,7 @@ const VideoPlayerScreen = () => {
       total_views: currentViews + 1,
       otp: otp,
       playback: playbackInfo,
-      stage_name: stage_name + " " + step,
+      stage_name: (stage_name ? stage_name : '') + " " + (typeof displayStep !== 'undefined' && displayStep !== null ? displayStep : step),
       deviceKey: deviceKey,
     };
 
@@ -129,14 +129,12 @@ const VideoPlayerScreen = () => {
     }
   }, [videoId, currentTime, language, step, totalDuration, otp, playbackInfo, stage_name]);
 
-  // Stop video when screen loses focus
   useFocusEffect(
     useCallback(() => {
-      // Reset on focus
+     
       progressUpdated.current = false;
 
       return () => {
-        // Cleanup when navigating away
         if (playerRef.current) {
           try {
             if (typeof playerRef.current.pause === 'function') {
@@ -145,33 +143,35 @@ const VideoPlayerScreen = () => {
             if (typeof playerRef.current.stop === 'function') {
               playerRef.current.stop();
             }
+            if (typeof playerRef.current.release === 'function') {
+              playerRef.current.release();
+            }
           } catch (e) {
-            console.error('Cleanup: Error stopping video:', e);
+            console.error('Cleanup: Error stopping video via ref:', e);
           }
         }
+        stopNativePlayer();
       };
     }, [])
   );
 
-  // Cleanup on component unmount
   useEffect(() => {
     return () => {
-      if (playerRef.current) {
-        try {
-          if (typeof playerRef.current.pause === 'function') {
-            playerRef.current.pause();
+      try {
+        if (playerRef.current) {
+          try {
+            if (typeof playerRef.current.pause === 'function') playerRef.current.pause();
+            if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
+            if (typeof playerRef.current.release === 'function') playerRef.current.release();
+          } catch (e) {
+            console.error('Unmount: Error cleaning up video player via ref:', e);
+          } finally {
+            playerRef.current = null;
           }
-          if (typeof playerRef.current.stop === 'function') {
-            playerRef.current.stop();
-          }
-          if (typeof playerRef.current.release === 'function') {
-            playerRef.current.release();
-          }
-        } catch (e) {
-          console.error('Unmount: Error cleaning up video player:', e);
-        } finally {
-          playerRef.current = null;
         }
+        stopNativePlayer();
+      } catch (e) {
+        console.error('Unmount: Error in cleanup:', e);
       }
     };
   }, []);
@@ -180,8 +180,29 @@ const VideoPlayerScreen = () => {
     setIsLoading(false);
   }, []);
 
+  const stopNativePlayer = useCallback(() => {
+    try {
+      const nm = NativeModules || {};
+      const modulesToTry = [nm.VdoPlayer, nm.VdocipherRnBridge, nm.Vdocipher, nm.VdocipherRNBridge, nm.Vdo];
+      const methodNames = ['stop', 'pause', 'release', 'releasePlayer', 'destroy', 'stopPlayer'];
+
+      modulesToTry.forEach(mod => {
+        if (!mod) return;
+        methodNames.forEach(m => {
+          try {
+            if (typeof mod[m] === 'function') {
+              mod[m]();
+            }
+          } catch (e) {
+          }
+        });
+      });
+    } catch (e) {
+      console.error('stopNativePlayer: error while attempting native stop/release', e);
+    }
+  }, []);
+
   const backAction = useCallback(async () => {
-    // Stop video before navigating back
     if (playerRef.current) {
       try {
         if (typeof playerRef.current.pause === 'function') {
@@ -194,6 +215,7 @@ const VideoPlayerScreen = () => {
         console.error('Error stopping video on back:', e);
       }
     }
+    stopNativePlayer();
     
     await updateVideoProgress(false);
     Orientation.lockToPortrait();
@@ -208,8 +230,7 @@ const VideoPlayerScreen = () => {
   }, [navigation, cameFrom, updateVideoProgress]);
 
   const handleEnded = useCallback(async () => {
-    // Stop video after it ends
-    if (playerRef.current) {
+   if (playerRef.current) {
       try {
         if (typeof playerRef.current.pause === 'function') {
           playerRef.current.pause();
@@ -221,6 +242,7 @@ const VideoPlayerScreen = () => {
         console.error('Error stopping video on end:', e);
       }
     }
+    stopNativePlayer();
     
     await updateVideoProgress(true);
     if (cameFrom === 'Dashboard') {
@@ -282,7 +304,6 @@ const VideoPlayerScreen = () => {
     };
   }, [backAction]);
 
-  // Pause/stop player when app goes to background to prevent audio playing
   useEffect(() => {
     const handleAppStateChange = (nextState) => {
       if (nextState === 'background' || nextState === 'inactive') {
@@ -293,11 +314,12 @@ const VideoPlayerScreen = () => {
               if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
               if (typeof playerRef.current.release === 'function') playerRef.current.release();
             } catch (e) {
-              console.error('AppState: Error cleaning up video player:', e);
+              console.error('AppState: Error cleaning up video player via ref:', e);
             } finally {
               playerRef.current = null;
             }
           }
+          stopNativePlayer();
           try {
             await updateVideoProgress(false);
           } catch (e) {
@@ -312,13 +334,11 @@ const VideoPlayerScreen = () => {
       try {
         subscription.remove();
       } catch (e) {
-        // fallback for older RN versions
         AppState.removeEventListener && AppState.removeEventListener('change', handleAppStateChange);
       }
     };
   }, [updateVideoProgress]);
   
-  // Ensure player is stopped/released when the screen loses focus (blur)
   useEffect(() => {
     const onBlur = () => {
       (async () => {
@@ -339,6 +359,7 @@ const VideoPlayerScreen = () => {
             playerRef.current = null;
           }
         }
+        stopNativePlayer();
 
         try {
           await updateVideoProgress(false);

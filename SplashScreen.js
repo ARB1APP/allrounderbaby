@@ -1,38 +1,64 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import {
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+  View,
+  Platform,
+} from 'react-native';
 import Video from 'react-native-video';
-import { StatusBar } from 'react-native';
 
-const SplashScreen = ({ onVideoEnd, onSkip }) => {
+const SplashScreen = ({ onVideoEnd }) => {
   return (
-    <View style={styles.container}>
-       <StatusBar backgroundColor="#111" barStyle="light-content" />
-      <Video
-        source={require('./assets/splash_video.mp4')}
-        style={styles.video}
-        resizeMode="stretch"
-        onEnd={onVideoEnd}
-        repeat={false}
-      />
-      {onSkip ? (
-        <TouchableOpacity style={styles.skipOverlay} activeOpacity={0.8} onPress={onSkip} accessibilityLabel="splash-skip">
-          <Text style={styles.skipText}>Tap to continue</Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
+    <SafeAreaView
+      style={[
+        styles.container,
+        Platform.OS === 'android' && { paddingTop: StatusBar.currentHeight || 0 },
+      ]}
+    >
+      <StatusBar backgroundColor="#000" barStyle="light-content" />
+
+      <View style={styles.videoWrapper}>
+        <Video
+          source={require('./assets/splash_video.mp4')}
+          style={styles.video}
+          resizeMode="cover"
+          onEnd={onVideoEnd}
+          repeat={false}
+          muted={false}
+        />
+      </View>
+
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor:'black',
+    backgroundColor: '#000',
+  },
+  videoWrapper: {
+    flex: 1,
   },
   video: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#000',
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  skipText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

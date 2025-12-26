@@ -51,74 +51,11 @@ const darkThemeColors = {
 };
 
 const createCashbackStyles = (theme) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.screenBackground,
-  },
-  scrollViewContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 17,
-    textAlign: 'center',
-    marginHorizontal: 0,
-    marginTop: 0,
-    marginBottom: 0,
-    fontWeight: '600',
-    color: theme.textPrimary,
-    lineHeight: 24,
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: theme.borderColor,
-    marginHorizontal: 20,
-    marginVertical: 20,
-  },
-  lastUpdatedText: {
-    textAlign: 'center',
-    fontSize: 12,
-    color: theme.textMuted,
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  introParagraph: {
-    marginHorizontal: 20,
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.textSecondary,
-    marginBottom: 5,
-  },
-  sectionHeader: {
-    marginHorizontal: 0,
-    marginTop: 0,
-    marginBottom: 12,
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  listItem: {
-    marginHorizontal: 10,
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.textSecondary,
-    marginBottom: 8,
-  },
-  subListItem: {
-    marginLeft: 15,
-    marginRight: 20,
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.textSecondary,
-    marginBottom: 8,
-  },
-  emphasisText: {
-    fontWeight: '600',
-    color: theme.textPrimary,
-  },
-  highlightText: {
-    color: theme.accentColor,
-    fontWeight: '600',
-  },
+  container: { flex: 1, backgroundColor: theme.screenBackground },
+  scrollViewContent: { flexGrow: 1, paddingBottom: 20 },
+
+  sectionDivider: { height: 1, backgroundColor: theme.borderColor, marginHorizontal: 20, marginVertical: 20 },
+
   importantDetailsBox: {
     marginHorizontal: 20,
     marginTop: 0,
@@ -133,107 +70,12 @@ const createCashbackStyles = (theme) => StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  detailPoint: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.textSecondary,
-    marginBottom: 10,
-     marginHorizontal: 10,
-  },
-  finalCallToAction: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.textSecondary,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  linkButton: {
-    alignSelf: 'flex-end',
-    marginHorizontal: 20,
-    marginTop: 15,
-    marginBottom: 20,
-  },
-  linkText: {
-    color: theme.linkColor,
-    textDecorationLine: 'underline',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  videoLinksContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 25,
-    backgroundColor: theme.cardBackground,
-    borderRadius: 10,
-    borderWidth: theme.elevation === 0 ? 1 : 0,
-    borderColor: theme.borderColor,
-    elevation: theme.elevation,
-    shadowColor: theme.bottomNavShadowColor,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  videoLinkItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-  },
-  videoLinkItemInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  videoIcon: {
-    width: 28,
-    height: 28,
-    marginRight: 12,
-  },
-  videoTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.textPrimary,
-  },
-  arrowIcon: {
-    width: 20,
-    height: 20,
-    tintColor: theme.iconColor,
-  },
-  videoItemDivider: {
-    height: 1,
-    backgroundColor: theme.borderColor,
-    marginHorizontal: 15,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: theme.bottomNavBackground,
-    paddingVertical: Platform.OS === 'ios' ? 15 : 10,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
-    borderTopWidth: 1,
-    borderTopColor: theme.borderColor,
-    shadowColor: theme.bottomNavShadowColor,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: theme.elevation > 0 ? 0.1 : 0,
-    shadowRadius: theme.elevation > 0 ? 4 : 0,
-    elevation: theme.elevation,
-  },
-  navItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  navIcon: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
-    marginBottom: 3,
-  },
-  navText: {
-    fontSize: 10,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
+
+  sectionHeader: { marginHorizontal: 0, marginTop: 0, marginBottom: 12, fontSize: 24, fontWeight: '600' },
+  subListItem: { marginLeft: 15, marginRight: 20, fontSize: 15, lineHeight: 22, color: theme.textSecondary, marginBottom: 8 },
+  emphasisText: { fontWeight: '600', color: theme.textPrimary },
+
+  finalCallToAction: { fontSize: 15, lineHeight: 22, color: theme.textSecondary, textAlign: 'center', fontWeight: '500' },
 });
 
 const CashbackforFeedbackConditions = ({ navigation }) => {

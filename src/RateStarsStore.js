@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, BackHandler, StatusBar
 import ScreenScroll from './components/ScreenScroll';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
-const RateStarsStore = ({ navigation }) => { 
+const RateStarsStore = ({ navigation, route }) => { 
   const isDarkMode = useColorScheme() === 'dark';
     const backgroundStyle = {
       backgroundColor: isDarkMode ? '#2a3144' : Colors.white,
@@ -11,11 +11,15 @@ const RateStarsStore = ({ navigation }) => {
 
   useEffect(() => {
             const backAction = () => {
-                if (navigation.canGoBack()) {
-                    navigation.navigate('My Profile');
-                } else {
-                }
+              if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+                navigation.navigate('My Profile');
                 return true;
+              }
+              if (route && route.params && route.params.origin) {
+                navigation.navigate(route.params.origin);
+                return true;
+              }
+              return false;
             };
     
             const backHandler = BackHandler.addEventListener(

@@ -12,8 +12,6 @@ import { useIsFocused, CommonActions } from '@react-navigation/native';
 import { BASE_URL } from './config/api';
 
 const NEW_LAUNCH_IMAGE = require('../img/newlaunchscreen.png');
-
-
 const _keychainModuleName = 'react-native-keychain';
 let Keychain = null;
 try { Keychain = require(_keychainModuleName); } catch (e) { Keychain = null; }
@@ -33,7 +31,6 @@ const LoginPage = ({ navigation }) => {
     const isDarkMode = useColorScheme() === 'dark';
     const lastBackPressed = useRef(0);
     const loginInProgressRef = useRef(false);
-
     const [showLoginForm, setShowLoginForm] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -43,13 +40,9 @@ const LoginPage = ({ navigation }) => {
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoadingCredentials, setIsLoadingCredentials] = useState(true);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-    // Animation values from both sections
     const welcomeOpacity = useRef(new Animated.Value(1)).current;
     const loginOpacity = useRef(new Animated.Value(0)).current;
     const imageOpacity = useRef(new Animated.Value(0)).current;
-    
-    // New design animation stubs (to prevent crashes)
     const emailTextPosition = useRef(new Animated.Value(0)).current;
     const usernamePosition = useRef(new Animated.Value(0)).current;
     const passwordPosition = useRef(new Animated.Value(0)).current;
@@ -77,7 +70,6 @@ const LoginPage = ({ navigation }) => {
         loadCredentials();
     }, []);
 
-    // Tell the app to hide the global footer while this screen is focused
     useEffect(() => {
         try {
             if (isFocused) {
@@ -86,9 +78,7 @@ const LoginPage = ({ navigation }) => {
                 navigation.setParams && navigation.setParams({ hideFooter: true });
             }
         } catch (e) {
-            // ignore
         }
-        // also clear on unmount
         return () => {
             try { navigation.setParams && navigation.setParams({ hideFooter: false }); } catch (e) {}
         };
@@ -137,7 +127,6 @@ const LoginPage = ({ navigation }) => {
         }
     }, [showLoginForm]);
 
-    // Ensure a persistent device key is available
     const getDeviceKey = async () => {
         try {
             let devicekey = await AsyncStorage.getItem('devicekey');
@@ -234,7 +223,6 @@ const LoginPage = ({ navigation }) => {
             <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={backgroundStyle.backgroundColor} />
             
             {!showLoginForm ? (
-                /* SECTION 1: AS IT IS */
                 <Animated.View style={[styles.container, { opacity: welcomeOpacity }]}>
                     <Image style={styles.welcomeImage} source={require('../img/babyone.jpg')} />
                     <View style={styles.fullDiv}>
@@ -250,7 +238,6 @@ const LoginPage = ({ navigation }) => {
                     </View>
                 </Animated.View>
             ) : (
-                /* SECTION 2: NEW DESIGN REPLACED */
                 <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                     <ScrollView style={backgroundStyle} contentContainerStyle={styles.loginContainer} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                         <Animated.Image style={[styles.image, { opacity: imageOpacity }]} source={NEW_LAUNCH_IMAGE} resizeMode="contain" />
@@ -258,7 +245,7 @@ const LoginPage = ({ navigation }) => {
                             Please enter login details below
                         </Animated.Text>
 
-                        <Animated.Text style={[styles.legend, usernameError ? styles.errorLegend : null, { transform: [{ translateX: usernamePosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
+                        <Animated.Text style={[ { marginTop: 5 },styles.legend, usernameError ? styles.errorLegend : null, { transform: [{ translateX: usernamePosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
                             Login ID
                         </Animated.Text>
                         <Animated.View style={[styles.fieldset, usernameError ? styles.errorFieldset : null, { transform: [{ translateX: usernamePosition }] }]}>
@@ -273,7 +260,7 @@ const LoginPage = ({ navigation }) => {
                         </Animated.View>
                         {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
 
-                        <Animated.Text style={[styles.legend, passwordError ? styles.errorLegend : null, { transform: [{ translateX: passwordPosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
+                        <Animated.Text style={[ { marginTop: 9 }, styles.legend, passwordError ? styles.errorLegend : null, { transform: [{ translateX: passwordPosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
                             Password
                         </Animated.Text>
                         <Animated.View style={[styles.fieldset, passwordError ? styles.errorFieldset : null, { transform: [{ translateX: passwordPosition }] }]}>
@@ -337,11 +324,8 @@ const LoginPage = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    // GENERAL
     outermostContainer: { flex: 1 },
     loadingContainer: { justifyContent: 'center', alignItems: 'center' },
-    
-    // SECTION 1 STYLES (AS IT IS)
     container: { flex: 1, justifyContent: 'space-between', alignItems: 'center' },
     welcomeImage: { height: isTablet ? '55%' : '60%', width: '100%', borderBottomRightRadius: isTablet ? 200 : 150 },
     fullDiv: { width: '100%', alignItems: 'center', paddingBottom: 40 },
@@ -349,21 +333,19 @@ const styles = StyleSheet.create({
     highlightText: { color: '#1434A4' },
     excitedLink: { marginTop: 10, fontSize: 16, marginBottom: 20 },
     customButtonInnerStart: { backgroundColor: '#1434A4', width: contentMaxWidth, height: 50, justifyContent: 'center', alignItems: 'center', borderRadius: 5, elevation: 5 },
-
-    // SECTION 2 STYLES (NEW DESIGN)
     loginContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 30 },
     image: { height: isTablet ? 160 : 130, width: isTablet ? contentMaxWidth : '90%', marginTop: 10, marginBottom: 20 },
     loginInstructionText: { marginTop: 15, marginBottom: 15, fontSize: isTablet ? 18 : 16 },
     fieldset: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', borderColor: '#ced4da', borderWidth: 1, paddingHorizontal: 10, marginTop: 5, borderRadius: 5, backgroundColor: '#fff', elevation: 3 },
-    legend: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', fontSize: isTablet ? 16 : 14, marginBottom: 2 },
+    legend: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', fontSize: isTablet ? 16 : 14, marginBottom: 2, paddingHorizontal: 10 },
     input: { height: isTablet ? 52 : 45, paddingHorizontal: 10, fontSize: isTablet ? 16 : 14 },
     customButton: { marginTop: 25, width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, height: isTablet ? 56 : 50, borderRadius: 5, backgroundColor: '#1434A4', justifyContent: 'center', alignItems: 'center', elevation: 5 },
-    buttonDisabled: { backgroundColor: '#a9a9a9' },
+    buttonDisabled: { backgroundColor: '#a9a9a9',   elevation: 0,},
     buttonText: { color: '#FFFFFF', fontSize: isTablet ? 18 : 16, fontWeight: 'bold' },
     checkboxesContainer: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', marginTop: 25 },
     checkboxContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },
     checkboxContainerSecond: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-    checkboxLabel: { fontSize: 14, flexShrink: 1, marginRight: 4 },
+    checkboxLabel: { fontSize: 14, flexShrink: 1, flexBasis: 'auto', marginRight: 4 },
     checkboxTextContainer: { marginLeft: 10, flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-start' },
     linkTouchable: { paddingHorizontal: 4 },
     linkUnderline: { textDecorationLine: 'underline', fontWeight: 'bold', color: '#1434A4' },

@@ -153,7 +153,6 @@ const ReferAndEarn = ({ navigation }) => {
         navigation.goBack();
         return true;
       }
-      // defer to global handler (returns false) so app-level handler can exit the app
       return false;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
@@ -180,10 +179,6 @@ const ReferAndEarn = ({ navigation }) => {
 
   const onPressKnowMoreButton = () => {
     setShowDetails(!showDetails);
-  };
-
-  const onPressReferralHistoryBtn = () => {
-    navigation.navigate('Referral History');
   };
 
   const openShareModal = () => {
@@ -518,9 +513,9 @@ const ReferAndEarn = ({ navigation }) => {
             <TouchableOpacity style={styles.primaryButton} onPress={openShareModal} disabled={isLoading || code === "N/A" || code === "Loading..." || code === "Error" || code === "Login Req."}>
               <Text style={styles.buttonTextPrimary}>Share Code</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} onPress={onPressReferralHistoryBtn}>
+            {/* <TouchableOpacity style={styles.secondaryButton} onPress={onPressReferralHistoryBtn}>
               <Text style={styles.buttonTextSecondary}>Referral History</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
         <View style={styles.sectionDivider} />
@@ -774,9 +769,6 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
   Thumbnail: {
     fontSize: 17,
   },
-  Willlist: {
-    textAlign: 'center',
-  },
   sectionHeader: {
     marginHorizontal: 0,
     marginTop: 0,
@@ -785,7 +777,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     fontWeight: '600',
   },
   importantDetailsBox: {
-    marginHorizontal: 40,
+    marginHorizontal: 20,
     marginTop: 0,
     padding: 15,
     backgroundColor: theme.cardBackground,
@@ -814,26 +806,9 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: 10,
   },
-  finalCallToAction: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.textSecondary,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
   scrollViewContent: {
     flexGrow: 1,
     paddingBottom: 20,
-  },
-  titleText: {
-    fontSize: 17,
-    textAlign: 'center',
-    marginHorizontal: 0,
-    marginTop: 0,
-    marginBottom: 0,
-    fontWeight: '600',
-    color: theme.textPrimary,
-    lineHeight: 24,
   },
   gradientTitleText: {
     fontSize: 17,
@@ -903,25 +878,8 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-  secondaryButton: {
-    flex: 1,
-    backgroundColor: theme.cardBackground,
-   paddingVertical: 7,
-    borderRadius: 8,
-    height: 35,
-    width: 10,
-    borderWidth: 1,
-    borderColor: theme.secondaryActionBorder,
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
   buttonTextPrimary: {
     color: theme.primaryActionText,
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  buttonTextSecondary: {
-    color: theme.secondaryActionText,
     fontWeight: '600',
     fontSize: 12,
   },
@@ -972,92 +930,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  videoLinksContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 30,
-    backgroundColor: theme.cardBackground,
-    borderRadius: 10,
-    borderWidth: theme.elevation === 0 ? 1 : 0,
-    borderColor: theme.borderColor,
-    elevation: theme.elevation,
-    shadowColor: theme.bottomNavShadowColor,
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    minHeight: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingMessageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  videoLinkItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    width: '100%',
-  },
-  videoLinkItemInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  videoIcon: {
-    width: 28,
-    height: 28,
-    marginRight: 12,
-  },
-  videoTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.textPrimary,
-  },
-  arrowIcon: {
-    width: 20,
-    height: 20,
-    tintColor: theme.iconColor,
-  },
-  videoItemDivider: {
-    height: 1,
-    backgroundColor: theme.borderColor,
-    marginHorizontal: 15,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: theme.modalBackground,
-    paddingVertical: 10,
-    bottom: 0,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 5,
-  },
-  navItem: {
-    alignItems: 'center',
-    paddingVertical: 5,
-  },
-  navIcon: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
-    marginBottom: 4,
-  },
-  navText: {
-    color: 'gray',
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: 'bold',
-  },
+  
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: theme.overlayBackground,

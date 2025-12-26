@@ -1,8 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, useColorScheme, Linking, BackHandler, StatusBar, Alert } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
-import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 const PrivacyPolicywithoutLog = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -13,10 +13,14 @@ const PrivacyPolicywithoutLog = () => {
       const backAction = () => {
         console.log('PrivacyPolicywithoutLog: hardware back press');
         try {
+          Alert.alert('Debug', 'Android back pressed on Privacy Policy');
+        } catch (e) {
+        }
+        try {
           if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
             navigation.goBack();
-          } else if (navigation && typeof navigation.reset === 'function') {
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          } else if (navigation && typeof navigation.navigate === 'function') {
+            navigation.navigate('Login');
           } else {
             Alert.alert('Navigation', 'Unable to navigate back.');
           }
@@ -866,7 +870,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
   },
+  /* container used around sections — defined to fix undefined usage */
+  sectionContainer: {
+    padding: 12,
+    borderRadius: 8,
+    margin: 12,
+  },
 });
-
-
 export default PrivacyPolicywithoutLog;

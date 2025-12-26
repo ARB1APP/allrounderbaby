@@ -153,18 +153,22 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
   },
 });
 
-const AboutUs = ({ navigation }) => {
+const AboutUs = ({ navigation, route }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = createCashbackConditionsStyles(theme);
   const isDarkMode = useColorScheme() === 'dark';
   useEffect(() => {
     const backAction = () => {
-      if (navigation.canGoBack()) {
-        navigation.navigate('Cashback for Feedback');
-      } else {
+      if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
       }
-      return true;
+      if (route && route.params && route.params.origin) {
+        navigation.navigate(route.params.origin);
+        return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
