@@ -26,18 +26,10 @@ import RateStarsStore from './src/RateStarsStore';
 import Community from './src/Community';
 import FAQ from './src/FAQ';
 import GetHelp from './src/GetHelp';
-import RestorePurchases from './src/RestorePurchases';
-import PhotoPermission from './src/PhotoPermission';
 import MyNotifications from './src/MyNotifications';
-import ProgressSnapshots from './src/ProgressSnapshots';
 import MyReferrals from './src/MyReferrals';
-import SaveActivities from './src/SaveActivities';
-import Medals from './src/Medals';
-import StarTracker from './src/StarTracker';
-import NextGoal from './src/NextGoal';
 import AboutUs from './src/AboutUs';
 import CashbackforFeedbackConditions from './src/CashbackforFeedbackConditions';
-import Trails from './src/Trails';
 import { BASE_URL } from './src/config/api';
 import { exitApp } from './src/utils/exitApp';
 
@@ -175,8 +167,7 @@ export const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
                   return;
                 }
 
-                // capture current focused route as origin so target can return here on back
-                let origin = null;
+               let origin = null;
                 try {
                   if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
                     const current = navigationRef.getCurrentRoute && navigationRef.getCurrentRoute();
@@ -233,7 +224,6 @@ const App = () => {
   const styles = createAppStyles(currentThemeColors);
   const [activeFooter, setActiveFooter] = useState('Home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
   const { width } = Dimensions.get('window');
   const footerIconSize = Math.round(Math.max(18, Math.min(32, width * 0.06)));
   const footerHeight = Math.round(Math.max(56, width * 0.12));
@@ -243,8 +233,7 @@ const App = () => {
   useEffect(() => {
     let isMounted = true;
     const checkAuthStatus = async () => {
-      try {
-        
+      try {    
         const firstTime = await AsyncStorage.getItem('first_time_opened');
         const token = await AsyncStorage.getItem('token');
         const userId = await AsyncStorage.getItem('userId');
@@ -300,20 +289,16 @@ const App = () => {
             return;
           }
 
-          // If not logged in, block protected pages (not in guestPages)
           if (!isLoggedIn && name && !guestPages.includes(name)) {
             Alert.alert('Login Required', 'Please login to access this page.');
-            // redirect to Login
             try { origNavigate('Login'); } catch (e) { }
             return;
           }
         } catch (e) {
-          // ignore
         }
         return origNavigate(...args);
       };
     } catch (e) {
-      // ignore
     }
 
     try {
@@ -558,7 +543,6 @@ const App = () => {
                   }
                 }
               } catch (err) {
-                // fallback: do nothing
               }
             },
           })}
@@ -580,16 +564,8 @@ const App = () => {
         <Drawer.Screen name="PrivacyPolicywithoutLog" component={PrivacyPolicywithoutLog} options={{ title: 'Privacy Policy' }} />
         <Drawer.Screen name="Community" component={Community} options={{}} />
         <Drawer.Screen name="FAQ" component={FAQ} options={{}} />
-        <Drawer.Screen name="Restore Purchases" component={RestorePurchases} options={{}} />
-        <Drawer.Screen name="Photo Permission" component={PhotoPermission} options={{}} />
         <Drawer.Screen name="My Notifications" component={MyNotifications} options={{}} />
-        <Drawer.Screen name="Progress Snapshots" component={ProgressSnapshots} options={{}} />
         <Drawer.Screen name="My Referrals" component={MyReferrals} options={{}} />
-        <Drawer.Screen name="Save Activities" component={SaveActivities} options={{}} />
-        <Drawer.Screen name="Medals" component={Medals} options={{}} />
-        <Drawer.Screen name="Star Tracker" component={StarTracker} options={{}} />
-        <Drawer.Screen name="Trails" component={Trails} options={{}} />
-        <Drawer.Screen name="Next Goal" component={NextGoal} options={{}} />
         <Drawer.Screen name="Cashback for Feedback Conditions" component={CashbackforFeedbackConditions} options={{}} />
         <Drawer.Screen name="Rate us / Update App" component={RateStarsStore} options={{}} />
         <Drawer.Screen name="Get Help" component={GetHelp} options={{}} />
@@ -601,9 +577,9 @@ const App = () => {
   const stylesGlobal = StyleSheet.create({
     footerWrap: { width: '100%', alignItems: 'center' },
     footerInner: { width: '100%', flexDirection: 'row',
-      backgroundColor: '#fff',
-      borderRadius: 0, alignItems: 'center',
-      justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee' },
+    backgroundColor: '#fff',
+    borderRadius: 0, alignItems: 'center',
+    justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee' },
     footerItem: { alignItems: 'center', justifyContent: 'center' },
     footerIcon: { width: footerIconSize, height: footerIconSize, tintColor: '#888' },
     footerLabel: { fontSize: footerFontSize, color: '#666', marginTop: 6 },
@@ -617,7 +593,6 @@ const App = () => {
         skipNavigationGuards.current = true;
         if (navigationRef.isReady()) navigationRef.navigate(routeName);
       } catch (e) {
-        // ignore
       } finally {
         skipNavigationGuards.current = false;
       }
@@ -671,7 +646,6 @@ const App = () => {
             if (!navigationRef.isReady()) return;
             const rootState = typeof navigationRef.getRootState === 'function' ? navigationRef.getRootState() : null;
 
-            // update footer active name
             if (rootState && rootState.routes && typeof rootState.index === 'number') {
               const top = rootState.routes[rootState.index];
               if (top && top.name) {
@@ -682,30 +656,22 @@ const App = () => {
               if (r && r.name) setActiveFooter(r.name);
             }
 
-            // detect if drawer is currently open by inspecting history entries
             const detectDrawerOpen = (state) => {
               if (!state) return false;
               try {
-                // prefer history-based detection: look for a drawer history entry with status 'open'
                 if (Array.isArray(state.history) && state.history.length) {
                   const drawerEntry = state.history.slice().reverse().find(h => h && h.type === 'drawer');
                   if (drawerEntry) {
-                    // some RN versions include a `status` field
                     if (drawerEntry.status === 'open') return true;
-                    // other versions may mark the drawer entry presence only when open
                     if (typeof drawerEntry.status === 'undefined') return true;
                   }
                 }
 
-                // check direct boolean flag if present
                 if (state.isDrawerOpen) return true;
-
-                // traverse into active child route
-                const idx = typeof state.index === 'number' ? state.index : 0;
+               const idx = typeof state.index === 'number' ? state.index : 0;
                 const route = state.routes && state.routes[idx];
                 if (route && route.state) return detectDrawerOpen(route.state);
               } catch (e) {
-                // ignore
               }
               return false;
             };
@@ -718,7 +684,6 @@ const App = () => {
             setIsDrawerOpen(!!drawerOpen);
 
           } catch (e) {
-            // ignore
           }
         }}
       >
@@ -732,10 +697,10 @@ const App = () => {
       {(() => {
         const guestFooterPages = ['Login', 'LoginPage', 'Splash', 'VideoPlayerScreen', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
         try {
+          if (initialRoute === 'Splash') return null;
           if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
             const rootState = navigationRef.getRootState && navigationRef.getRootState();
             if (rootState) {
-              // traverse active route chain to collect names and check params
               const activeNames = [];
               let state = rootState;
               let hideFooterParam = false;
@@ -744,7 +709,6 @@ const App = () => {
                 const route = state.routes && state.routes[idx];
                 if (!route) break;
                   activeNames.push(route.name);
-                  // if any active route has params.hideFooter === true, hide the footer
                   if (route.params && route.params.hideFooter) hideFooterParam = true;
                   state = route.state;
               }
@@ -754,7 +718,6 @@ const App = () => {
             }
           }
         } catch (e) {
-          // ignore and fallback
         }
         return !guestFooterPages.includes(activeFooter) ? <FooterBar /> : null;
       })()}

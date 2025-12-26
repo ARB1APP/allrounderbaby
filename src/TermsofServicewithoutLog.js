@@ -16,7 +16,6 @@ const TermsofServicewithoutLog = () => {
         try {
           Alert.alert('Debug', 'Android back pressed on Terms of Service');
         } catch (e) {
-          // ignore
         }
         try {
           if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
@@ -928,145 +927,12 @@ const TermsofServicewithoutLog = () => {
     };
 
 const styles = StyleSheet.create({
-  containersss: {
-    backgroundColor: '#E0F7FA',
-    borderRadius: 10,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  appText: {
-    backgroundColor: '#E0F7FA',
-    borderRadius: 10,
-    padding:  5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-    textAlign: 'center',
-  },
-  introText: {
-    fontSize: 16,
-    marginBottom: 20,
-    color: '#555',
-    lineHeight: 24,
-  },
-  listItem: {
-    flexDirection: 'row',
-    marginBottom: -20,
-    marginTop: 20,
-    alignItems: 'flex-start',
-  },
-  bullet: {
-    fontSize: 16,
-    marginRight: 10,
-    color: '#007bff', 
-    fontWeight: 'bold',
-  },
-  footerText: {
-    fontSize: 14,
-    marginTop: 20,
-    color: '#777',
-    lineHeight: 22,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 15,
-  },
-  infoBox: {
-    backgroundColor: '#E0F7FA',
-    borderRadius: 15, 
-    padding: 10,
-    marginHorizontal: 10,
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 8,
-    width: '95%',
-    maxWidth: 600,
-    marginBottom: 10,
-  },
-  importantText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#00796B',
-    marginBottom: 15,
-  },
-  platformtext: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#00796B',
-    marginBottom: 15,
-    paddingHorizontal: 0,
-  },
-  bulletPoint: {
-    flexDirection: 'row',
-    marginBottom: 10,
-    paddingLeft: 5,
-  },
-  bulletIcon: {
-    fontSize: 18,
-    color: '#00BCD4',
-    marginRight: 5,
-  },
-  bulletText: {
-    fontSize: 15,
-    lineHeight: 24,
-    marginBottom: 15,
-    color: '#666',
-    paddingHorizontal: 15,
-  },
-  container: { flex: 1, backgroundColor: '#f1f2f2', },
-  text: { fontSize: 20, textAlign: 'center', margin: 10, },
-  bottomNav: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', backgroundColor: '#fff', paddingVertical: 10, bottom: 0, width: '100%', borderTopLeftRadius: 20, borderTopRightRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 5, },
-  navItem: { alignItems: 'center', },
-  inactive: { opacity: 0.5, },
-  navIcon: { width: 25, height: 25, resizeMode: 'contain', },
-  navTextActive: { color: 'rgba(20, 52, 164, 1)', fontSize: 10, marginTop: 4, fontWeight: 'bold', },
-  navText: { color: 'gray', fontSize: 10, marginTop: 4, fontWeight: 'bold', },
-  containerss: {
-    borderWidth: 2,
-    borderColor: '#E60000',
-    borderRadius: 5, 
-    padding: 15,
-    margin: 10, 
-    backgroundColor: '#FFFFFF', 
-  },
-  importantText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-      color: '#00796B',
-    marginBottom: 10,
-  },
-  bodyText: {
-    fontSize: 14,
-    color: '#333333', 
-    lineHeight: 22, 
-    marginBottom: 10, 
-  },
-
-  contentContainer: {
-    flexDirection: 'row',
-  },
-  mainContent: {
-    flex: 1,
-  },
-  mainContentPadding: {
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-  },
-  section: {
-    marginBottom: 0,
+  container: { flex: 1, backgroundColor: '#f1f2f2' },
+  sectionContainer: {
+    padding: 12,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderRadius: 8,
   },
   pageTitle: {
     fontSize: 28,
@@ -1076,12 +942,12 @@ const styles = StyleSheet.create({
     color: '#1434a4',
     paddingHorizontal: 20,
   },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#1434a4',
-    paddingHorizontal: 20,
+  sectionHeader: {
+    marginHorizontal: 20,
+    marginTop: 10,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 20,
   },
   leadText: {
     fontSize: 15,
@@ -1090,88 +956,60 @@ const styles = StyleSheet.create({
     color: '#666',
     paddingHorizontal: 20,
   },
-  leadTextsss: {
-    fontSize: 16,
-    lineHeight: 30,
-    marginBottom: 1,
-    fontWeight: 'bold',
-    color: '#000',
-    paddingHorizontal: 15,
+  bodyText: {
+    fontSize: 14,
+    color: '#333333',
+    lineHeight: 22,
+    marginBottom: 10,
   },
-  leadTextss: {
-    fontSize: 16,
-    lineHeight: 20,
+  platformtext: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#00796B',
+    marginBottom: 15,
+    paddingHorizontal: 0,
+  },
+  containerss: {
+    borderWidth: 2,
+    borderColor: '#E60000',
+    borderRadius: 5,
+    padding: 15,
+    margin: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  appText: {
+    backgroundColor: '#E0F7FA',
+    borderRadius: 10,
+    padding: 5,
+    elevation: 3,
+  },
+  infoBox: {
+    backgroundColor: '#E0F7FA',
+    borderRadius: 12,
+    padding: 10,
+    marginHorizontal: 10,
+    elevation: 4,
+    width: '95%',
+    maxWidth: 600,
+    marginBottom: 10,
+  },
+  listItem: {
+    flexDirection: 'row',
+    marginBottom: -20,
+    marginTop: 20,
+    alignItems: 'flex-start',
+  },
+  bulletPoint: {
+    flexDirection: 'row',
+    marginBottom: 10,
+    paddingLeft: 5,
+  },
+  bulletText: {
+    fontSize: 15,
+    lineHeight: 24,
     marginBottom: 15,
     color: '#666',
     paddingHorizontal: 15,
-  },
-  leadTexttt: {
-    fontSize: 16,
-    lineHeight: 20,
-    marginBottom: 15,
-    color: '#000',
-    fontWeight: 'bold',
-    paddingHorizontal: 15,
-  },
-  boldText: {
-    fontWeight: 'bold',
-  },
-  linkText: {
-    color: '#007bff',
-    textDecorationLine: 'underline',
-  },
-  marginBottom0: {
-    marginBottom: 0,
-  },
-  highlightBox: {
-    backgroundColor: '#e9f7ef',
-    padding: 15,
-    borderRadius: 8,
-    borderLeftWidth: 5,
-    borderLeftColor: '#28a745',
-    marginVertical: 20,
-  },
-  infoList: {
-    marginTop: 10,
-  },
-  infoListItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 15,
-  },
-  infoListItemContent: {
-    marginLeft: 10,
-    flex: 1,
-  },
-  grievanceCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginTop: 10,
-  },
-    sectionHeader: {
-    marginHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 0,
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 20,
-  },
-  hilite: {
-    backgroundColor: '#FFFACD',
-    padding: 15,
-    borderRadius: 8, 
-    margin: 10, 
-  },
-  leadTextss: {
-    fontSize: 16,
-    marginBottom: 8,
-    color: '#333', 
   },
 });
 

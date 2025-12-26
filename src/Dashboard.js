@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Modal, Alert, StatusBar, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler } from 'react-native';
-import { useRoute, CommonActions, useIsFocused } from '@react-navigation/native';
+import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Alert, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler, findNodeHandle } from 'react-native';
+import { CommonActions, useIsFocused } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from './config/api';
@@ -8,7 +8,6 @@ import { BASE_URL } from './config/api';
 const { width, height } = Dimensions.get('window');
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
-
 const url = BASE_URL;
 
 const formatDuration = (totalSeconds) => {
@@ -18,41 +17,56 @@ const formatDuration = (totalSeconds) => {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
-const StepListItem = ({ group, onPress, isCompleted, isLocked, isDarkMode }) => {
-    const { stepNumber, displayStepNumber, hindiVideo, englishVideo } = group;
-    if (!hindiVideo && !englishVideo) return null;
+const StepListItem = React.forwardRef(
+    ({ group, onPress, isCompleted, isLocked, isDarkMode, previousDisplay }, ref) => {
 
-    const videoToShowDuration = englishVideo || hindiVideo;
-    const durationText = videoToShowDuration?.length ? formatDuration(videoToShowDuration.length) : "";
-    const itemStyle = isLocked ? styles.lockedDropdownItemBtn : (isCompleted ? styles.completedDropdownItemBtn : styles.dropdownItemBtn);
-    return (
-        <TouchableOpacity
-            style={itemStyle}
-            onPress={() => onPress(stepNumber)}
-        >
-            <Image
-                source={isCompleted ? require('../img/checkedimg.png') : require('../img/videoPlayer.png')}
-                style={styles.imageVideo}
-                resizeMode="cover"
-            />
-            <Text style={styles.dropdownItem}>{`Step ${displayStepNumber}`}</Text>
-            {durationText && (
-                <View style={styles.durationContainer}>
+        const { stepNumber, displayStepNumber, hindiVideo, englishVideo } = group;
+        if (!hindiVideo && !englishVideo) return null;
+
+        const videoToShowDuration = englishVideo || hindiVideo;
+        const durationText = videoToShowDuration?.length ? formatDuration(videoToShowDuration.length) : "";
+        const itemStyle = isLocked ? styles.lockedDropdownItemBtn : (isCompleted ? styles.completedDropdownItemBtn : styles.dropdownItemBtn);
+        return (
+            <View ref={ref} collapsable={false}>
+                <TouchableOpacity
+                    style={itemStyle}
+                    onPress={() => {
+                        if (isLocked) {
+                            const prevLabel = previousDisplay ?? 'previous';
+                            Alert.alert('Step Locked', `Please complete Step ${prevLabel} to unlock this step.`);
+                            return;
+                        }
+                        if (typeof onPress === 'function') onPress(stepNumber);
+                    }}
+                    activeOpacity={0.7}
+                    accessible={true}
+                    accessibilityRole="button"
+                >
                     <Image
-                        source={require('../img/timer.png')}
-                        style={[styles.timerImage, { tintColor: isDarkMode ? '#FFD700' : '#FFD700' }]}
-                        resizeMode="contain"
+                        source={isCompleted ? require('../img/checkedimg.png') : require('../img/videoPlayer.png')}
+                        style={styles.imageVideo}
+                        resizeMode="cover"
                     />
-                    <Text style={[styles.durationText, { color: isDarkMode ? '#FFD700' : '#FFD700' }]}>
-                        {durationText}
-                    </Text>
-                </View>
-            )}
-        </TouchableOpacity>
-    );
-};
+                    <Text style={styles.dropdownItem}>{`Step ${displayStepNumber}`}</Text>
+                    {durationText && (
+                        <View style={styles.durationContainer}>
+                            <Image
+                                source={require('../img/timer.png')}
+                                style={[styles.timerImage, { tintColor: '#FFD700' }]}
+                                resizeMode="contain"
+                            />
+                            <Text style={[styles.durationText, { color: '#FFD700' }]}>
+                                {durationText}
+                            </Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+            </View>
+        );
+    }
+);
 
-const VideoStepList = ({ groups, completedSteps, onStepPress, isDarkMode }) => {
+const VideoStepList = ({ groups, completedSteps, onStepPress, isDarkMode, stepRefs }) => {
     return (
         <View style={styles.dropdownContent}>
             {groups.map((group, index) => {
@@ -62,17 +76,28 @@ const VideoStepList = ({ groups, completedSteps, onStepPress, isDarkMode }) => {
                 const isLocked = !isPreviousStepCompleted;
 
                 return (
-                    <StepListItem key={`step-group-${group.stepNumber}`} group={group} onPress={onStepPress} isCompleted={completedSteps[`step${group.stepNumber}`] ?? false} isLocked={isLocked} isDarkMode={isDarkMode} />
+                    <StepListItem
+                        key={`step-group-${group.stepNumber}`}
+                        ref={(el) => {
+                            if (el) stepRefs.current[group.stepNumber] = el;
+                        }}
+                        group={group}
+                        onPress={onStepPress}
+                        isCompleted={completedSteps[`step${group.stepNumber}`] ?? false}
+                        isLocked={isLocked}
+                        isDarkMode={isDarkMode}
+                        previousDisplay={previousStep?.displayStepNumber ?? previousStep?.apiStepNumber ?? previousStep?.stepNumber}
+                    />
                 );
             })}
         </View>
     );
 };
 
-const LevelModal = ({ levelName, children, onClose, isDarkMode }) => (
+const LevelModal = ({ levelName, children, onClose, isDarkMode, scrollRef }) => (
     <View style={styles.modalLikeContainer}>
         <Pressable style={styles.fullScreenPressable} onPress={onClose}>
-            <TouchableOpacity activeOpacity={1} style={styles.modalLikeContentBox} onPress={() => { }}>
+            <Pressable style={styles.modalLikeContentBox} onPress={() => { }}>
                 <View style={[styles.modalContents, { backgroundColor: isDarkMode ? '#2a3144' : Colors.white }]}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalHeaderText}>{levelName}</Text>
@@ -80,22 +105,22 @@ const LevelModal = ({ levelName, children, onClose, isDarkMode }) => (
                             <Text style={styles.closeButtonText}>✕</Text>
                         </TouchableOpacity>
                     </View>
-                    <ScrollView style={styles.modalScrollView} contentContainerStyle={styles.modalScrollViewContent}>
+                    <ScrollView ref={scrollRef} style={styles.modalScrollView} contentContainerStyle={styles.modalScrollViewContent} nestedScrollEnabled={true}>
                         <View style={styles.videolist}>
                             {children}
                         </View>
                     </ScrollView>
                 </View>
-            </TouchableOpacity>
+            </Pressable>
         </Pressable>
     </View>
 );
 
-const CategoryButton = ({ image, title, onPress, isOpen }) => (
+const CategoryButton = ({ image, title, onPress, isOpen, isComplete }) => (
     <TouchableOpacity activeOpacity={1} onPress={onPress}>
         <View style={[styles.buttonNested, { marginBottom: isOpen ? 0 : 10 }]}>
             <Image source={image} style={styles.imagenested} resizeMode="cover" />
-            <View style={styles.textOverlay}>
+            <View style={[styles.textOverlay, isComplete ? styles.completedCategoryOverlay : null]}>
                 <Text style={styles.text}>{title}</Text>
             </View>
         </View>
@@ -105,7 +130,7 @@ const CategoryButton = ({ image, title, onPress, isOpen }) => (
 
 const Dashboard = ({ navigation }) => {
     const isFocused = useIsFocused();
-    const route = useRoute();
+    const stepRefs = useRef({});
     const [token, setToken] = useState(null);
     const [userId, setUserID] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -118,7 +143,9 @@ const Dashboard = ({ navigation }) => {
     const [selectedStepGroup, setSelectedStepGroup] = useState(null);
     const [topicCompletionTimes, setTopicCompletionTimes] = useState({});
     const [unlockedStepsThreshold, setUnlockedStepsThreshold] = useState(0);
-    const [lastViewed, setLastViewed] = useState(null); // { categoryKey, stepNumber }
+    const [lastViewedRequest, setLastViewedRequest] = useState(null);
+    const dataLoadedRef = useRef(false);
+
     const [levelToUnlock, setLevelToUnlock] = useState(null);
     const [middleLevelCompletionTime, setMiddleLevelCompletionTime] = useState(null);
     const [advancedLevelCompletionTime, setAdvancedLevelCompletionTime] = useState(null);
@@ -135,37 +162,54 @@ const Dashboard = ({ navigation }) => {
     const backgroundStyle = { backgroundColor: isDarkMode ? '#2a3144' : Colors.white };
     const textColorModal = { color: isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)' }
     const textColorModalPara = { color: isDarkMode ? Colors.white : '#2a3144' }
-
-    // Back navigation handled centrally in App.js
-    // Double-back-to-exit when on Home: first back shows toast, second within 2s exits
     const lastBackPressed = useRef(0);
+    const levelModalScrollRef = useRef(null);
+
     useEffect(() => {
-        // Double-back-to-exit: first press shows toast, second press within 2s exits the app
         const onBackPress = () => {
             if (!isFocused) return false;
+            if (isModalVisible) {
+                setIsModalVisible(false);
+                return true;
+            }
+
+            if (openCategory) {
+                setOpenCategory(null);
+                return true;
+            }
+
+            if (activeLevel) {
+                setActiveLevel(null);
+                return true;
+            }
+
             const now = Date.now();
             if (lastBackPressed.current && now - lastBackPressed.current < 2000) {
-                // use centralized exit helper
                 try {
-                    const { exitApp } = require('./utils/exitApp');
-                    exitApp();
+                    const exitModule = require('./utils/exitApp');
+                    const exitFn = exitModule && (exitModule.default || exitModule.exitApp || exitModule);
+                    if (typeof exitFn === 'function') exitFn();
+                    else BackHandler.exitApp();
                 } catch (e) {
                     BackHandler.exitApp();
                 }
                 return true;
             }
+
             lastBackPressed.current = now;
             if (Platform.OS === 'android') {
                 ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+            } else {
+                Alert.alert('', 'Press back again to exit');
             }
             return true;
         };
 
         const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
         return () => sub.remove();
-    }, [isFocused]);
+    }, [isFocused, isModalVisible, openCategory, activeLevel]);
 
-    // Ensure unauthenticated users cannot access Dashboard — redirect to Login if token missing
+    //redirect to Login if token missing
     useEffect(() => {
         const verifyAuth = async () => {
             try {
@@ -183,7 +227,6 @@ const Dashboard = ({ navigation }) => {
             }
         };
         if (isFocused) verifyAuth();
-        // no-op cleanup (no subscriptions to remove here)
         return undefined;
     }, [isFocused, navigation]);
 
@@ -293,26 +336,135 @@ const Dashboard = ({ navigation }) => {
         }
     }, [videoData, masterConfig]);
 
+    useEffect(() => {
+        if (!lastViewedRequest) {
+            return;
+        }
+
+        if (activeLevel && activeLevel !== lastViewedRequest.level) {
+            handleCloseModal();
+            return;
+        }
+
+        if (!activeLevel) {
+            handleLevelPress(lastViewedRequest.level);
+            return;
+        }
+
+        if (activeLevel === lastViewedRequest.level) {
+            handleCategoryPress(lastViewedRequest.category);
+        }
+    }, [lastViewedRequest, activeLevel]);
+
+
+    useEffect(() => {
+        if (!lastViewedRequest || !openCategory) return;
+
+        const stepNumber = lastViewedRequest.step;
+
+        const timer = setTimeout(() => {
+            const stepRef = stepRefs.current[stepNumber];
+            const scrollRef = levelModalScrollRef.current;
+
+            if (stepRef && scrollRef) {
+                const scrollNode = findNodeHandle(scrollRef) || (scrollRef.getInnerViewNode && scrollRef.getInnerViewNode());
+
+                try {
+                    stepRef.measureLayout(
+                        scrollNode,
+                        (x, y) => {
+                            if (scrollRef && typeof scrollRef.scrollTo === 'function') {
+                                scrollRef.scrollTo({
+                                    y: Math.max(y - 20, 0),
+                                    animated: true,
+                                });
+                            }
+                            setLastViewedRequest(null);
+                        },
+                        (err) => {
+                            console.log('measureLayout error', err);
+                            // fallback: try scrolling to top if measurement fails
+                            if (scrollRef && typeof scrollRef.scrollTo === 'function') {
+                                scrollRef.scrollTo({ y: 0, animated: true });
+                            }
+                            setLastViewedRequest(null);
+                        }
+                    );
+                } catch (e) {
+                    console.warn('measureLayout threw', e);
+                    if (scrollRef && typeof scrollRef.scrollTo === 'function') {
+                        scrollRef.scrollTo({ y: 0, animated: true });
+                    }
+                    setLastViewedRequest(null);
+                }
+            }
+        }, 600);
+
+        return () => clearTimeout(timer);
+    }, [openCategory, lastViewedRequest]);
+
+
+
     const foundationKeys = ['trust', 'loveAndCare', 'respect', 'familiar'];
     const middleKeys = ['speechDevelopment', 'truth', 'setBoundaries', 'listenFollow'];
     const advancedKeys = ['cooperation', 'imagination', 'help', 'discussion', 'narrate', 'emotions', 'feelings', 'knowledge'];
+
+    const getLevelForCategory = (categoryKey) => {
+        if (foundationKeys.includes(categoryKey)) return 'foundation';
+        if (middleKeys.includes(categoryKey)) return 'middle';
+        if (advancedKeys.includes(categoryKey)) return 'advanced';
+        return null;
+    };
+
+    const handleLastViewedPress = async () => {
+        try {
+            const lastViewedJson = await AsyncStorage.getItem('lastViewed');
+            if (lastViewedJson) {
+                const lastViewed = JSON.parse(lastViewedJson);
+                const { category, step } = lastViewed;
+
+                if (category && masterConfig[category]) {
+                    const level = getLevelForCategory(category);
+                    if (level) {
+                        setLastViewedRequest({ level, category, step });
+                    } else {
+                        showToast("Could not find the level for your last viewed topic.");
+                    }
+                } else {
+                    showToast("No last viewed topic found to continue from.");
+                }
+            } else {
+                showToast("No last viewed topic found to continue from.");
+            }
+        } catch (error) {
+            console.error("Failed to handle last viewed press:", error);
+            Alert.alert("Error", "Could not retrieve your last viewed topic.");
+        }
+    };
 
     useEffect(() => {
         const loadInitialData = async () => {
             setIsLoading(true);
             try {
+                await loadCompletedSteps();
+                await loadMiddleLevelCompletionTime();
+                await loadAdvancedLevelCompletionTime();
+                await loadTopicCompletionTimes();
+
                 const storedToken = await AsyncStorage.getItem('token');
                 const storedUserId = await AsyncStorage.getItem('userId');
                 if (storedToken && storedUserId) {
                     setToken(storedToken);
                     setUserID(storedUserId);
                     await fetchUserProgress(storedUserId, storedToken);
+                    try {
+                        await prefetchAllCategoryVideos(storedToken);
+                    } catch (err) {
+                        console.error('Prefetch after initial progress fetch failed:', err);
+                    }
+                } else {
+                    setDataLoaded(true);
                 }
-                await loadCompletedSteps();
-                await loadLastViewed();
-                await loadMiddleLevelCompletionTime();
-                await loadAdvancedLevelCompletionTime();
-                await loadTopicCompletionTimes();
             } catch (error) {
                 console.error("Failed to load initial data:", error);
                 Alert.alert("Error", "Failed to load user data. Please try restarting the app.");
@@ -323,12 +475,34 @@ const Dashboard = ({ navigation }) => {
 
         loadInitialData();
 
+        //already loaded data.
         const unsubscribe = navigation.addListener('focus', () => {
-            loadInitialData();
+            if (!dataLoadedRef.current) {
+                loadInitialData();
+            }
         });
 
         return unsubscribe;
     }, [navigation]);
+
+    useEffect(() => { dataLoadedRef.current = dataLoaded; }, [dataLoaded]);
+
+    useEffect(() => {
+        if (token && userId) {
+            (async () => {
+                try {
+                    await fetchUserProgress(userId, token);
+                    try {
+                        await prefetchAllCategoryVideos(token);
+                    } catch (err) {
+                        console.error('Prefetch after token change failed:', err);
+                    }
+                } catch (e) {
+                    console.error('fetchUserProgress on token change failed', e);
+                }
+            })();
+        }
+    }, [token, userId]);
 
     const getCategoryFromStep = (stepNumber) => {
         for (const categoryKey in masterConfig) {
@@ -373,21 +547,96 @@ const Dashboard = ({ navigation }) => {
                     progressByStep[item.level_step] = item;
                 });
 
+                const savedLocalStepsJson = await AsyncStorage.getItem('completedSteps');
+                const localCompletedSteps = savedLocalStepsJson ? JSON.parse(savedLocalStepsJson) : {};
+
+                const savedLocalTopicTimesJson = await AsyncStorage.getItem('topicCompletionTimes');
+                const localTopicTimes = savedLocalTopicTimesJson ? JSON.parse(savedLocalTopicTimesJson) : {};
+
                 const newCompletedSteps = {};
                 const newTopicCompletionTimes = {};
                 let highestCompletedStep = 0;
-
+                let loadcategory = null;
+                let loadcategorystep = null;
+                let mappedCategory = null;
+                let mappedLocalCategoryStep = null;
                 result.data.forEach(item => {
                     if (item.total_views > 0) {
                         newCompletedSteps[`step${item.level_step}`] = true;
-                        if (item.level_step > highestCompletedStep) {
+
+                        if (
+                            item.level_step !== 1001 &&
+                            item.level_step !== 1002 &&
+                            item.level_step > highestCompletedStep
+                        ) {
                             highestCompletedStep = item.level_step;
+
+
+
+                            if (item.stage_name) {
+                                console.log("Processing stage name:", item.stage_name);
+                                const name = item.stage_name.toString().trim();
+
+                                const match = name.match(/^\s*([^\d]+?)\s*(\d+)?\s*$/);
+
+                                if (match) {
+                                    loadcategory = match[1].toLowerCase().trim();
+                                    loadcategorystep = match[2] ? parseInt(match[2], 10) : null;
+
+                                    const normalizeToKey = (str) => {
+                                        if (!str) return null;
+                                        let s = str.toLowerCase();
+                                        s = s.replace(/&/g, ' and ');
+                                        s = s.replace(/[^a-z0-9\s]/g, ' ');
+                                        s = s.replace(/\s+/g, ' ').trim();
+                                        const parts = s.split(' ');
+                                        if (parts.length === 0) return null;
+                                        const key = parts[0] + parts.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+                                        return key;
+                                    };
+
+                                    const normalizedKey = normalizeToKey(loadcategory);
+                                    if (normalizedKey && masterConfig[normalizedKey]) {
+                                        mappedCategory = normalizedKey;
+                                    } else {
+                                        const firstWord = loadcategory.split(' ')[0];
+                                        if (firstWord && masterConfig[firstWord]) mappedCategory = firstWord;
+                                        else mappedCategory = normalizedKey || loadcategory;
+                                    }
+                                    mappedLocalCategoryStep = loadcategorystep;
+                                }
+                            }
                         }
                     }
+
                 });
-                console.log("Highest completed step:", highestCompletedStep);
-                console.log("Progress by step:", progressByStep);
-                console.log("Fetched completed steps:", newCompletedSteps);
+                console.log("Mapped Category:", mappedCategory, "Mapped Local Step:", mappedLocalCategoryStep, "Highest Completed Step:", highestCompletedStep);
+
+                if (mappedCategory) {
+                    try {
+                        const lastViewedObj = {
+                            step: highestCompletedStep,
+                            category: mappedCategory,
+                            timestamp: new Date().toISOString()
+                        };
+                        await AsyncStorage.setItem('lastViewed', JSON.stringify(lastViewedObj));
+                        console.log('Primed lastViewed from server progress:', lastViewedObj);
+                    } catch (err) {
+                        console.error('Failed to save last viewed info from server progress:', err);
+                    }
+                }
+
+                if (mappedCategory && mappedLocalCategoryStep != null && masterConfig[mappedCategory]?.finalGroupedData) {
+                    const groups = masterConfig[mappedCategory].finalGroupedData;
+                    const matched = groups.find(g => Number(g.displayStepNumber) === Number(mappedLocalCategoryStep) || Number(g.apiStepNumber) === Number(mappedLocalCategoryStep));
+                    if (matched) {
+                        const globalStep = matched.stepNumber;
+                        console.log('Resolved global step for', mappedCategory, mappedLocalCategoryStep, '->', globalStep);
+                        if (globalStep > highestCompletedStep) {
+                            highestCompletedStep = globalStep;
+                        }
+                    }
+                }
                 for (const categoryKey in masterConfig) {
                     const category = masterConfig[categoryKey];
                     if (category.finalGroupedData && !newTopicCompletionTimes[categoryKey]) {
@@ -404,10 +653,15 @@ const Dashboard = ({ navigation }) => {
                 }
 
                 setUnlockedStepsThreshold(highestCompletedStep);
-                setCompletedSteps(newCompletedSteps);
-                setTopicCompletionTimes(newTopicCompletionTimes);
-                await AsyncStorage.setItem('completedSteps', JSON.stringify(newCompletedSteps));
-                await AsyncStorage.setItem('topicCompletionTimes', JSON.stringify(newTopicCompletionTimes));
+
+                const mergedCompletedSteps = { ...localCompletedSteps, ...newCompletedSteps };
+                setCompletedSteps(mergedCompletedSteps);
+
+                const mergedTopicTimes = { ...localTopicTimes, ...newTopicCompletionTimes };
+                setTopicCompletionTimes(mergedTopicTimes);
+
+                await AsyncStorage.setItem('completedSteps', JSON.stringify(mergedCompletedSteps));
+                await AsyncStorage.setItem('topicCompletionTimes', JSON.stringify(mergedTopicTimes));
                 setDataLoaded(true);
             }
         } catch (error) {
@@ -434,15 +688,6 @@ const Dashboard = ({ navigation }) => {
             }
         } catch (error) {
             console.error("Failed to load topic completion times from storage", error);
-        }
-    };
-
-    const loadLastViewed = async () => {
-        try {
-            const saved = await AsyncStorage.getItem('lastViewed');
-            if (saved) setLastViewed(JSON.parse(saved));
-        } catch (err) {
-            console.error('Failed to load lastViewed from storage', err);
         }
     };
 
@@ -481,7 +726,7 @@ const Dashboard = ({ navigation }) => {
     const startHandAnimation = () => {
         const targetX = screenWidth * 0.4;
         const targetY = screenHeight * 0.3;
-        Animated.loop(
+        return Animated.loop(
             Animated.sequence([
                 Animated.delay(1500),
                 Animated.parallel([Animated.timing(handOpacity, { toValue: 1, duration: 300, useNativeDriver: true }), Animated.timing(handPositionX, { toValue: targetX, duration: 1000, useNativeDriver: true }), Animated.timing(handPositionY, { toValue: targetY, duration: 1000, useNativeDriver: true }),]),
@@ -490,27 +735,36 @@ const Dashboard = ({ navigation }) => {
                 Animated.parallel([Animated.timing(handOpacity, { toValue: 0, duration: 300, delay: 700, useNativeDriver: true }), Animated.timing(handPositionX, { toValue: screenWidth * 0.6, duration: 1000, useNativeDriver: true }), Animated.timing(handPositionY, { toValue: screenHeight * 0.4, duration: 1000, useNativeDriver: true }),]),
                 Animated.delay(1000),
             ])
-        ).start();
+        );
     };
 
     useEffect(() => {
-        startHandAnimation();
+        const handAnimation = startHandAnimation();
+        handAnimation.start();
+
         const blinkingAnimation = Animated.loop(
             Animated.sequence([Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true }), Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: true }),]), { iterations: 8 }
         );
-        blinkingAnimation.start(() => { Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true }).start(); });
+        blinkingAnimation.start();
+
         Animated.timing(scale1, { toValue: 1, duration: 600, useNativeDriver: true }).start();
         Animated.timing(scale2, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start();
-        Animated.timing(scale3, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start(); return () => blinkingAnimation.stop();
+        Animated.timing(scale3, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start();
+
+        return () => {
+            try { handAnimation.stop(); } catch (e) { }
+            try { blinkingAnimation.stop(); } catch (e) { }
+        };
     }, []);
 
-    const fetchVideos = async (folderIds) => {
+    const fetchVideos = async (folderIds, tokenParam) => {
         if (!Array.isArray(folderIds)) folderIds = [folderIds];
+        const authToken = tokenParam || token;
         let allVideos = { rows: [] };
         for (const folderId of folderIds) {
             try {
                 const endpoint = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
-                const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
+                const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' } });
                 if (!response.ok) throw new Error(`Failed to fetch videos for folder ${folderId}`);
                 const data = await response.json();
                 if (data && data.rows) { allVideos.rows.push(...data.rows); }
@@ -521,6 +775,31 @@ const Dashboard = ({ navigation }) => {
         }
         return allVideos;
 
+    };
+
+
+    const prefetchAllCategoryVideos = async (authToken) => {
+        try {
+            const keys = Object.keys(masterConfig || {});
+            const fetched = {};
+            for (const key of keys) {
+                try {
+                    if (!videoData[key]?.rows?.length) {
+                        const folderIds = masterConfig[key].folderIds || [masterConfig[key].folderId];
+                        const details = await fetchVideos(folderIds, authToken);
+                        if (details && details.rows && details.rows.length) {
+                            setVideoData(prev => ({ ...prev, [key]: details }));
+                            fetched[key] = details;
+                        }
+                    }
+                } catch (innerErr) {
+                    console.error(`Prefetch failed for ${key}:`, innerErr);
+                }
+            }
+            return fetched;
+        } catch (err) {
+            console.error('Failed to prefetch category videos:', err);
+        }
     };
 
     const ensureCategoryDataIsLoaded = async (categoryKey) => {
@@ -540,6 +819,15 @@ const Dashboard = ({ navigation }) => {
         }
         return true;
     };
+
+    const showToast = (message) => {
+        if (Platform.OS === 'android') {
+            ToastAndroid.show(message, ToastAndroid.LONG);
+        } else {
+            Alert.alert('', message);
+        }
+    };
+
     const arePrerequisitesMet = async (categoryKey) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
         const config = masterConfig[categoryKey];
@@ -552,15 +840,12 @@ const Dashboard = ({ navigation }) => {
                     Alert.alert("Error", "Could not load prerequisite data. Please try again.");
                     return false;
                 }
-                const updatedPrereqConfig = masterConfig[config.prerequisiteCategory];
                 const allPrereqSteps = prereqConfig.finalGroupedData.map(g => `step${g.stepNumber}`);
                 const areAllPrereqsCompleted = allPrereqSteps.every(stepKey => completedSteps[stepKey]);
-
                 if (!areAllPrereqsCompleted) {
                     Alert.alert("Level Locked", `You must complete the "${prereqConfig.name}" stage before accessing this one.`);
                     return false;
                 }
-
                 const lastStepOfPrereq = prereqConfig.finalGroupedData[prereqConfig.finalGroupedData.length - 1];
                 const lastStepNumber = lastStepOfPrereq.stepNumber;
                 const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}&DeviceKey=${deviceKey}`;
@@ -578,23 +863,22 @@ const Dashboard = ({ navigation }) => {
                             if (lockDurationHours > 0) {
                                 const hoursSinceCompletion = (new Date() - completionDate) / (1000 * 60 * 60);
                                 if (hoursSinceCompletion < lockDurationHours) {
-                                    const hoursRemaining = Math.ceil(lockDurationHours - hoursSinceCompletion);
+
                                     Alert.alert("Topic Locked", `Great progress! Your next topic will unlock in ${lockDurationHours} hours. Use this time to practice what you’ve learned so far.`);
                                     return false;
                                 } else {
-                                    // Show the unlock message only once per topic/category
                                     try {
                                         const notifKey = 'topicUnlockNotified';
                                         const notifiedJson = await AsyncStorage.getItem(notifKey);
                                         const notified = notifiedJson ? JSON.parse(notifiedJson) : {};
                                         if (!notified[categoryKey]) {
-                                            Alert.alert("Topic Unlocked!", `Your next Topic is now unlocked. Start watching!`);
+                                            showToast('Your next Topic is now unlocked. Start watching!');
                                             notified[categoryKey] = true;
                                             await AsyncStorage.setItem(notifKey, JSON.stringify(notified));
                                         }
                                     } catch (err) {
                                         console.error('Failed to persist unlock notification flag:', err);
-                                        Alert.alert("Topic Unlocked!", `Your next Topic is now unlocked. Start watching!`);
+                                        showToast('Your next Topic is now unlocked. Start watching!');
                                     }
                                 }
                             }
@@ -644,19 +928,6 @@ const Dashboard = ({ navigation }) => {
         const config = masterConfig[openCategory];
         if (!config) return;
         const group = config.finalGroupedData.find(g => g.stepNumber === stepNumber);
-        const groupIndex = config.finalGroupedData.findIndex(g => g.stepNumber === stepNumber);
-
-        if (groupIndex > 0) {
-            const previousStep = config.finalGroupedData[groupIndex - 1];
-            const isPreviousStepCompleted = completedSteps[`step${previousStep.stepNumber}`];
-            if (!isPreviousStepCompleted) {
-                Alert.alert(
-                    "Step Locked",
-                    `Please complete Step ${previousStep.displayStepNumber} to unlock this step.`
-                );
-                return;
-            }
-        }
         if (group) {
             setSelectedStepGroup({ ...group, category: openCategory });
             setIsModalVisible(true);
@@ -668,7 +939,12 @@ const Dashboard = ({ navigation }) => {
     const handleVideo = async (videoId, step, language) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
 
-        if (step !== 90 && step !== 91) {
+        if (!selectedStepGroup) {
+            Alert.alert('Error', 'No video selected. Please select a video first.');
+            return;
+        }
+
+        if (step !== 1001 && step !== 1002) {
             const stepGroup = selectedStepGroup;
             const hindiVideoId = stepGroup?.hindiVideo?.id;
             const englishVideoId = stepGroup?.englishVideo?.id;
@@ -684,7 +960,7 @@ const Dashboard = ({ navigation }) => {
                     if (response.ok) {
                         const result = await response.json();
                         if (result.isSuccess && result.data) {
-                            totalWatchCount += result.data.reduce((sum, record) => sum + (record.is_finished || 0), 0);
+                            totalWatchCount += result.data.reduce((sum, record) => sum + (Number(record.is_finished) || 0), 0);
                         }
                     }
                 }
@@ -701,7 +977,7 @@ const Dashboard = ({ navigation }) => {
                     const specificResult = await specificVideoResponse.json();
                     if (specificResult.isSuccess && specificResult.data) {
                         const languageRecord = specificResult.data.find(d => d.language.toLowerCase() === language.toLowerCase());
-                        if (languageRecord && languageRecord.is_finished >= 3) {
+                        if (languageRecord && Number(languageRecord.is_finished) >= 3) {
                             Alert.alert("Limit Reached", `You have already watched the ${language} video for this step 3 times.`);
                             return;
                         }
@@ -759,6 +1035,16 @@ const Dashboard = ({ navigation }) => {
             const data = await response.json();
 
             await saveCompletedStep(`step${step}`);
+            try {
+                const lastViewedObj = {
+                    step: step,
+                    category: openCategory || selectedStepGroup?.category || null,
+                    timestamp: new Date().toISOString()
+                };
+                await AsyncStorage.setItem('lastViewed', JSON.stringify(lastViewedObj));
+            } catch (err) {
+                console.error('Failed to save last viewed info:', err);
+            }
             if (openCategory) {
                 const category = masterConfig[openCategory];
                 const allSteps = category.finalGroupedData.map(g => `step${g.stepNumber}`);
@@ -811,6 +1097,7 @@ const Dashboard = ({ navigation }) => {
         }
     };
 
+
     const vdoCipherApi = async (videoId) => {
         setIsVideoLoading(true);
         if (!videoId) {
@@ -840,7 +1127,7 @@ const Dashboard = ({ navigation }) => {
     };
 
     const handleIntroductionPress = async (introType) => {
-        if (introType === 2 && !completedSteps['step90']) {
+        if (introType === 2 && !completedSteps['step1001']) {
             Alert.alert("Locked", "Please complete Introduction I before starting Introduction II.");
             return;
         }
@@ -855,7 +1142,7 @@ const Dashboard = ({ navigation }) => {
                 ...prevData,
                 ['introduction']: videoDetails
             }));
-            const group = introType === 1 ? { stepNumber: 90, hindiVideo: videoDetails.rows[2], englishVideo: videoDetails.rows[3] } : { stepNumber: 91, hindiVideo: videoDetails.rows[0], englishVideo: videoDetails.rows[1] };
+            const group = introType === 1 ? { stepNumber: 1001, hindiVideo: videoDetails.rows[2], englishVideo: videoDetails.rows[3] } : { stepNumber: 1002, hindiVideo: videoDetails.rows[0], englishVideo: videoDetails.rows[1] };
             setSelectedStepGroup(group);
             setIsModalVisible(true);
         } else {
@@ -928,7 +1215,7 @@ const Dashboard = ({ navigation }) => {
         };
 
         if (level === 'foundation') {
-            if (!completedSteps['step91']) {
+            if (!completedSteps['step1002']) {
                 Alert.alert("Locked", "Please complete Introduction II before starting the Foundation Level.");
                 return;
             }
@@ -992,8 +1279,6 @@ const Dashboard = ({ navigation }) => {
         }
     };
 
-
-
     const handleCloseModal = () => {
         setActiveLevel(null);
         setOpenCategory(null);
@@ -1010,10 +1295,48 @@ const Dashboard = ({ navigation }) => {
 
         const levelName = `${activeLevel.charAt(0).toUpperCase() + activeLevel.slice(1)} Level`;
 
-        return <LevelModal levelName={levelName} onClose={handleCloseModal} isDarkMode={isDarkMode}>{levelKeys.map(key => { const config = masterConfig[key]; if (!config) return null; return (<React.Fragment key={key}><CategoryButton image={config.image} title={config.name} onPress={() => handleCategoryPress(key)} isOpen={openCategory === key} />{openCategory === key && <VideoStepList groups={config.finalGroupedData} completedSteps={completedSteps} onStepPress={handleDropdownItemClick} isDarkMode={isDarkMode} />}</React.Fragment>); })}</LevelModal>
+        return <LevelModal levelName={levelName} onClose={handleCloseModal} isDarkMode={isDarkMode} scrollRef={levelModalScrollRef}>{levelKeys.map(key => {
+            const config = masterConfig[key];
+            if (!config) return null;
+            const allSteps = config.finalGroupedData?.map(g => `step${g.stepNumber}`) || [];
+            const isComplete = allSteps.length > 0 && allSteps.every(stepKey => completedSteps[stepKey]);
+            return (
+                <React.Fragment key={key}>
+                    <CategoryButton image={config.image} title={config.name} onPress={() => handleCategoryPress(key)} isOpen={openCategory === key} isComplete={isComplete} />
+                    {openCategory === key && <VideoStepList groups={config.finalGroupedData} completedSteps={completedSteps} onStepPress={handleDropdownItemClick} isDarkMode={isDarkMode} stepRefs={stepRefs} />}
+                </React.Fragment>
+            );
+        })}</LevelModal>
     }
+    //scroll to top 
+    useEffect(() => {
+        if (lastViewedRequest) return;
+
+        if (!levelModalScrollRef.current) return;
+
+        const timeout = setTimeout(() => {
+            try {
+                levelModalScrollRef.current.scrollTo({
+                    y: 0,
+                    animated: true,
+                });
+            } catch (e) {
+                console.warn('Failed to scroll level modal to top:', e);
+            }
+        }, 300);
+        return () => clearTimeout(timeout);
+    }, [activeLevel, openCategory]);
+
 
     const closeLanguageModal = () => setIsModalVisible(false);
+
+    //categories (keys) in a level are fully completed
+    const isLevelComplete = (keys) => {
+        if (!keys || !keys.length) return false;
+        const allSteps = keys.flatMap(key => masterConfig[key]?.finalGroupedData.map(g => `step${g.stepNumber}`) || []);
+        if (allSteps.length === 0) return false;
+        return allSteps.every(stepKey => completedSteps[stepKey]);
+    };
 
     if (isLoading) {
         return <View style={styles.loaderContainer}><ActivityIndicator size="large" /></View>;
@@ -1022,23 +1345,57 @@ const Dashboard = ({ navigation }) => {
     return (
         <View style={[styles.container, backgroundStyle]}>
             <View style={styles.imageContainer}>
-                <ScrollView
-
-                    showsVerticalScrollIndicator={false}
-                >
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(1)}><Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 5 }]}><Image source={require('../img/Intro1.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlay}><Text style={styles.text}>Introduction I</Text></View></Animated.View></TouchableOpacity>
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(2)}><Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}><Image source={require('../img/Intro2.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlay}><Text style={styles.text}>Introduction II</Text></View></Animated.View></TouchableOpacity>
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('foundation')}><Animated.View style={[styles.button, { transform: [{ scale: scale1 }], marginTop: 10 }]}><Image source={require('../img/foundationlevel.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlayTwo}><Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity: 0 }]} /><Text style={styles.text}>Foundation Level</Text><Animated.Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity }]} resizeMode="cover" /></View></Animated.View></TouchableOpacity>
+                <ScrollView showsVerticalScrollIndicator={false} >
+                    <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(1)}>
+                        <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 5 }]}>
+                            <Image source={require('../img/Intro1.png')} style={styles.image} resizeMode="cover" />
+                            <View style={[completedSteps['step1001'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
+                                <Text style={styles.text}>Introduction I</Text>
+                            </View>
+                        </Animated.View>
+                    </TouchableOpacity>
+                    <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(2)}>
+                        <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}>
+                            <Image source={require('../img/Intro2.png')} style={styles.image} resizeMode="cover" />
+                            <View style={[completedSteps['step1002'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
+                                <Text style={styles.text}>Introduction II</Text>
+                            </View>
+                        </Animated.View>
+                    </TouchableOpacity>
+                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('foundation')}>
+                        <Animated.View style={[styles.button, { transform: [{ scale: scale1 }], marginTop: 10 }]}>
+                            <Image source={require('../img/foundationlevel.png')} style={styles.image} resizeMode="cover" />
+                            <View style={[styles.textOverlayTwo, isLevelComplete(foundationKeys) ? styles.completedTextOverlayTwo : null]}>
+                                <Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity: 0 }]} />
+                                <Text style={styles.text}>Foundation Level</Text>
+                                <Animated.Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity }]} resizeMode="cover" />
+                            </View>
+                        </Animated.View>
+                    </TouchableOpacity>
                     <Animated.Image source={require('../img/tap.png')} style={[styles.handImage, { opacity: handOpacity, transform: [{ translateX: handPositionX }, { translateY: handPositionY }, { scale: handScale }] }]} resizeMode="contain" pointerEvents="none" />
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('middle')}><Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}><Image source={require('../img/middlelevel2.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlay}><Text style={styles.text}>Middle Level</Text></View></Animated.View></TouchableOpacity>
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('advanced')}><Animated.View style={[styles.button, { transform: [{ scale: scale3 }], marginTop: 10 }]}><Image source={require('../img/advancelevel.png')} style={styles.image} resizeMode="cover" /><View style={styles.textOverlay}><Text style={styles.text}>Advanced Level</Text></View></Animated.View></TouchableOpacity>
+                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('middle')}>
+                        <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}>
+                            <Image source={require('../img/middlelevel2.png')} style={styles.image} resizeMode="cover" />
+                            <View style={[styles.textOverlay, isLevelComplete(middleKeys) ? styles.completedCategoryOverlay : null]}>
+                                <Text style={styles.text}>Middle Level</Text>
+                            </View>
+                        </Animated.View>
+                    </TouchableOpacity>
+                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('advanced')}>
+                        <Animated.View style={[styles.button, { transform: [{ scale: scale3 }], marginTop: 10 }]}>
+                            <Image source={require('../img/advancelevel.png')} style={styles.image} resizeMode="cover" />
+                            <View style={[styles.textOverlay, isLevelComplete(advancedKeys) ? styles.completedCategoryOverlay : null]}>
+                                <Text style={styles.text}>Advanced Level</Text>
+                            </View>
+                        </Animated.View>
+                    </TouchableOpacity>
                 </ScrollView>
                 {renderLevelModal()}
             </View>
 
             {isModalVisible && selectedStepGroup && (
                 <View style={styles.modalLikeContainer}>
-                    <Pressable style={[styles.modalContent, backgroundStyle]} onPress={(e) => e.stopPropagation()}>
+                    <Pressable style={[styles.modalContent, backgroundStyle]} onPress={() => { }}>
                         <View style={styles.modalContentMainDiv}>
                             <Text style={[styles.modalTitle, textColorModal]}>Select Language</Text>
                             <TouchableOpacity onPress={closeLanguageModal}><Text style={[styles.modalContentClose, textColorModalPara]}>✕</Text></TouchableOpacity>
@@ -1058,36 +1415,7 @@ const Dashboard = ({ navigation }) => {
                     style={styles.customButton}
                     activeOpacity={0.7}
                     accessibilityLabel="Last Viewed"
-                    onPress={async () => {
-                        try {
-                            if (openCategory) {
-                                await handleCategoryPress(openCategory);
-                                return;
-                            }
-
-                            const completedStepKeys = Object.keys(completedSteps || {}).filter(k => /^step\d+$/.test(k));
-                            const nonIntroSteps = completedStepKeys.map(k => parseInt(k.replace('step', ''), 10)).filter(n => n !== 90 && n !== 91);
-                            const lastStep = nonIntroSteps.length ? Math.max(...nonIntroSteps) : (unlockedStepsThreshold || 0);
-                            let targetCategory = null;
-                            if (lastStep > 0) {
-                                targetCategory = getCategoryFromStep(lastStep);
-                            }
-                            console.log('Last Viewed debug:', { completedStepKeys, nonIntroSteps, computedLastStep: lastStep, mappedCategory: targetCategory });
-
-                            if (!targetCategory) {
-                                console.warn('Last Viewed: no category mapped for step', lastStep, 'falling back to', foundationKeys[0]);
-                                targetCategory = foundationKeys[0];
-                            }
-                            let levelForCategory = 'foundation';
-                            if (middleKeys.includes(targetCategory)) levelForCategory = 'middle';
-                            else if (advancedKeys.includes(targetCategory)) levelForCategory = 'advanced';
-                            await handleLevelPress(levelForCategory);
-                            await ensureCategoryDataIsLoaded(targetCategory);
-                            await handleCategoryPress(targetCategory);
-                        } catch (err) {
-                            console.error('Arrow button handler error:', err);
-                        }
-                    }}
+                    onPress={handleLastViewedPress}
                 >
                     <Text style={styles.arrowText}>Last Viewed</Text>
                 </TouchableOpacity>
@@ -1111,16 +1439,12 @@ const styles = StyleSheet.create({
     image: { width: width - 20, height: 250, resizeMode: 'center', borderRadius: 5, },
     imagenested: { width: width - 48, height: height / 2.8, borderRadius: 5, },
     textOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, },
+    completedCategoryOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#4DB6AC', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, },
+    completedTextOverlayTwo: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#4DB6AC', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, flexDirection: 'row', justifyContent: 'space-between', },
     lockedDropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)' },
     completedDropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: '#4DB6AC' },
     textOverlayTwo: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, flexDirection: 'row', justifyContent: 'space-between', },
     text: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
-    bottomNav: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', backgroundColor: '#fff', paddingVertical: 10, bottom: 0, width: '100%', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 20, elevation: 5, },
-    navItem: { alignItems: 'center', paddingVertical: 5, },
-    navIcon: { width: 24, height: 24, resizeMode: 'contain', marginBottom: 4, },
-    navText: { color: 'gray', fontSize: 10, marginTop: 4, fontWeight: 'bold', },
-    inactive: { opacity: 0.5, },
-    navTextActive: { color: 'rgba(20, 52, 164, 1)', fontSize: 10, marginTop: 4, fontWeight: 'bold', },
     dropdownContent: { borderBottomLeftRadius: 5, borderBottomRightRadius: 5, width: '100%', marginBottom: 10, paddingHorizontal: 0, },
     dropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.8)' },
     imageVideo: { width: 35, height: 35, borderRadius: 5 },

@@ -96,9 +96,6 @@ const GetHelp = ({ navigation }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = createGetHelpStyles(theme);
-
-  // Back navigation is handled centrally in App.js
-
   const handleEmailPress = () => {
     Linking.openURL('mailto:support@allrounderbaby.com').catch(err =>
       console.error('Failed to open mail app:', err)

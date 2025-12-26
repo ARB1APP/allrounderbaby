@@ -17,21 +17,11 @@ const lightThemeColors = {
   textPrimary: '#000000',
   textSecondary: 'gray',
   textPlaceholder: 'gray',
-  statusCompletedBackground: '#388e3c',
-  statusCompletedText: '#ffffff',
-  statusPendingBackground: '#ffa000',
-  statusPendingText: '#444444',
   shadowColor: '#000000',
   shadowOpacity: 0.15,
   shadowRadius: 3,
   elevation: 4,
   statusBarContent: 'dark-content',
-
-  bottomNavBackground: '#ffffff',
-  activeIconTint: 'rgba(20, 52, 164, 1)',
-  inactiveIconTint: 'gray',
-  activeNavText: 'rgba(20, 52, 164, 1)',
-  inactiveNavText: 'gray',
 };
 
 const darkThemeColors = {
@@ -41,21 +31,11 @@ const darkThemeColors = {
   textPrimary: '#E0E0E0',
   textSecondary: '#A0A0A0',
   textPlaceholder: '#888888',
-  statusCompletedBackground: '#2E7D32',
-  statusCompletedText: '#E0E0E0',
-  statusPendingBackground: '#FF8F00',
-  statusPendingText: '#E0E0E0',
   shadowColor: '#000000',
   shadowOpacity: 0.3,
   shadowRadius: 4,
   elevation: 0,
   statusBarContent: 'light-content',
-
-  bottomNavBackground: '#1E1E1E',
-  activeIconTint: 'rgba(60, 102, 224, 1)',
-  inactiveIconTint: '#888888',
-  activeNavText: 'rgba(60, 102, 224, 1)',
-  inactiveNavText: '#888888',
 };
 
 const createMyReferralsStyles = (theme) => StyleSheet.create({
@@ -125,79 +105,7 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
      color: theme.textPrimary,
      marginBottom: 15,
   },
-  referralItem: {
-    backgroundColor: theme.cardBackground,
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    elevation: theme.elevation,
-    shadowColor: theme.shadowColor,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: theme.shadowOpacity,
-    shadowRadius: theme.shadowRadius,
-    borderColor: theme.cardBorder,
-    borderWidth: Platform.OS === 'android' && theme.elevation === 0 ? 1 : 0,
-  },
-  referralInfo: {
-     flex: 1,
-     marginRight: 10,
-  },
-  referralName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.textPrimary,
-    marginBottom: 4,
-  },
-  referralDate: {
-    fontSize: 12,
-    color: theme.textSecondary,
-  },
-  referralStatusContainer: {
-      alignItems: 'flex-end',
-  },
-  referralStatus: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    overflow: 'hidden',
-    textAlign: 'center',
-  },
-  statusCompleted: {
-      color: theme.statusCompletedText,
-      backgroundColor: theme.statusCompletedBackground,
-  },
-  statusPending: {
-      color: theme.statusPendingText,
-      backgroundColor: theme.statusPendingBackground,
-  },
-  referralEarnings: {
-      fontSize: 12,
-      color: theme.textSecondary,
-      marginTop: 5,
-  },
- 
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: theme.bottomNavBackground,
-    paddingVertical: 10,
-    width: '100%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-
-  },
-  navItem: { alignItems: 'center', flex: 1, },
-  navIcon: { width: 25, height: 25, resizeMode: 'contain', },
-  activeIcon: { tintColor: theme.activeIconTint, },
-  inactiveIcon: { tintColor: theme.inactiveIconTint, },
-  navTextActive: { color: theme.activeNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
-  navText: { color: theme.inactiveNavText, fontSize: 10, marginTop: 4, fontWeight: 'bold', textAlign: 'center', },
+  referralItem: {},
 });
 
 const MyReferrals = ({ navigation, route }) => {

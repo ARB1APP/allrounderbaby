@@ -1,8 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, useColorScheme, Linking, BackHandler, StatusBar, Alert } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
-import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 const PrivacyPolicywithoutLog = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -15,7 +15,6 @@ const PrivacyPolicywithoutLog = () => {
         try {
           Alert.alert('Debug', 'Android back pressed on Privacy Policy');
         } catch (e) {
-          // ignore
         }
         try {
           if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
@@ -871,7 +870,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
   },
+  /* container used around sections — defined to fix undefined usage */
+  sectionContainer: {
+    padding: 12,
+    borderRadius: 8,
+    margin: 12,
+  },
 });
-
-
 export default PrivacyPolicywithoutLog;

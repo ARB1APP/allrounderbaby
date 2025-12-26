@@ -11,7 +11,6 @@ const ScreenScroll = ({ children, contentContainerStyle, ...props }) => {
 
   return (
     <ScrollView
-     // contentContainerStyle={[{ flexGrow: 1 }, contentContainerStyle, { paddingBottom: bottomInset  }]}
       {...props}
     >
       {children}

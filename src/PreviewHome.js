@@ -57,7 +57,6 @@ const Card = ({ title, image, onPress }) => (
 
 
 const PreviewHome = ({ navigation }) => {
-	// Hide this preview design on guest pages
 	try {
 		const guestPages = ['Login', 'LoginPage', 'Splash', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
 		if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
