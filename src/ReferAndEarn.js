@@ -3,7 +3,7 @@ import {
   StyleSheet,
   Text,
   View,
-  
+
   TouchableOpacity,
   Image,
   Clipboard,
@@ -23,6 +23,7 @@ import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
 import { BASE_URL } from './config/api';
+import safeJsonParse from './utils/safeJsonParse';
 
 const { width, height } = Dimensions.get('window');
 
@@ -241,7 +242,8 @@ const ReferAndEarn = ({ navigation }) => {
         try {
           errorData = await response.json();
         } catch (parseError) {
-          errorData = { message: response.statusText };
+          const responseText = await response.text();
+          errorData = safeJsonParse(responseText, { message: response.statusText });
         }
         Alert.alert("API Error", `Failed to get video details: ${errorData.message || response.statusText}`);
         return null;
@@ -282,7 +284,8 @@ const ReferAndEarn = ({ navigation }) => {
         try {
           errorData = await response.json();
         } catch (parseError) {
-          errorData = { message: response.statusText };
+          const responseText = await response.text();
+          errorData = safeJsonParse(responseText, { message: response.statusText });
         }
         return {
           error: true,
@@ -323,10 +326,10 @@ const ReferAndEarn = ({ navigation }) => {
         try {
           errorData = JSON.parse(responseText);
         } catch (parseError) {
-          errorData = {
+          errorData = safeJsonParse(responseText, {
             message: response.statusText,
             rawResponse: responseText
-          };
+          });
         }
         console.error("handleRefrealcode: API Error Response:", errorData);
         Alert.alert("API Error", `Failed to load user details: ${errorData.message || response.statusText}. Raw response: ${errorData.rawResponse || 'N/A'}`);
@@ -407,6 +410,7 @@ const ReferAndEarn = ({ navigation }) => {
             setIsVideoLoading(false);
           } else {
             const data = await response.json();
+            if (!data) { setIsVideoLoading(false); return; }
             navigation.navigate('VideoPlayerScreen', {
               id: videoId,
               otp: data.otp,
@@ -492,7 +496,7 @@ const ReferAndEarn = ({ navigation }) => {
       <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <LinearGradient
           colors={['#FFF8E5', '#FFFDEB']}
-          style={[styles.importantDetailsBox, { marginTop: 10, color: isDarkMode ? '#fff' : '#003366'}]}>
+          style={[styles.importantDetailsBox, { marginTop: 10, color: isDarkMode ? '#fff' : '#003366' }]}>
           <Text style={styles.gradientTitleText}>You earn ₹3,000 / $30 every time</Text>
           <Text style={styles.gradientTitleText}>Refer a friend & they get 10% OFF</Text>
         </LinearGradient>
@@ -558,114 +562,114 @@ const ReferAndEarn = ({ navigation }) => {
           </Text>
         </View>
 
-      
+
         {showDetails && (
           <View style={styles.sectionLinkDivider}>
             <View style={styles.sectionDivider} />
-            
-                    <View style={styles.importantDetailsBox}>
-            
-                       <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Processing & Bank Details</Text>
-            
-                     <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️ Update your bank details after logging in to our website—this account will be used for your earning payout.
-                        </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️  Cashback is processed within 1 to 60 days depending on transaction volume and verification time.
-                        </Text>
-                    </View>
-            
-                     <View style={styles.sectionDivider} />
-                        <View style={styles.importantDetailsBox}>
-            
-                              <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
-                                International Payments & Charges
-                               </Text>
-            
-                            <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️ For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
-                        </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️   The final amount credited depends on your bank’s deductions and exchange rates.
-                        </Text>
-                      </View>
-            
-                  <View style={styles.sectionDivider} />
-                   
-                     <View style={styles.sectionDivider} />
-                    <View style={styles.importantDetailsBox}>
-            
-                          <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
-                               Tax & Compliance
-                            </Text>
-            
-                       <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️ Referral income is considered commission income and is subject to Indian tax laws.
-                        </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️   Payouts may be withheld until PAN details are submitted to ensure tax compliance.
-                        </Text>
-            
-                      <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️   A TDS (Tax Deducted at Source) of 5% has been deducted under Section 194H of the Income Tax Act, 
-                              1961. Payouts are made after tax deduction. 
-                              You may claim credit for this TDS when filing your income tax return
-                                {'\n'}{'\n'}
-                        </Text>
-            
-                       
-            
-                    <Text  style={styles.boldText}>For International Users:   {'\n'}</Text>
-            
-                      <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️ </Text>  
-                              You are responsible for reporting your referral income according to your local tax laws.
-                        </Text>
-            
-                   <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️ </Text>  
-                             We do not deduct or file international taxes on your behalf.
-                        </Text>
-                        
-                  </View>
-            
-                  <View style={styles.sectionDivider} />
-                    <View style={styles.importantDetailsBox}>
-            
-                          <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Important Notes
-                       </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️ </Text>  
-                             AllrounderBaby does not offer tax advice. Please consult your tax advisor.
-                        </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️ </Text>  
-                              By receiving referral earnings, you agree to our Terms of Use and Privacy Policy.
-                        </Text>
-            
-                        
-                  </View>
-                   <View style={styles.sectionDivider} />
-                    <View style={styles.importantDetailsBox}>
-                      <Text style={[styles.listItem, { textAlign: 'center' }]}>
-                            <Text style={styles.boldText}>
-                              Science says – “Your child grows better with good friends”
-                              REFER your child’s friends’ parents ! 
-                              </Text>
-                        </Text>
-                    </View>
+
+            <View style={styles.importantDetailsBox}>
+
+              <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>Processing & Bank Details</Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text>
+                ️ Update your bank details after logging in to our website—this account will be used for your earning payout.
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text>
+                ️  Cashback is processed within 1 to 60 days depending on transaction volume and verification time.
+              </Text>
+            </View>
+
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+
+              <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>
+                International Payments & Charges
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text>
+                ️ For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text>
+                ️   The final amount credited depends on your bank’s deductions and exchange rates.
+              </Text>
+            </View>
+
+            <View style={styles.sectionDivider} />
+
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+
+              <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>
+                Tax & Compliance
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text>
+                ️ Referral income is considered commission income and is subject to Indian tax laws.
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text>
+                ️   Payouts may be withheld until PAN details are submitted to ensure tax compliance.
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text>
+                ️   A TDS (Tax Deducted at Source) of 5% has been deducted under Section 194H of the Income Tax Act,
+                1961. Payouts are made after tax deduction.
+                You may claim credit for this TDS when filing your income tax return
+                {'\n'}{'\n'}
+              </Text>
+
+
+
+              <Text style={styles.boldText}>For International Users:   {'\n'}</Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️ </Text>
+                You are responsible for reporting your referral income according to your local tax laws.
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️ </Text>
+                We do not deduct or file international taxes on your behalf.
+              </Text>
+
+            </View>
+
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+
+              <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>Important Notes
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️ </Text>
+                AllrounderBaby does not offer tax advice. Please consult your tax advisor.
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️ </Text>
+                By receiving referral earnings, you agree to our Terms of Use and Privacy Policy.
+              </Text>
+
+
+            </View>
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+              <Text style={[styles.listItem, { textAlign: 'center' }]}>
+                <Text style={styles.boldText}>
+                  Science says – “Your child grows better with good friends”
+                  REFER your child’s friends’ parents !
+                </Text>
+              </Text>
+            </View>
           </View>
         )}
 
@@ -793,12 +797,13 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  borderLine: { 
-    borderBottomWidth: 1, 
-    borderBottomColor: 
-    theme.borderColorD, 
+  borderLine: {
+    borderBottomWidth: 1,
+    borderBottomColor:
+      theme.borderColorD,
     width: "100%",
-    marginBottom: 15, },
+    marginBottom: 15,
+  },
   detailPoint: {
     fontSize: 15,
     lineHeight: 22,
@@ -870,7 +875,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     marginHorizontal: 5,
     elevation: theme.elevation / 2,
     shadowColor: theme.bottomNavShadowColor,
-   
+
     shadowOffset: {
       width: 0,
       height: 2
@@ -930,7 +935,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  
+
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: theme.overlayBackground,

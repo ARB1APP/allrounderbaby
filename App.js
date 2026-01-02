@@ -9,10 +9,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from './SplashScreen';
 import LoginPage from './src/LoginPage';
 import Dashboard from './src/Dashboard';
+import ErrorLogs from './src/ErrorLogs';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import { logError } from './src/utils/errorLogger';
 import ChasCashbackforFeedback from './src/CashbackforFeedback';
 import ReferAndEarn from './src/ReferAndEarn';
 import Profile from './src/Profile';
-import VideoPlayerScreen from './src/VideoPlayerScreen'; 
+import VideoPlayerScreen from './src/VideoPlayerScreen';
 import ReferAndEarnConditions from './src/ReferAndEarnConditions';
 import ReferralHistory from './src/ReferralHistory';
 import MyOrders from './src/MyOrders';
@@ -116,6 +119,7 @@ export const drawerItems = [
   { key: "feedback", label: "Feedback", navigateTo: "Get Help", icon: require('./img/feedback.png'), iconSize: { width: 26, height: 26 } },
   { key: "contact", label: "Contact us", navigateTo: "Get Help", icon: require('./img/call.png'), iconSize: { width: 22, height: 22 } },
   { key: "logout", label: "Logout", navigateTo: "Login", icon: require('./img/logout.png'), iconSize: { width: 22, height: 22 } },
+  { key: "logs", label: "Error Logs", navigateTo: "Error Logs", icon: require('./img/info.png'), iconSize: { width: 20, height: 20 } },
 ];
 
 const isDrawerItemFocused = (item, props) => {
@@ -167,7 +171,7 @@ export const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
                   return;
                 }
 
-               let origin = null;
+                let origin = null;
                 try {
                   if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
                     const current = navigationRef.getCurrentRoute && navigationRef.getCurrentRoute();
@@ -231,9 +235,30 @@ const App = () => {
   const prevDrawerOpenRef = React.useRef(false);
 
   useEffect(() => {
+    // install global JS error handler to capture uncaught exceptions
+    try {
+      if (typeof ErrorUtils !== 'undefined' && ErrorUtils && typeof ErrorUtils.setGlobalHandler === 'function') {
+        ErrorUtils.setGlobalHandler((error, isFatal) => {
+          try { logError(error, { isFatal }); } catch (e) { console.error('global logError failed', e); }
+        });
+      }
+    } catch (e) {
+      console.error('Failed to set global error handler', e);
+    }
+
+    // attempt to capture unhandled promise rejections if the environment supports it
+    try {
+      if (typeof global !== 'undefined' && typeof global.addEventListener === 'function') {
+        global.addEventListener('unhandledrejection', (ev) => {
+          try { logError(ev.reason || ev, { type: 'unhandledrejection' }); } catch (e) { console.error('rejection log failed', e); }
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
     let isMounted = true;
     const checkAuthStatus = async () => {
-      try {    
+      try {
         const firstTime = await AsyncStorage.getItem('first_time_opened');
         const token = await AsyncStorage.getItem('token');
         const userId = await AsyncStorage.getItem('userId');
@@ -291,7 +316,7 @@ const App = () => {
 
           if (!isLoggedIn && name && !guestPages.includes(name)) {
             Alert.alert('Login Required', 'Please login to access this page.');
-            try { origNavigate('Login'); } catch (e) { }
+            try { origNavigate('Login'); } catch (e) { console.error('origNavigate to Login failed', e); }
             return;
           }
         } catch (e) {
@@ -338,7 +363,7 @@ const App = () => {
 
           if (!isLoggedIn && containsProtectedRoute(action)) {
             Alert.alert('Login Required', 'Please login to access this page.');
-            try { navigationRef.navigate('Login'); } catch (e) { }
+            try { navigationRef.navigate('Login'); } catch (e) { console.error('navigationRef.navigate to Login failed', e); }
             return;
           }
         } catch (e) {
@@ -349,7 +374,7 @@ const App = () => {
     }
 
     try {
-        if (typeof navigationRef.resetRoot === 'function') {
+      if (typeof navigationRef.resetRoot === 'function') {
         const origResetRoot = navigationRef.resetRoot.bind(navigationRef);
         navigationRef.resetRoot = async (state) => {
           if (skipNavigationGuards.current) return origResetRoot(state);
@@ -365,7 +390,7 @@ const App = () => {
               const hasProtected = state && Array.isArray(state.routes) && state.routes.some(r => !guestPages.includes(r.name));
               if (!isLoggedIn && hasProtected) {
                 Alert.alert('Login Required', 'Please login to access this page.');
-                try { navigationRef.navigate('Login'); } catch (e) { }
+                try { navigationRef.navigate('Login'); } catch (e) { console.error('navigationRef.navigate to Login failed', e); }
                 return;
               }
             }
@@ -391,11 +416,11 @@ const App = () => {
     }
   };
 
-  const clearLocalSessionAndNavigate = useCallback( () => {
+  const clearLocalSessionAndNavigate = useCallback(() => {
     try {
-       AsyncStorage.removeItem('token');
-       AsyncStorage.removeItem('userId');
-       AsyncStorage.removeItem('username');
+      AsyncStorage.removeItem('token');
+      AsyncStorage.removeItem('userId');
+      AsyncStorage.removeItem('username');
       isLoggedInRef.current = false;
 
       try {
@@ -403,14 +428,14 @@ const App = () => {
         if (navigationRef.isReady()) {
           if (typeof navigationRef.resetRoot === 'function') {
             try {
-               navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login' }] });
+              navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login' }] });
             } catch (e) {
-               navigationRef.dispatch(
+              navigationRef.dispatch(
                 CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] })
               );
             }
           } else {
-             navigationRef.dispatch(
+            navigationRef.dispatch(
               CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] })
             );
           }
@@ -425,7 +450,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-        const onBackPress = () => {
+    const onBackPress = () => {
       try {
         if (!navigationRef.isReady()) return false;
         const rootState = navigationRef.getRootState && navigationRef.getRootState();
@@ -477,11 +502,11 @@ const App = () => {
                 const userId = await AsyncStorage.getItem('userId');
                 const deviceKey = await AsyncStorage.getItem('deviceKey');
                 if (!userId) {
-                   clearLocalSessionAndNavigate();
+                  clearLocalSessionAndNavigate();
                   return;
                 }
                 if (!deviceKey) {
-                   clearLocalSessionAndNavigate();
+                  clearLocalSessionAndNavigate();
                   return;
                 }
                 const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceKey)}`;
@@ -492,11 +517,11 @@ const App = () => {
                   const errorText = await response.text();
                   Alert.alert("Logout Warning", "Failed to log out from the server. Your local session has been cleared.");
                 }
-                 clearLocalSessionAndNavigate();
+                clearLocalSessionAndNavigate();
               } catch (error) {
                 console.error('Error during logout process:', error);
                 Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
-                 clearLocalSessionAndNavigate();
+                clearLocalSessionAndNavigate();
               }
             }
           }
@@ -537,7 +562,7 @@ const App = () => {
               try {
                 if (isLoggedInRef.current && e && e.data && e.data.action && e.data.action.type) {
                   const t = e.data.action.type;
-                    if (t === 'GO_BACK' || t === 'POP') {
+                  if (t === 'GO_BACK' || t === 'POP') {
                     e.preventDefault();
                     try { exitApp(); } catch (err2) { BackHandler.exitApp(); }
                   }
@@ -569,6 +594,7 @@ const App = () => {
         <Drawer.Screen name="Cashback for Feedback Conditions" component={CashbackforFeedbackConditions} options={{}} />
         <Drawer.Screen name="Rate us / Update App" component={RateStarsStore} options={{}} />
         <Drawer.Screen name="Get Help" component={GetHelp} options={{}} />
+        <Drawer.Screen name="Error Logs" component={ErrorLogs} options={{}} />
       </Drawer.Navigator>
     ),
     [currentThemeColors, handleGlobalLogout]
@@ -576,10 +602,12 @@ const App = () => {
 
   const stylesGlobal = StyleSheet.create({
     footerWrap: { width: '100%', alignItems: 'center' },
-    footerInner: { width: '100%', flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 0, alignItems: 'center',
-    justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee' },
+    footerInner: {
+      width: '100%', flexDirection: 'row',
+      backgroundColor: '#fff',
+      borderRadius: 0, alignItems: 'center',
+      justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee'
+    },
     footerItem: { alignItems: 'center', justifyContent: 'center' },
     footerIcon: { width: footerIconSize, height: footerIconSize, tintColor: '#888' },
     footerLabel: { fontSize: footerFontSize, color: '#666', marginTop: 6 },
@@ -599,8 +627,8 @@ const App = () => {
     };
 
     return (
-      <View style={[stylesGlobal.footerWrap, { paddingBottom: bottomInset, backgroundColor: 'transparent' }]}> 
-        <View style={[stylesGlobal.footerInner, { height: footerHeight }]}> 
+      <View style={[stylesGlobal.footerWrap, { paddingBottom: bottomInset, backgroundColor: 'transparent' }]}>
+        <View style={[stylesGlobal.footerInner, { height: footerHeight }]}>
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Home')}>
             <Image source={require('./img/home.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Home' ? currentThemeColors.primary : '#888' }]} />
             <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Home' ? currentThemeColors.primary : '#666' }]}>Home</Text>
@@ -613,7 +641,7 @@ const App = () => {
 
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Refer and Earn')}>
             <Image source={require('./img/usersgroup.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#888' }]} />
-            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#666' }]}>Refer</Text>
+            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#666' }]}>Refer and Earn</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('My Profile')}>
@@ -636,91 +664,93 @@ const App = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <SafeAreaProvider>
-      <View style={{ flex: 1 }}>
-      <NavigationContainer
-        ref={navigationRef}
-        theme={navigationTheme}
-        onReady={onNavigationReady}
-        onStateChange={() => {
-          try {
-            if (!navigationRef.isReady()) return;
-            const rootState = typeof navigationRef.getRootState === 'function' ? navigationRef.getRootState() : null;
+        <View style={{ flex: 1 }}>
+          <ErrorBoundary>
+            <NavigationContainer
+              ref={navigationRef}
+              theme={navigationTheme}
+              onReady={onNavigationReady}
+              onStateChange={() => {
+                try {
+                  if (!navigationRef.isReady()) return;
+                  const rootState = typeof navigationRef.getRootState === 'function' ? navigationRef.getRootState() : null;
 
-            if (rootState && rootState.routes && typeof rootState.index === 'number') {
-              const top = rootState.routes[rootState.index];
-              if (top && top.name) {
-                setActiveFooter(top.name);
-              }
-            } else {
-              const r = navigationRef.getCurrentRoute();
-              if (r && r.name) setActiveFooter(r.name);
-            }
-
-            const detectDrawerOpen = (state) => {
-              if (!state) return false;
-              try {
-                if (Array.isArray(state.history) && state.history.length) {
-                  const drawerEntry = state.history.slice().reverse().find(h => h && h.type === 'drawer');
-                  if (drawerEntry) {
-                    if (drawerEntry.status === 'open') return true;
-                    if (typeof drawerEntry.status === 'undefined') return true;
+                  if (rootState && rootState.routes && typeof rootState.index === 'number') {
+                    const top = rootState.routes[rootState.index];
+                    if (top && top.name) {
+                      setActiveFooter(top.name);
+                    }
+                  } else {
+                    const r = navigationRef.getCurrentRoute();
+                    if (r && r.name) setActiveFooter(r.name);
                   }
+
+                  const detectDrawerOpen = (state) => {
+                    if (!state) return false;
+                    try {
+                      if (Array.isArray(state.history) && state.history.length) {
+                        const drawerEntry = state.history.slice().reverse().find(h => h && h.type === 'drawer');
+                        if (drawerEntry) {
+                          if (drawerEntry.status === 'open') return true;
+                          if (typeof drawerEntry.status === 'undefined') return true;
+                        }
+                      }
+
+                      if (state.isDrawerOpen) return true;
+                      const idx = typeof state.index === 'number' ? state.index : 0;
+                      const route = state.routes && state.routes[idx];
+                      if (route && route.state) return detectDrawerOpen(route.state);
+                    } catch (e) {
+                    }
+                    return false;
+                  };
+
+                  const drawerOpen = detectDrawerOpen(rootState);
+                  if (prevDrawerOpenRef.current !== !!drawerOpen) {
+                    console.log('[App] drawerOpen changed ->', !!drawerOpen);
+                    prevDrawerOpenRef.current = !!drawerOpen;
+                  }
+                  setIsDrawerOpen(!!drawerOpen);
+
+                } catch (e) {
                 }
-
-                if (state.isDrawerOpen) return true;
-               const idx = typeof state.index === 'number' ? state.index : 0;
-                const route = state.routes && state.routes[idx];
-                if (route && route.state) return detectDrawerOpen(route.state);
-              } catch (e) {
-              }
-              return false;
-            };
-
-            const drawerOpen = detectDrawerOpen(rootState);
-            if (prevDrawerOpenRef.current !== !!drawerOpen) {
-              console.log('[App] drawerOpen changed ->', !!drawerOpen);
-              prevDrawerOpenRef.current = !!drawerOpen;
-            }
-            setIsDrawerOpen(!!drawerOpen);
-
-          } catch (e) {
-          }
-        }}
-      >
-        {initialRoute === 'Splash' ? (
-          <SplashScreen onVideoEnd={handleVideoEnd} onSkip={() => setInitialRoute('Login')} />
-        ) : (
-          renderDrawerNavigator(initialRoute)
-        )}
-      </NavigationContainer>
-      </View>
-      {(() => {
-        const guestFooterPages = ['Login', 'LoginPage', 'Splash', 'VideoPlayerScreen', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
-        try {
-          if (initialRoute === 'Splash') return null;
-          if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
-            const rootState = navigationRef.getRootState && navigationRef.getRootState();
-            if (rootState) {
-              const activeNames = [];
-              let state = rootState;
-              let hideFooterParam = false;
-              while (state) {
-                const idx = typeof state.index === 'number' ? state.index : 0;
-                const route = state.routes && state.routes[idx];
-                if (!route) break;
+              }}
+            >
+              {initialRoute === 'Splash' ? (
+                <SplashScreen onVideoEnd={handleVideoEnd} onSkip={() => setInitialRoute('Login')} />
+              ) : (
+                renderDrawerNavigator(initialRoute)
+              )}
+            </NavigationContainer>
+          </ErrorBoundary>
+        </View>
+        {(() => {
+          const guestFooterPages = ['Login', 'LoginPage', 'Splash', 'VideoPlayerScreen', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
+          try {
+            if (initialRoute === 'Splash') return null;
+            if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
+              const rootState = navigationRef.getRootState && navigationRef.getRootState();
+              if (rootState) {
+                const activeNames = [];
+                let state = rootState;
+                let hideFooterParam = false;
+                while (state) {
+                  const idx = typeof state.index === 'number' ? state.index : 0;
+                  const route = state.routes && state.routes[idx];
+                  if (!route) break;
                   activeNames.push(route.name);
                   if (route.params && route.params.hideFooter) hideFooterParam = true;
                   state = route.state;
-              }
+                }
                 const isGuest = activeNames.some(n => guestFooterPages.includes(n));
                 if (isGuest || hideFooterParam) return null;
                 if (isDrawerOpen) return null;
+              }
             }
+          } catch (e) {
           }
-        } catch (e) {
-        }
-        return !guestFooterPages.includes(activeFooter) ? <FooterBar /> : null;
-      })()}
+          return !guestFooterPages.includes(activeFooter) ? <FooterBar /> : null;
+        })()}
       </SafeAreaProvider>
     </SafeAreaView>
   );

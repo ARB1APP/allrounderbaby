@@ -17,6 +17,7 @@ import {
   Linking
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import safeJsonParse from './utils/safeJsonParse';
 import { useFocusEffect } from '@react-navigation/native';
 import { BASE_URL } from './config/api';
 
@@ -330,7 +331,7 @@ const MyEarnings = ({ navigation, route }) => {
 
   const handleBankDetails = async (token, userId) => {
     if (!userId || !token) {
-       return;
+      return;
     }
 
     const DETAILS_ENDPOINT = `${url}MyProfile/MyProfileDetails_Get_ByID?UserID=${userId}`;
@@ -345,8 +346,9 @@ const MyEarnings = ({ navigation, route }) => {
         },
       });
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`handleBankDetails: Error fetching profile data: ${response.status} - ${errorText}`);
+        const responseText = await response.text();
+        const errorText = safeJsonParse(responseText, { message: response.statusText });
+        console.error(`handleBankDetails: Error fetching profile data: ${response.status} - ${responseText}`);
         setBankDetails(null);
         return;
       }
@@ -369,7 +371,7 @@ const MyEarnings = ({ navigation, route }) => {
         };
         setBankDetails(details);
       } else {
-         setBankDetails(null);
+        setBankDetails(null);
       }
     } catch (error) {
       console.error("handleBankDetails: Network or unexpected error:", error);
@@ -381,11 +383,11 @@ const MyEarnings = ({ navigation, route }) => {
 
   const handleEarningDetails = async (token, userId) => {
     if (!userId || !token) {
-       return;
+      return;
     }
 
     const DETAILS_ENDPOINT = `${url}ReferralTransaction/ReferralTransactionList_Get_ByID?ReferralCodeFromUserID=${userId}`;
- 
+
     try {
       const response = await fetch(DETAILS_ENDPOINT, {
         method: 'GET',
@@ -430,19 +432,19 @@ const MyEarnings = ({ navigation, route }) => {
 
         if (referralTransactions.length > 0 && referralTransactions[0].referralCodeName) {
           setCode(referralTransactions[0].referralCodeName);
-         } else {
-           if (code === "Login Req." || code === "") setCode("N/A");
+        } else {
+          if (code === "Login Req." || code === "") setCode("N/A");
         }
 
       } else if (jsonResponse && jsonResponse.data && !Array.isArray(jsonResponse.data)) {
         console.warn("handleEarningDetails: Response contains a 'data' property, but it's not an array. Please verify API response structure for earning details.");
 
         setReferralCount(0);
-        setEarningsPerReferral(3000); 
+        setEarningsPerReferral(3000);
         setPendingReferralCount(0);
         if (code === "Login Req." || code === "") setCode("N/A");
       } else {
-         setReferralCount(0);
+        setReferralCount(0);
         setEarningsPerReferral(3000);
         setPendingReferralCount(0);
         if (code === "Login Req." || code === "") setCode("N/A");
@@ -461,11 +463,11 @@ const MyEarnings = ({ navigation, route }) => {
 
   const handleFeedbackEarnings = async (currentToken, currentUserId) => {
     if (!currentUserId || !currentToken) {
-       return;
+      return;
     }
 
     const FEEDBACK_ENDPOINT = `${url}MyProfile/cashback-processed?userId=${currentUserId}`;
- 
+
     try {
       const response = await fetch(FEEDBACK_ENDPOINT, {
         method: 'GET',
@@ -482,12 +484,12 @@ const MyEarnings = ({ navigation, route }) => {
       }
 
       const jsonResponse = await response.json();
-        if (jsonResponse.code === 200) {
+      if (jsonResponse.code === 200) {
         setFeedbackEarnings('1000.00');
       } else if (jsonResponse.code === 404) {
         setFeedbackEarnings('0.00');
       } else {
-         setFeedbackEarnings('0.00');
+        setFeedbackEarnings('0.00');
       }
 
     } catch (error) {

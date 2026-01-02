@@ -50,7 +50,7 @@ const lightThemeColors = {
 const darkThemeColors = {
   screenBackground: '#1A202C',
   cardBackground: '#2D3748',
-   cardBackgroundText: '#FFFFFF',
+  cardBackgroundText: '#FFFFFF',
   textPrimary: '#E2E8F0',
   textPrimaryModal: '#fff',
   textSecondary: '#A0AEC0',
@@ -82,7 +82,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
   sectionHeader: { marginHorizontal: 0, marginTop: 0, marginBottom: 12, fontSize: 24, fontWeight: '600' },
 
 
-   importantDetailsBox: {
+  importantDetailsBox: {
     marginHorizontal: 20,
     marginTop: 0,
     padding: 15,
@@ -298,6 +298,7 @@ const CashbackforFeedback = () => {
           Alert.alert("Error", errorData.message || "Video not found or failed to get OTP.");
         } else {
           const data = await response.json();
+          if (!data) { setIsVideoLoading(false); return; }
           navigation.navigate('VideoPlayerScreen', {
             id: videoId,
             otp: data.otp,
@@ -362,13 +363,13 @@ const CashbackforFeedback = () => {
     if (playableCashbackVideos.length > 0) {
       const hindiVideo = playableCashbackVideos.find(v => v.language === 'hindi');
       const englishVideo = playableCashbackVideos.find(v => v.language === 'english');
-  
+
       const videoGroup = {
         hindiVideo: hindiVideo ? { id: hindiVideo.id } : null,
         englishVideo: englishVideo ? { id: englishVideo.id } : null,
-        stepNumber: 'cashback', 
+        stepNumber: 'cashback',
       };
-  
+
       setSelectedVideoGroup(videoGroup);
       setIsLanguageModalVisible(true);
     } else {
@@ -400,7 +401,7 @@ const CashbackforFeedback = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.sectionDivider} />
-        
+
         <View style={styles.importantDetailsBox}>
           <Text style={[styles.sectionHeader, { color: theme.accentColor }]}>How It Works?</Text>
           <Text style={styles.listItem}>
@@ -429,98 +430,98 @@ const CashbackforFeedback = () => {
           <View style={styles.sectionLinkDivider} >
             <View style={styles.sectionDivider} />
             <View style={styles.importantDetailsBox}>
-                       <Text  style={[
-                                styles.sectionHeader,
-                                { color: isDarkMode ? '#fff' : '#1434a4' }
-                            ]}>Submission & Review Process</Text>
-                   <Text style={styles.subListItem}>
-                      <Text style={styles.emphasisText}>✔️ 
-                        </Text> Feedback  must be submitted after logging in to our website .
-                    </Text>
-                    <Text style={styles.subListItem}>
-                      <Text style={styles.emphasisText}>✔️ 
-                         </Text> Our team will review and verify yourfeedback before 
-                              approval. 
-                    </Text>
-                    <Text style={styles.subListItem}>
-                      <Text style={styles.emphasisText}>✔️ 
-                        </Text> Cashback is issued only if the feedback is detailed, genuine, and approved.
-                        <Text style={styles.emphasisText}></Text>
-                    </Text>
-                    </View>
-                    <View style={styles.sectionDivider} />
-                    <View style={styles.importantDetailsBox}>
-                       <Text  style={[
-                                styles.sectionHeader,
-                                { color: isDarkMode ? '#fff' : '#1434a4' }
-                            ]}>Bank Account & Payment Processing</Text>
-                   <Text style={styles.subListItem}>
-                     <Text style={styles.emphasisText}>✔️ </Text> 
-                      Update your bank details after logging in to our website—this account will be used for your cashback payout.
-                    </Text>
-                    <Text style={styles.subListItem}>
-                      <Text style={styles.emphasisText}>✔️ </Text> 
-                      Cashback is processed within 1 to 60 days after approval.
-                    </Text>
-                    </View>
-                <View style={styles.sectionDivider} />
-                     <View style={styles.importantDetailsBox}>
-                       <Text  style={[
-                                styles.sectionHeader,
-                                { color: isDarkMode ? '#fff' : '#1434a4' }
-                            ]}>International Participants</Text>
-                     <Text style={styles.subListItem}>
-                       <Text style={styles.emphasisText}>✔️ </Text> 
-                        For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
-                    </Text>
-                    <Text style={styles.subListItem}>
-                        <Text style={styles.emphasisText}>✔️ </Text> 
-                        The final amount credited depends on your bank’s deductions and exchange rates.
-                    </Text>
-                    </View>
-                <View style={styles.sectionDivider} />
-                       <View style={styles.importantDetailsBox}>
-                       <Text  style={[
-                                styles.sectionHeader,
-                                { color: isDarkMode ? '#fff' : '#1434a4' }
-                            ]}>Tax & Compliance</Text>
-                    <Text style={styles.subListItem}>
-                          <Text style={styles.emphasisText}>✔️ </Text> 
-                           No TDS will be deducted under Section 194J of the Indian Income Tax Act, subject to applicable rules.
-                    </Text> 
-                      <Text style={styles.subListItem}>{'\n'}
-                          <Text style={styles.emphasisText}>For International Users:</Text> 
-                    </Text>
-                       <Text style={styles.subListItem}>
-                           <Text style={styles.emphasisText}>✔️ </Text> 
-                           You are responsible for reporting and paying taxes in accordance with your local tax regulations.
-                    </Text>
-                    <Text style={styles.subListItem}>
-                           <Text style={styles.emphasisText}>✔️ </Text> 
-                           Cashback is treated as commission income and may be taxable under the laws of your country.
-                    </Text>
-                    </View>
-                <View style={styles.sectionDivider} />
-              <View style={styles.importantDetailsBox}>
-                       <Text  style={[
-                                styles.sectionHeader,
-                                { color: isDarkMode ? '#fff' : '#1434a4' }
-                            ]}>Important Notes</Text>
-                      <Text style={styles.subListItem}>
-                           <Text style={styles.emphasisText}>✔️ </Text> 
-                           AllrounderBaby does not offer tax advice. Please consult your tax advisor.
-                    </Text>
-                        <Text style={styles.subListItem}>
-                           <Text style={styles.emphasisText}>✔️ </Text> 
-                          By submitting feedback, you agree to our Terms of Use and Privacy Policy.
-                    </Text>
-                    </View>
-                 <View style={styles.sectionDivider} />
-                    <View style={styles.importantDetailsBox}>
-                      <Text style={styles.finalCallToAction}>
-                        Your feedback matters! Help us improve and get rewarded with cashback up to ₹1,000 / $10
-                      </Text>
-                    </View>
+              <Text style={[
+                styles.sectionHeader,
+                { color: isDarkMode ? '#fff' : '#1434a4' }
+              ]}>Submission & Review Process</Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️
+                </Text> Feedback  must be submitted after logging in to our website .
+              </Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️
+                </Text> Our team will review and verify yourfeedback before
+                approval.
+              </Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️
+                </Text> Cashback is issued only if the feedback is detailed, genuine, and approved.
+                <Text style={styles.emphasisText}></Text>
+              </Text>
+            </View>
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+              <Text style={[
+                styles.sectionHeader,
+                { color: isDarkMode ? '#fff' : '#1434a4' }
+              ]}>Bank Account & Payment Processing</Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                Update your bank details after logging in to our website—this account will be used for your cashback payout.
+              </Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                Cashback is processed within 1 to 60 days after approval.
+              </Text>
+            </View>
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+              <Text style={[
+                styles.sectionHeader,
+                { color: isDarkMode ? '#fff' : '#1434a4' }
+              ]}>International Participants</Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
+              </Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                The final amount credited depends on your bank’s deductions and exchange rates.
+              </Text>
+            </View>
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+              <Text style={[
+                styles.sectionHeader,
+                { color: isDarkMode ? '#fff' : '#1434a4' }
+              ]}>Tax & Compliance</Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                No TDS will be deducted under Section 194J of the Indian Income Tax Act, subject to applicable rules.
+              </Text>
+              <Text style={styles.subListItem}>{'\n'}
+                <Text style={styles.emphasisText}>For International Users:</Text>
+              </Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                You are responsible for reporting and paying taxes in accordance with your local tax regulations.
+              </Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                Cashback is treated as commission income and may be taxable under the laws of your country.
+              </Text>
+            </View>
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+              <Text style={[
+                styles.sectionHeader,
+                { color: isDarkMode ? '#fff' : '#1434a4' }
+              ]}>Important Notes</Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                AllrounderBaby does not offer tax advice. Please consult your tax advisor.
+              </Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                By submitting feedback, you agree to our Terms of Use and Privacy Policy.
+              </Text>
+            </View>
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+              <Text style={styles.finalCallToAction}>
+                Your feedback matters! Help us improve and get rewarded with cashback up to ₹1,000 / $10
+              </Text>
+            </View>
           </View>
         )}
 
@@ -566,7 +567,7 @@ const CashbackforFeedback = () => {
           </View>
         </Pressable>
       )}
-     </View>
+    </View>
   );
 };
 export default CashbackforFeedback;

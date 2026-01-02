@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-    View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, ScrollView, 
+import {
+    View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, ScrollView,
     StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, Dimensions, BackHandler, ToastAndroid
 } from 'react-native';
 import { exitApp } from './utils/exitApp';
@@ -36,7 +36,7 @@ const LoginPage = ({ navigation }) => {
     const [password, setPassword] = useState('');
     const [usernameError, setUsernameError] = useState('');
     const [passwordError, setPasswordError] = useState('');
-    const [termsAccepted, setTermsAccepted] = useState(true);
+    const [termsAccepted, setTermsAccepted] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoadingCredentials, setIsLoadingCredentials] = useState(true);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -61,8 +61,12 @@ const LoginPage = ({ navigation }) => {
                     if (creds) {
                         setUsername(creds.username);
                         setPassword(creds.password);
+                        setRememberMe(true);
+                    } else {
+                        // Clear stale preference if no credentials are available
+                        try { await AsyncStorage.removeItem('rememberMePreference'); } catch (e) { console.error('Failed to remove rememberMePreference', e); }
+                        setRememberMe(false);
                     }
-                    setRememberMe(true);
                 }
             } catch (e) { console.error(e); }
             finally { setIsLoadingCredentials(false); }
@@ -78,9 +82,10 @@ const LoginPage = ({ navigation }) => {
                 navigation.setParams && navigation.setParams({ hideFooter: true });
             }
         } catch (e) {
+            console.error('Failed to set navigation params hideFooter', e);
         }
         return () => {
-            try { navigation.setParams && navigation.setParams({ hideFooter: false }); } catch (e) {}
+            try { navigation.setParams && navigation.setParams({ hideFooter: false }); } catch (e) { console.error('Failed to reset hideFooter param', e); }
         };
     }, [isFocused]);
 
@@ -171,6 +176,12 @@ const LoginPage = ({ navigation }) => {
             const response = await fetch(API_URL);
             const data = await response.json();
 
+            if (!data || !data.data) {
+                setIsLoggingIn(false);
+                loginInProgressRef.current = false;
+                return;
+            }
+
             if (data?.code === 200) {
                 const { firstName, lastName, emailAddress, phoneNumber, deviceKey: serverDeviceKey } = data.data || {};
                 const finalDeviceKey = serverDeviceKey || devicekey;
@@ -221,7 +232,7 @@ const LoginPage = ({ navigation }) => {
     return (
         <View style={[styles.outermostContainer, backgroundStyle]}>
             <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={backgroundStyle.backgroundColor} />
-            
+
             {!showLoginForm ? (
                 <Animated.View style={[styles.container, { opacity: welcomeOpacity }]}>
                     <Image style={styles.welcomeImage} source={require('../img/babyone.jpg')} />
@@ -241,11 +252,11 @@ const LoginPage = ({ navigation }) => {
                 <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                     <ScrollView style={backgroundStyle} contentContainerStyle={styles.loginContainer} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                         <Animated.Image style={[styles.image, { opacity: imageOpacity }]} source={NEW_LAUNCH_IMAGE} resizeMode="contain" />
-                         <Animated.Text style={[styles.loginInstructionText, { transform: [{ translateX: emailTextPosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
+                        <Animated.Text style={[styles.loginInstructionText, { transform: [{ translateX: emailTextPosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
                             Please enter login details below
                         </Animated.Text>
 
-                        <Animated.Text style={[ { marginTop: 5 },styles.legend, usernameError ? styles.errorLegend : null, { transform: [{ translateX: usernamePosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
+                        <Animated.Text style={[{ marginTop: 5 }, styles.legend, usernameError ? styles.errorLegend : null, { transform: [{ translateX: usernamePosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
                             Login ID
                         </Animated.Text>
                         <Animated.View style={[styles.fieldset, usernameError ? styles.errorFieldset : null, { transform: [{ translateX: usernamePosition }] }]}>
@@ -260,7 +271,7 @@ const LoginPage = ({ navigation }) => {
                         </Animated.View>
                         {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
 
-                        <Animated.Text style={[ { marginTop: 9 }, styles.legend, passwordError ? styles.errorLegend : null, { transform: [{ translateX: passwordPosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
+                        <Animated.Text style={[{ marginTop: 9 }, styles.legend, passwordError ? styles.errorLegend : null, { transform: [{ translateX: passwordPosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
                             Password
                         </Animated.Text>
                         <Animated.View style={[styles.fieldset, passwordError ? styles.errorFieldset : null, { transform: [{ translateX: passwordPosition }] }]}>
@@ -277,31 +288,31 @@ const LoginPage = ({ navigation }) => {
 
                         <View style={styles.checkboxesContainer}>
                             <Animated.View style={[styles.checkboxContainer, { transform: [{ translateX: checkboxPosition }] }]}>
-                                    <CheckBox isChecked={termsAccepted} onClick={() => setTermsAccepted(!termsAccepted)} checkBoxColor="#1434A4" />
-                                    <View style={styles.checkboxTextContainer}>
-                                        <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>By logging in, you agree to company’s </Text>
+                                <CheckBox isChecked={termsAccepted} onClick={() => setTermsAccepted(!termsAccepted)} checkBoxColor="#1434A4" />
+                                <View style={styles.checkboxTextContainer}>
+                                    <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}>By logging in, you agree to company’s </Text>
 
-                                        <TouchableOpacity
-                                            onPress={() => navigation.navigate('TermsofServicewithoutLog')}
-                                            hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}
-                                            activeOpacity={0.7}
-                                            style={styles.linkTouchable}
-                                        >
-                                            <Text style={styles.linkUnderline}>Terms and Conditions</Text>
-                                        </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={() => navigation.navigate('TermsofServicewithoutLog')}
+                                        hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}
+                                        activeOpacity={0.7}
+                                        style={styles.linkTouchable}
+                                    >
+                                        <Text style={styles.linkUnderline}>Terms and Conditions</Text>
+                                    </TouchableOpacity>
 
-                                        <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}> and </Text>
+                                    <Text style={[styles.checkboxLabel, { color: isDarkMode ? Colors.white : Colors.black }]}> and </Text>
 
-                                        <TouchableOpacity
-                                            onPress={() => navigation.navigate('PrivacyPolicywithoutLog')}
-                                            hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}
-                                            activeOpacity={0.7}
-                                            style={styles.linkTouchable}
-                                        >
-                                            <Text style={styles.linkUnderline}>Privacy Policy</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </Animated.View>
+                                    <TouchableOpacity
+                                        onPress={() => navigation.navigate('PrivacyPolicywithoutLog')}
+                                        hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}
+                                        activeOpacity={0.7}
+                                        style={styles.linkTouchable}
+                                    >
+                                        <Text style={styles.linkUnderline}>Privacy Policy</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </Animated.View>
 
                             <Animated.View style={[styles.checkboxContainerSecond, { transform: [{ translateX: rememberMePosition }] }]}>
                                 <CheckBox isChecked={rememberMe} onClick={() => setRememberMe(!rememberMe)} checkBoxColor="#1434A4" />
@@ -340,7 +351,7 @@ const styles = StyleSheet.create({
     legend: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', fontSize: isTablet ? 16 : 14, marginBottom: 2, paddingHorizontal: 10 },
     input: { height: isTablet ? 52 : 45, paddingHorizontal: 10, fontSize: isTablet ? 16 : 14 },
     customButton: { marginTop: 25, width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, height: isTablet ? 56 : 50, borderRadius: 5, backgroundColor: '#1434A4', justifyContent: 'center', alignItems: 'center', elevation: 5 },
-    buttonDisabled: { backgroundColor: '#a9a9a9',   elevation: 0,},
+    buttonDisabled: { backgroundColor: '#a9a9a9', elevation: 0, },
     buttonText: { color: '#FFFFFF', fontSize: isTablet ? 18 : 16, fontWeight: 'bold' },
     checkboxesContainer: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', marginTop: 25 },
     checkboxContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },

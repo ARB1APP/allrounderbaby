@@ -15,6 +15,7 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from './config/api';
+import safeJsonParse from './utils/safeJsonParse';
 
 const url = BASE_URL;
 import Orientation from 'react-native-orientation-locker';
@@ -59,7 +60,12 @@ const VideoPlayerScreen = () => {
     try {
       const savedProgress = await AsyncStorage.getItem('userProgress');
       if (savedProgress) {
-        const progressData = JSON.parse(savedProgress);
+        let progressData = [];
+        try {
+          progressData = safeJsonParse(savedProgress, []);
+        } catch (err) {
+          progressData = [];
+        }
         const videoProgress = progressData.find(p => p.video_id === videoId);
         if (videoProgress) {
           currentViews = videoProgress.total_views || 0;
@@ -69,8 +75,12 @@ const VideoPlayerScreen = () => {
     } catch (e) { console.error("Failed to get local video progress:", e); }
 
     const currentTimeInSeconds = Math.round(currentTime / 1000);
-    const isNowConsideredFinished = isFinished || (totalDuration > 0 && currentTimeInSeconds >= totalDuration - 10);
-    const newFinishCount = isNowConsideredFinished ? previousFinishCount + 1 : previousFinishCount;
+    const finishThresholdPercent = 0.8; // 80%
+    const isNowConsideredFinished = isFinished ||
+      (totalDuration > 0 && currentTimeInSeconds >= totalDuration * finishThresholdPercent);
+    const newFinishCount = isNowConsideredFinished && previousFinishCount === 0
+      ? 1
+      : previousFinishCount;
 
     const payload = {
       User_id: parseInt(userId, 10),
@@ -87,24 +97,45 @@ const VideoPlayerScreen = () => {
       deviceKey: deviceKey,
     };
 
+    const fetchWithTimeout = async (resource, options = {}) => {
+      const { timeout = 15000, signal: providedSignal, ...rest } = options;
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      try {
+        const signalToUse = providedSignal || controller.signal;
+        const response = await fetch(resource, { ...rest, signal: signalToUse });
+        return response;
+      } finally {
+        clearTimeout(id);
+      }
+    };
+
     try {
-      
+
       const endpoint = `${url}User/User_Video_Data`;
-      const response = await fetch(endpoint, {
+      const response = await fetchWithTimeout(endpoint, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        timeout: 15000
       });
 
       const responseData = await response.json();
       if (response.ok && responseData.code === 200) {
         try {
           const savedProgress = await AsyncStorage.getItem('userProgress');
-          let progressData = savedProgress ? JSON.parse(savedProgress) : [];
+          let progressData = [];
+          if (savedProgress) {
+            try {
+              progressData = safeJsonParse(savedProgress, []);
+            } catch (err) {
+              progressData = [];
+            }
+          }
           const videoIndex = progressData.findIndex(p => p.video_id === videoId);
 
           if (videoIndex > -1) {
@@ -131,7 +162,7 @@ const VideoPlayerScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-     
+
       progressUpdated.current = false;
 
       return () => {
@@ -216,7 +247,7 @@ const VideoPlayerScreen = () => {
       }
     }
     stopNativePlayer();
-    
+
     await updateVideoProgress(false);
     Orientation.lockToPortrait();
     if (cameFrom === 'Dashboard') {
@@ -230,7 +261,7 @@ const VideoPlayerScreen = () => {
   }, [navigation, cameFrom, updateVideoProgress]);
 
   const handleEnded = useCallback(async () => {
-   if (playerRef.current) {
+    if (playerRef.current) {
       try {
         if (typeof playerRef.current.pause === 'function') {
           playerRef.current.pause();
@@ -243,7 +274,7 @@ const VideoPlayerScreen = () => {
       }
     }
     stopNativePlayer();
-    
+
     await updateVideoProgress(true);
     if (cameFrom === 'Dashboard') {
       navigation.navigate('Home');
@@ -338,7 +369,7 @@ const VideoPlayerScreen = () => {
       }
     };
   }, [updateVideoProgress]);
-  
+
   useEffect(() => {
     const onBlur = () => {
       (async () => {

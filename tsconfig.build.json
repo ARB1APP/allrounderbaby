@@ -1,0 +1,17 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "vdocipher-rn-bridge": [
+                "src/types/shims-vdocipher.d.ts"
+            ],
+            "vdocipher-rn-bridge/*": [
+                "src/types/shims-vdocipher.d.ts"
+            ]
+        }
+    },
+    "include": [
+        "src"
+    ]
+}

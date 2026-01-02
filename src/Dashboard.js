@@ -17,6 +17,27 @@ const formatDuration = (totalSeconds) => {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
+const safeJsonParse = (value, fallback = {}) => {
+    try {
+        return JSON.parse(value);
+    } catch (e) {
+        return fallback;
+    }
+};
+
+const fetchWithTimeout = async (resource, options = {}) => {
+    const { timeout = 15000, signal: providedSignal, ...rest } = options;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+        const signalToUse = providedSignal || controller.signal;
+        const response = await fetch(resource, { ...rest, signal: signalToUse });
+        return response;
+    } finally {
+        clearTimeout(id);
+    }
+};
+
 const StepListItem = React.forwardRef(
     ({ group, onPress, isCompleted, isLocked, isDarkMode, previousDisplay }, ref) => {
 
@@ -145,11 +166,18 @@ const Dashboard = ({ navigation }) => {
     const [unlockedStepsThreshold, setUnlockedStepsThreshold] = useState(0);
     const [lastViewedRequest, setLastViewedRequest] = useState(null);
     const dataLoadedRef = useRef(false);
+    const completedStepsRef = useRef({});
+
+    const setVideoLoader = (value) => {
+        setIsVideoLoading(prev => value ? true : (prev && false));
+    };
 
     const [levelToUnlock, setLevelToUnlock] = useState(null);
     const [middleLevelCompletionTime, setMiddleLevelCompletionTime] = useState(null);
     const [advancedLevelCompletionTime, setAdvancedLevelCompletionTime] = useState(null);
     const [videoData, setVideoData] = useState({});
+    const prefetchingRef = useRef(false);
+    const videoFetchCacheRef = useRef({});
     const scale1 = useRef(new Animated.Value(0)).current;
     const scale2 = useRef(new Animated.Value(0)).current;
     const scale3 = useRef(new Animated.Value(0)).current;
@@ -158,6 +186,11 @@ const Dashboard = ({ navigation }) => {
     const handPositionY = useRef(new Animated.Value(screenHeight * 0.4)).current;
     const handScale = useRef(new Animated.Value(1)).current;
     const opacity = useRef(new Animated.Value(1)).current;
+    const handAnimationRef = useRef(null);
+    const blinkingAnimationRef = useRef(null);
+    const scale1AnimRef = useRef(null);
+    const scale2AnimRef = useRef(null);
+    const scale3AnimRef = useRef(null);
     const isDarkMode = useColorScheme() === 'dark';
     const backgroundStyle = { backgroundColor: isDarkMode ? '#2a3144' : Colors.white };
     const textColorModal = { color: isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)' }
@@ -165,21 +198,28 @@ const Dashboard = ({ navigation }) => {
     const lastBackPressed = useRef(0);
     const levelModalScrollRef = useRef(null);
 
+
     useEffect(() => {
         const onBackPress = () => {
             if (!isFocused) return false;
+            // Close modal first
             if (isModalVisible) {
                 setIsModalVisible(false);
+                lastBackPressed.current = 0;
                 return true;
             }
 
+            // Then close open category
             if (openCategory) {
                 setOpenCategory(null);
+                lastBackPressed.current = 0;
                 return true;
             }
 
+            // Then close active level
             if (activeLevel) {
                 setActiveLevel(null);
+                lastBackPressed.current = 0;
                 return true;
             }
 
@@ -206,7 +246,7 @@ const Dashboard = ({ navigation }) => {
         };
 
         const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-        return () => sub.remove();
+        return () => sub?.remove?.();
     }, [isFocused, isModalVisible, openCategory, activeLevel]);
 
     //redirect to Login if token missing
@@ -331,7 +371,7 @@ const Dashboard = ({ navigation }) => {
 
     useEffect(() => {
         if (levelToUnlock) {
-            handleLevelPress(levelToUnlock, true);
+            handleLevelPress(levelToUnlock);
             setLevelToUnlock(null);
         }
     }, [videoData, masterConfig]);
@@ -369,6 +409,19 @@ const Dashboard = ({ navigation }) => {
             if (stepRef && scrollRef) {
                 const scrollNode = findNodeHandle(scrollRef) || (scrollRef.getInnerViewNode && scrollRef.getInnerViewNode());
 
+                // guard against missing refs (Android edge cases); fallback to top scroll
+                if (!stepRef || !scrollRef) {
+                    try {
+                        if (scrollRef && typeof scrollRef.scrollTo === 'function') {
+                            scrollRef.scrollTo({ y: 0, animated: true });
+                        }
+                    } catch (err) {
+                        console.warn('Fallback scrollTo failed in measure guard:', err);
+                    }
+                    setLastViewedRequest(null);
+                    return;
+                }
+
                 try {
                     stepRef.measureLayout(
                         scrollNode,
@@ -401,7 +454,7 @@ const Dashboard = ({ navigation }) => {
         }, 600);
 
         return () => clearTimeout(timer);
-    }, [openCategory, lastViewedRequest]);
+    }, [openCategory, lastViewedRequest?.trigger]);
 
 
 
@@ -420,13 +473,13 @@ const Dashboard = ({ navigation }) => {
         try {
             const lastViewedJson = await AsyncStorage.getItem('lastViewed');
             if (lastViewedJson) {
-                const lastViewed = JSON.parse(lastViewedJson);
+                const lastViewed = safeJsonParse(lastViewedJson, null);
                 const { category, step } = lastViewed;
 
                 if (category && masterConfig[category]) {
                     const level = getLevelForCategory(category);
                     if (level) {
-                        setLastViewedRequest({ level, category, step });
+                        setLastViewedRequest({ level, category, step, trigger: Date.now() });
                     } else {
                         showToast("Could not find the level for your last viewed topic.");
                     }
@@ -486,6 +539,7 @@ const Dashboard = ({ navigation }) => {
     }, [navigation]);
 
     useEffect(() => { dataLoadedRef.current = dataLoaded; }, [dataLoaded]);
+    useEffect(() => { completedStepsRef.current = completedSteps; }, [completedSteps]);
 
     useEffect(() => {
         if (token && userId) {
@@ -528,11 +582,12 @@ const Dashboard = ({ navigation }) => {
         try {
             const deviceKey = await AsyncStorage.getItem('deviceKey');
             const endpoint = `${url}User/User_Deshboard_Data?id=${userId}&DeviceKey=${deviceKey}`;
-            const response = await fetch(endpoint, {
+            const response = await fetchWithTimeout(endpoint, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
-                }
+                },
+                timeout: 15000
             });
 
             if (!response.ok) {
@@ -548,10 +603,10 @@ const Dashboard = ({ navigation }) => {
                 });
 
                 const savedLocalStepsJson = await AsyncStorage.getItem('completedSteps');
-                const localCompletedSteps = savedLocalStepsJson ? JSON.parse(savedLocalStepsJson) : {};
+                const localCompletedSteps = savedLocalStepsJson ? safeJsonParse(savedLocalStepsJson, {}) : {};
 
                 const savedLocalTopicTimesJson = await AsyncStorage.getItem('topicCompletionTimes');
-                const localTopicTimes = savedLocalTopicTimesJson ? JSON.parse(savedLocalTopicTimesJson) : {};
+                const localTopicTimes = savedLocalTopicTimesJson ? safeJsonParse(savedLocalTopicTimesJson, {}) : {};
 
                 const newCompletedSteps = {};
                 const newTopicCompletionTimes = {};
@@ -663,6 +718,11 @@ const Dashboard = ({ navigation }) => {
                 await AsyncStorage.setItem('completedSteps', JSON.stringify(mergedCompletedSteps));
                 await AsyncStorage.setItem('topicCompletionTimes', JSON.stringify(mergedTopicTimes));
                 setDataLoaded(true);
+            } else {
+                console.warn('fetchUserProgress: unexpected API response', result);
+                Alert.alert('Sync Error', 'Could not load your progress data. Some features may be unavailable.');
+                setDataLoaded(true);
+                return;
             }
         } catch (error) {
             console.error("Failed to fetch user progress:", error);
@@ -673,7 +733,7 @@ const Dashboard = ({ navigation }) => {
         try {
             const savedSteps = await AsyncStorage.getItem('completedSteps');
             if (savedSteps !== null) {
-                setCompletedSteps(JSON.parse(savedSteps));
+                setCompletedSteps(safeJsonParse(savedSteps, {}));
             }
         } catch (error) {
             console.error("Failed to load completed steps from storage", error);
@@ -684,7 +744,7 @@ const Dashboard = ({ navigation }) => {
         try {
             const savedTimes = await AsyncStorage.getItem('topicCompletionTimes');
             if (savedTimes !== null) {
-                setTopicCompletionTimes(JSON.parse(savedTimes));
+                setTopicCompletionTimes(safeJsonParse(savedTimes, {}));
             }
         } catch (error) {
             console.error("Failed to load topic completion times from storage", error);
@@ -715,9 +775,11 @@ const Dashboard = ({ navigation }) => {
 
     const saveCompletedStep = async (stepKey) => {
         try {
-            const newCompletedSteps = { ...completedSteps, [stepKey]: true };
-            setCompletedSteps(newCompletedSteps);
-            await AsyncStorage.setItem('completedSteps', JSON.stringify(newCompletedSteps));
+            setCompletedSteps(prev => {
+                const updated = { ...prev, [stepKey]: true };
+                AsyncStorage.setItem('completedSteps', JSON.stringify(updated)).catch(err => console.error('Failed to persist completedSteps', err));
+                return updated;
+            });
         } catch (error) {
             console.error("Failed to save completed step to storage", error);
         }
@@ -739,21 +801,43 @@ const Dashboard = ({ navigation }) => {
     };
 
     useEffect(() => {
-        const handAnimation = startHandAnimation();
-        handAnimation.start();
+        // start and retain refs to animations so we can stop them on unmount
+        try {
+            handAnimationRef.current = startHandAnimation();
+            handAnimationRef.current && handAnimationRef.current.start && handAnimationRef.current.start();
+        } catch (e) {
+            console.error('Failed to start handAnimation', e);
+        }
 
-        const blinkingAnimation = Animated.loop(
-            Animated.sequence([Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true }), Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: true }),]), { iterations: 8 }
-        );
-        blinkingAnimation.start();
+        try {
+            blinkingAnimationRef.current = Animated.loop(
+                Animated.sequence([
+                    Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true }),
+                    Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+                ]), { iterations: 8 }
+            );
+            blinkingAnimationRef.current.start && blinkingAnimationRef.current.start();
+        } catch (e) {
+            console.error('Failed to start blinkingAnimation', e);
+        }
 
-        Animated.timing(scale1, { toValue: 1, duration: 600, useNativeDriver: true }).start();
-        Animated.timing(scale2, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start();
-        Animated.timing(scale3, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true }).start();
+        try {
+            scale1AnimRef.current = Animated.timing(scale1, { toValue: 1, duration: 600, useNativeDriver: true });
+            scale2AnimRef.current = Animated.timing(scale2, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true });
+            scale3AnimRef.current = Animated.timing(scale3, { toValue: 1, duration: 600, delay: 200, useNativeDriver: true });
+            scale1AnimRef.current.start && scale1AnimRef.current.start();
+            scale2AnimRef.current.start && scale2AnimRef.current.start();
+            scale3AnimRef.current.start && scale3AnimRef.current.start();
+        } catch (e) {
+            console.error('Failed to start scale animations', e);
+        }
 
         return () => {
-            try { handAnimation.stop(); } catch (e) { }
-            try { blinkingAnimation.stop(); } catch (e) { }
+            try { handAnimationRef.current?.stop?.(); } catch (e) { console.error('Failed to stop handAnimation', e); }
+            try { blinkingAnimationRef.current?.stop?.(); } catch (e) { console.error('Failed to stop blinkingAnimation', e); }
+            try { scale1AnimRef.current?.stop?.(); } catch (e) { console.error('Failed to stop scale1 animation', e); }
+            try { scale2AnimRef.current?.stop?.(); } catch (e) { console.error('Failed to stop scale2 animation', e); }
+            try { scale3AnimRef.current?.stop?.(); } catch (e) { console.error('Failed to stop scale3 animation', e); }
         };
     }, []);
 
@@ -763,22 +847,58 @@ const Dashboard = ({ navigation }) => {
         let allVideos = { rows: [] };
         for (const folderId of folderIds) {
             try {
-                const endpoint = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
-                const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' } });
-                if (!response.ok) throw new Error(`Failed to fetch videos for folder ${folderId}`);
-                const data = await response.json();
+                const cacheEntry = videoFetchCacheRef.current[folderId];
+                if (cacheEntry) {
+                    if (cacheEntry.promise) {
+                        const data = await cacheEntry.promise;
+                        if (data && data.rows) allVideos.rows.push(...data.rows);
+                        continue;
+                    }
+                    if (cacheEntry.data) {
+                        allVideos.rows.push(...(cacheEntry.data.rows || []));
+                        continue;
+                    }
+                }
+
+                const fetchPromise = (async () => {
+                    const endpoint = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
+                    const response = await fetchWithTimeout(endpoint, { headers: { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' }, timeout: 15000 });
+                    if (!response.ok) throw new Error(`Failed to fetch videos for folder ${folderId}`);
+                    const data = await response.json();
+                    // store resolved data in cache
+                    videoFetchCacheRef.current[folderId] = { data };
+                    return data;
+                })();
+
+                // mark in-flight
+                videoFetchCacheRef.current[folderId] = { promise: fetchPromise };
+                const data = await fetchPromise;
                 if (data && data.rows) { allVideos.rows.push(...data.rows); }
             } catch (error) {
                 console.error(`Error fetching videos from folder ${folderId}:`, error);
                 Alert.alert("API Error", `Could not load some videos. Please check your connection and try again. Details: ${error.message}`);
             }
         }
-        return allVideos;
+
+        // dedupe rows by id
+        const unique = [];
+        const seen = new Set();
+        for (const r of allVideos.rows) {
+            if (!r) continue;
+            const id = r.id ?? `${r.title ?? ''}-${r.length ?? ''}`;
+            if (!id) { unique.push(r); continue; }
+            if (seen.has(id)) continue;
+            seen.add(id);
+            unique.push(r);
+        }
+        return { rows: unique };
 
     };
 
 
     const prefetchAllCategoryVideos = async (authToken) => {
+        if (prefetchingRef.current) return;
+        prefetchingRef.current = true;
         try {
             const keys = Object.keys(masterConfig || {});
             const fetched = {};
@@ -799,15 +919,18 @@ const Dashboard = ({ navigation }) => {
             return fetched;
         } catch (err) {
             console.error('Failed to prefetch category videos:', err);
+            return {};
+        } finally {
+            prefetchingRef.current = false;
         }
     };
 
-    const ensureCategoryDataIsLoaded = async (categoryKey) => {
+    const ensureCategoryDataIsLoaded = async (categoryKey, manageLoading = true) => {
         const config = masterConfig[categoryKey];
         if (config && !videoData[categoryKey]?.rows?.length) {
-            setIsVideoLoading(true);
+            if (manageLoading) setVideoLoader(true);
             const videoDetails = await fetchVideos(config.folderIds || [config.folderId]);
-            setIsVideoLoading(false);
+            if (manageLoading) setVideoLoader(false);
             if (videoDetails) {
                 setVideoData(prevData => ({
                     ...prevData,
@@ -850,7 +973,7 @@ const Dashboard = ({ navigation }) => {
                 const lastStepNumber = lastStepOfPrereq.stepNumber;
                 const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}&DeviceKey=${deviceKey}`;
                 try {
-                    const response = await fetch(DETAILS_ENDPOINT, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
+                    const response = await fetchWithTimeout(DETAILS_ENDPOINT, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }, timeout: 15000 });
 
                     if (response.ok) {
                         const data = await response.json();
@@ -870,7 +993,7 @@ const Dashboard = ({ navigation }) => {
                                     try {
                                         const notifKey = 'topicUnlockNotified';
                                         const notifiedJson = await AsyncStorage.getItem(notifKey);
-                                        const notified = notifiedJson ? JSON.parse(notifiedJson) : {};
+                                        const notified = notifiedJson ? safeJsonParse(notifiedJson, {}) : {};
                                         if (!notified[categoryKey]) {
                                             showToast('Your next Topic is now unlocked. Start watching!');
                                             notified[categoryKey] = true;
@@ -882,6 +1005,10 @@ const Dashboard = ({ navigation }) => {
                                     }
                                 }
                             }
+                        } else {
+                            console.warn('arePrerequisitesMet: could not verify prerequisite completion', data);
+                            showToast('Could not verify prerequisite completion. Please try again.');
+                            return false;
                         }
                     }
                 } catch (error) {
@@ -917,10 +1044,15 @@ const Dashboard = ({ navigation }) => {
         if (isDataLoaded) {
             setOpenCategory(categoryKey);
         } else {
-            setIsVideoLoading(true);
-            await ensureCategoryDataIsLoaded(categoryKey);
-            setIsVideoLoading(false);
-            setOpenCategory(categoryKey);
+            setVideoLoader(true);
+            const loaded = await ensureCategoryDataIsLoaded(categoryKey, false);
+            setVideoLoader(false);
+            if (loaded) {
+                setOpenCategory(categoryKey);
+            } else {
+                Alert.alert('Error', 'Could not load videos for this category. Please try again.');
+                setOpenCategory(null);
+            }
         }
     };
 
@@ -954,13 +1086,18 @@ const Dashboard = ({ navigation }) => {
                 const videoIdsForStep = [hindiVideoId, englishVideoId].filter(Boolean);
                 for (const id of videoIdsForStep) {
                     const endpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${id}&DeviceKey=${deviceKey}`;
-                    const response = await fetch(endpoint, {
-                        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+                    const response = await fetchWithTimeout(endpoint, {
+                        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+                        timeout: 15000
                     });
                     if (response.ok) {
                         const result = await response.json();
                         if (result.isSuccess && result.data) {
                             totalWatchCount += result.data.reduce((sum, record) => sum + (Number(record.is_finished) || 0), 0);
+                        } else {
+                            console.warn('Could not fetch watch counts for video id', id, result);
+                            showToast('Could not verify video watch counts. Please try again later.');
+                            return;
                         }
                     }
                 }
@@ -970,8 +1107,9 @@ const Dashboard = ({ navigation }) => {
                     return;
                 }
                 const specificVideoEndpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${videoId}&DeviceKey=${deviceKey}`;
-                const specificVideoResponse = await fetch(specificVideoEndpoint, {
-                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+                const specificVideoResponse = await fetchWithTimeout(specificVideoEndpoint, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+                    timeout: 15000
                 });
                 if (specificVideoResponse.ok) {
                     const specificResult = await specificVideoResponse.json();
@@ -997,10 +1135,14 @@ const Dashboard = ({ navigation }) => {
         }
 
         setIsModalVisible(false);
-        setIsVideoLoading(true);
+        setVideoLoader(true);
         let total_time = 0;
         try {
             const videoDetails = await vdoCipherApi(videoId);
+            if (!videoDetails) {
+                Alert.alert("Error", "Could not fetch video details. Please try again.");
+                return;
+            }
             if (videoDetails && videoDetails.length) {
                 total_time = videoDetails.length;
             } else {
@@ -1011,7 +1153,7 @@ const Dashboard = ({ navigation }) => {
             const email = await AsyncStorage.getItem('userEmail') || 'N/A';
             const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
             const sessionId = await AsyncStorage.getItem('sessionId');
-            const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
+            const watermarkText = `${name}, ${email}, ${phone}, ${sessionId}`;
             const annotationObject = [{
                 type: 'rtext',
                 text: watermarkText,
@@ -1026,13 +1168,15 @@ const Dashboard = ({ navigation }) => {
                 annotate: JSON.stringify(annotationObject)
             };
 
-            const response = await fetch(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
+            const response = await fetchWithTimeout(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
                 method: 'POST',
                 headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(requestBody),
+                timeout: 15000
             });
             if (!response.ok) { throw new Error("Video not found or failed to get OTP."); }
             const data = await response.json();
+            if (!data) return;
 
             await saveCompletedStep(`step${step}`);
             try {
@@ -1045,11 +1189,13 @@ const Dashboard = ({ navigation }) => {
             } catch (err) {
                 console.error('Failed to save last viewed info:', err);
             }
+
             if (openCategory) {
                 const category = masterConfig[openCategory];
                 const allSteps = category.finalGroupedData.map(g => `step${g.stepNumber}`);
-                const newCompletedSteps = { ...completedSteps, [`step${step}`]: true };
-                const isCategoryComplete = allSteps.every(stepKey => newCompletedSteps[stepKey]);
+
+                const mergedCompletedSteps = { ...(completedStepsRef.current || {}), [`step${step}`]: true };
+                const isCategoryComplete = allSteps.every(stepKey => mergedCompletedSteps[stepKey]);
 
                 if (isCategoryComplete && !topicCompletionTimes[openCategory]) {
                     await updateTopicCompletionTime(openCategory, new Date().toISOString());
@@ -1093,26 +1239,27 @@ const Dashboard = ({ navigation }) => {
         } catch (err) {
             Alert.alert("Error", err.message);
         } finally {
-            setIsVideoLoading(false);
+            setVideoLoader(false);
         }
     };
 
 
     const vdoCipherApi = async (videoId) => {
-        setIsVideoLoading(true);
+        setVideoLoader(true);
         if (!videoId) {
             Alert.alert("Error", "Missing video ID to get details.");
-            setIsVideoLoading(false);
+            setVideoLoader(false);
             return null;
         }
         const DETAILS_ENDPOINT = `${url}Vdocipher/GetVDOCipher_VideosDetails?videoId=${videoId}`;
         try {
-            const response = await fetch(DETAILS_ENDPOINT, {
+            const response = await fetchWithTimeout(DETAILS_ENDPOINT, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
-                }
+                },
+                timeout: 15000
             });
             if (!response.ok) {
                 throw new Error("Failed to get video details.");
@@ -1122,7 +1269,7 @@ const Dashboard = ({ navigation }) => {
             Alert.alert("API Error", `An unexpected error occurred: ${error.message}`);
             return null;
         } finally {
-            setIsVideoLoading(false);
+            setVideoLoader(false);
         }
     };
 
@@ -1133,10 +1280,10 @@ const Dashboard = ({ navigation }) => {
         }
 
         const folderId = "8a15a7910bcb41a897b50111ec4f95d9";
-        setIsVideoLoading(true);
+        setVideoLoader(true);
         const videoDetails = await fetchVideos([folderId]);
         if (introType === 2) { }
-        setIsVideoLoading(false);
+        setVideoLoader(false);
         if (videoDetails?.rows?.length >= 4) {
             setVideoData(prevData => ({
                 ...prevData,
@@ -1163,7 +1310,7 @@ const Dashboard = ({ navigation }) => {
                 .map(key => fetchVideos(masterConfig[key].folderIds || [masterConfig[key].folderId]).then(details => ({ key, details })));
 
             if (dataFetchPromises.length > 0) {
-                setIsVideoLoading(true);
+                setVideoLoader(true);
                 try {
                     const results = await Promise.all(dataFetchPromises);
                     setVideoData(prevData => {
@@ -1174,7 +1321,7 @@ const Dashboard = ({ navigation }) => {
                         return newData;
                     });
                 } finally {
-                    setIsVideoLoading(false);
+                    setVideoLoader(false);
                 }
             }
             return true;
@@ -1186,9 +1333,9 @@ const Dashboard = ({ navigation }) => {
                 .map(key => fetchVideos(masterConfig[key].folderIds || [masterConfig[key].folderId]).then(details => ({ key, details })));
 
             if (dataFetchPromises.length > 0) {
-                setIsVideoLoading(true);
+                setVideoLoader(true);
                 const results = await Promise.all(dataFetchPromises);
-                setIsVideoLoading(false);
+                setVideoLoader(false);
 
                 setVideoData(prevData => {
                     const newData = { ...prevData };
@@ -1220,11 +1367,11 @@ const Dashboard = ({ navigation }) => {
                 return;
             }
             await loadLevelVideos(foundationKeys);
-            const lastStepOfMiddle = "49";
+            const lastStepOfMiddle = 49;
             if (lastStepOfMiddle > 0) {
                 const endpoint = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepOfMiddle}&DeviceKey=${deviceKey}`;
                 try {
-                    const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
+                    const response = await fetchWithTimeout(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }, timeout: 15000 });
                     if (response.ok) {
                         const result = await response.json();
                         if (result.isSuccess && result.data && result.data.length > 0) {
@@ -1234,6 +1381,9 @@ const Dashboard = ({ navigation }) => {
                                 Alert.alert('You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.');
                                 return;
                             }
+                        } else {
+                            console.warn('Could not check lastStepOfMiddle lock status', result);
+                            showToast('Could not verify unlock status. Please try again later.');
                         }
                     }
                 } catch (error) { console.error("Could not check foundation lock time", error); }
@@ -1244,11 +1394,11 @@ const Dashboard = ({ navigation }) => {
             const foundationComplete = await checkAndLoadPrerequisites(foundationKeys, 'Foundation');
             if (foundationComplete) {
                 await loadLevelVideos(middleKeys);
-                const StepOfAdvance = "84";
+                const StepOfAdvance = 84;
                 if (StepOfAdvance > 0) {
                     const endpoint = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${StepOfAdvance}&DeviceKey=${deviceKey}`;
                     try {
-                        const response = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
+                        const response = await fetchWithTimeout(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }, timeout: 15000 });
                         if (response.ok) {
                             const result = await response.json();
                             if (result.isSuccess && result.data && result.data.length > 0) {
@@ -1258,6 +1408,9 @@ const Dashboard = ({ navigation }) => {
                                     Alert.alert(" You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.");
                                     return;
                                 }
+                            } else {
+                                console.warn('Could not check StepOfAdvance lock status', result);
+                                showToast('Could not verify unlock status. Please try again later.');
                             }
                         }
                     } catch (error) { console.error("Could not check foundation lock time", error); }
@@ -1322,6 +1475,12 @@ const Dashboard = ({ navigation }) => {
                 });
             } catch (e) {
                 console.warn('Failed to scroll level modal to top:', e);
+                try {
+                    // fallback: try without animation or with a short timeout
+                    levelModalScrollRef.current.scrollTo({ y: 0, animated: false });
+                } catch (err) {
+                    console.error('Fallback scrollTo also failed:', err);
+                }
             }
         }, 300);
         return () => clearTimeout(timeout);
@@ -1403,8 +1562,20 @@ const Dashboard = ({ navigation }) => {
                         <View style={styles.borderLine} />
                         <Text style={[styles.modalText, textColorModalPara]}>In which language would you like to watch this video?</Text>
                         <View style={styles.modalButtons}>
-                            <TouchableOpacity style={[styles.modalButton, !selectedStepGroup.hindiVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.hindiVideo.id, selectedStepGroup.stepNumber, 'hindi')} disabled={!selectedStepGroup.hindiVideo}><Text style={styles.modalButtonText}>Hindi</Text></TouchableOpacity>
-                            <TouchableOpacity style={[styles.modalButton, !selectedStepGroup.englishVideo && styles.disabledButton]} onPress={() => handleVideo(selectedStepGroup.englishVideo.id, selectedStepGroup.stepNumber, 'english')} disabled={!selectedStepGroup.englishVideo}><Text style={styles.modalButtonText}>English</Text></TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, !selectedStepGroup.hindiVideo && styles.disabledButton]}
+                                onPress={() => { if (!selectedStepGroup?.hindiVideo) return; handleVideo(selectedStepGroup.hindiVideo.id, selectedStepGroup.stepNumber, 'hindi'); }}
+                                disabled={!selectedStepGroup.hindiVideo}
+                            >
+                                <Text style={styles.modalButtonText}>Hindi</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, !selectedStepGroup.englishVideo && styles.disabledButton]}
+                                onPress={() => { if (!selectedStepGroup?.englishVideo) return; handleVideo(selectedStepGroup.englishVideo.id, selectedStepGroup.stepNumber, 'english'); }}
+                                disabled={!selectedStepGroup.englishVideo}
+                            >
+                                <Text style={styles.modalButtonText}>English</Text>
+                            </TouchableOpacity>
                         </View>
                     </Pressable>
                 </View>

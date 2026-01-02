@@ -85,7 +85,7 @@ const ReferralHistory = ({ navigation, route }) => {
 
     setIsLoading(true);
     const API_ENDPOINT = `${url}ReferralTransaction/ReferralTransactionList_Get_ByID?ReferralCodeFromUserID=${currentUserId}`;
-  
+
 
     try {
       const response = await fetch(API_ENDPOINT, {
@@ -101,7 +101,7 @@ const ReferralHistory = ({ navigation, route }) => {
         let errorData;
         const responseText = await response.text();
         try {
-          errorData = JSON.parse(responseText);
+          errorData = safeJsonParse(responseText, { message: response.statusText, rawResponse: responseText });
         } catch (parseError) {
           errorData = { message: response.statusText, rawResponse: responseText };
         }
@@ -163,10 +163,10 @@ const ReferralHistory = ({ navigation, route }) => {
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={theme.screenBackground} />
       <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.header}>
-            <TouchableOpacity onPress={handlereferAndearnBackpress} style={styles.backButton}>
-                <Image source={require('../img/arrowicon.png')} style={[styles.backIcon, { tintColor: theme.textPrimary }]} />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Referral History</Text>
+          <TouchableOpacity onPress={handlereferAndearnBackpress} style={styles.backButton}>
+            <Image source={require('../img/arrowicon.png')} style={[styles.backIcon, { tintColor: theme.textPrimary }]} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Referral History</Text>
         </View>
 
         {isLoading ? (
