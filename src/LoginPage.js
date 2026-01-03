@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, ScrollView,
-    StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, Dimensions, BackHandler, ToastAndroid
+    StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, Dimensions, BackHandler, ToastAndroid,
 } from 'react-native';
 import { exitApp } from './utils/exitApp';
 import CheckBox from 'react-native-check-box';
@@ -57,13 +57,12 @@ const LoginPage = ({ navigation }) => {
                 const rememberPref = await AsyncStorage.getItem('rememberMePreference');
                 if (rememberPref === 'true') {
                     let creds = null;
-                    if (keychainAvailable) creds = await Keychain.getGenericPassword({ service: 'loginCredentials' });
+                    if (keychainAvailable) { creds = await Keychain.getGenericPassword({ service: 'loginCredentials' }); }
                     if (creds) {
                         setUsername(creds.username);
                         setPassword(creds.password);
                         setRememberMe(true);
                     } else {
-                        // Clear stale preference if no credentials are available
                         try { await AsyncStorage.removeItem('rememberMePreference'); } catch (e) { console.error('Failed to remove rememberMePreference', e); }
                         setRememberMe(false);
                     }
@@ -91,7 +90,7 @@ const LoginPage = ({ navigation }) => {
 
     useEffect(() => {
         const onBackPress = async () => {
-            if (!isFocused) return false;
+            if (!isFocused) { return false; }
             if (showLoginForm) {
                 setShowLoginForm(false);
                 return true;
@@ -102,7 +101,7 @@ const LoginPage = ({ navigation }) => {
                 return true;
             }
             lastBackPressed.current = now;
-            if (Platform.OS === 'android') ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+            if (Platform.OS === 'android') { ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT); }
             return true;
         };
         const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
@@ -114,7 +113,7 @@ const LoginPage = ({ navigation }) => {
         Animated.parallel([
             Animated.timing(welcomeOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
             Animated.timing(loginOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
-            Animated.timing(imageOpacity, { toValue: 1, duration: 800, useNativeDriver: true })
+            Animated.timing(imageOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
         ]).start();
     };
 
@@ -122,12 +121,12 @@ const LoginPage = ({ navigation }) => {
         if (showLoginForm) {
             Animated.parallel([
                 Animated.timing(imageOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
-                Animated.timing(loginOpacity, { toValue: 1, duration: 500, useNativeDriver: true })
+                Animated.timing(loginOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
             ]).start();
         } else {
             Animated.parallel([
                 Animated.timing(imageOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-                Animated.timing(loginOpacity, { toValue: 0, duration: 300, useNativeDriver: true })
+                Animated.timing(loginOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
             ]).start();
         }
     }, [showLoginForm]);
@@ -150,7 +149,7 @@ const LoginPage = ({ navigation }) => {
     };
 
     const handleLogin = async () => {
-        if (loginInProgressRef.current) return;
+        if (loginInProgressRef.current) { return; }
         loginInProgressRef.current = true;
         setIsLoggingIn(true);
         setUsernameError('');
@@ -159,7 +158,7 @@ const LoginPage = ({ navigation }) => {
         try {
             const netInfo = await NetInfo.fetch();
             if (!netInfo.isInternetReachable) {
-                Alert.alert("No Connection", "Please check your internet.");
+                Alert.alert('No Connection', 'Please check your internet.');
                 return;
             }
 
@@ -168,7 +167,7 @@ const LoginPage = ({ navigation }) => {
 
             if (!trimmedU) { setUsernameError('❗Please enter username.'); return; }
             if (!trimmedP) { setPasswordError('❗Please enter password.'); return; }
-            if (!termsAccepted) { Alert.alert("Wait!", "Please accept terms."); return; }
+            if (!termsAccepted) { Alert.alert('Wait!', 'Please accept terms.'); return; }
 
             let devicekey = await getDeviceKey();
             const API_URL = `${BASE_URL}Login/LoginMobileUser?username=${encodeURIComponent(trimmedU)}&password=${encodeURIComponent(trimmedP)}&deviceId=${encodeURIComponent(devicekey)}`;
@@ -176,7 +175,7 @@ const LoginPage = ({ navigation }) => {
             const response = await fetch(API_URL);
             const data = await response.json();
 
-            if (!data || !data.data) {
+            if (!data) {
                 setIsLoggingIn(false);
                 loginInProgressRef.current = false;
                 return;
@@ -192,12 +191,12 @@ const LoginPage = ({ navigation }) => {
                     ['token', data.data.token],
                     ['userId', data.data.userID.toString()],
                     ['deviceKey', finalDeviceKey],
-                    ['sessionId', sessionId]
+                    ['sessionId', sessionId],
                 ];
 
-                if (firstName && lastName) items.push(['Name', `${firstName} ${lastName}`]);
-                if (emailAddress) items.push(['userEmail', emailAddress]);
-                if (phoneNumber) items.push(['phoneNumber', phoneNumber]);
+                if (firstName && lastName) { items.push(['Name', `${firstName} ${lastName}`]); }
+                if (emailAddress) { items.push(['userEmail', emailAddress]); }
+                if (phoneNumber) { items.push(['phoneNumber', phoneNumber]); }
 
                 await AsyncStorage.multiSet(items);
 
@@ -205,7 +204,7 @@ const LoginPage = ({ navigation }) => {
                 console.log('Login API call completed successfully');
 
                 if (rememberMe) {
-                    if (keychainAvailable) await Keychain.setGenericPassword(trimmedU, trimmedP, { service: 'loginCredentials' });
+                    if (keychainAvailable) { await Keychain.setGenericPassword(trimmedU, trimmedP, { service: 'loginCredentials' }); }
                     await AsyncStorage.setItem('rememberMePreference', 'true');
                 }
 
@@ -214,7 +213,7 @@ const LoginPage = ({ navigation }) => {
                 setPasswordError(data.message || '❗Invalid credentials.');
             }
         } catch (e) {
-            Alert.alert("Error", "Login failed.");
+            console.error('Login failed.', e);
         } finally {
             loginInProgressRef.current = false;
             setIsLoggingIn(false);
@@ -231,7 +230,7 @@ const LoginPage = ({ navigation }) => {
 
     return (
         <View style={[styles.outermostContainer, backgroundStyle]}>
-            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={backgroundStyle.backgroundColor} />
+            <StatusBar barStyle={'light-content'} backgroundColor={backgroundStyle.backgroundColor} />
 
             {!showLoginForm ? (
                 <Animated.View style={[styles.container, { opacity: welcomeOpacity }]}>
@@ -351,7 +350,7 @@ const styles = StyleSheet.create({
     legend: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', fontSize: isTablet ? 16 : 14, marginBottom: 2, paddingHorizontal: 10 },
     input: { height: isTablet ? 52 : 45, paddingHorizontal: 10, fontSize: isTablet ? 16 : 14 },
     customButton: { marginTop: 25, width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, height: isTablet ? 56 : 50, borderRadius: 5, backgroundColor: '#1434A4', justifyContent: 'center', alignItems: 'center', elevation: 5 },
-    buttonDisabled: { backgroundColor: '#a9a9a9', elevation: 0, },
+    buttonDisabled: { backgroundColor: '#a9a9a9', elevation: 0 },
     buttonText: { color: '#FFFFFF', fontSize: isTablet ? 18 : 16, fontWeight: 'bold' },
     checkboxesContainer: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', marginTop: 25 },
     checkboxContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },

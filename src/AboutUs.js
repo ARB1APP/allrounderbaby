@@ -3,7 +3,7 @@ import {
   StyleSheet,
   Text,
   View,
-  
+
   BackHandler,
   Image,
   StatusBar,
@@ -19,7 +19,7 @@ const lightThemeColors = {
   textMuted: '#718096',
   accentColor: 'rgba(20, 52, 164, 1)',
   borderColor: '#E2E8F0',
-  statusBarContent: 'dark-content',
+  statusBarContent: 'light-content',
 };
 
 const darkThemeColors = {
@@ -137,7 +137,7 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
   },
   sectionHeaderFlex: {
     marginHorizontal: 20,
-    flexDirection: 'row'
+    flexDirection: 'row',
   },
   sectionContainer: {
     padding: 10,
@@ -185,11 +185,11 @@ const AboutUs = ({ navigation, route }) => {
         <View style={[
           styles.sectionContainer,
           { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-          { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+          { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
         ]}>
           <Text style={[
             styles.sectionHeader,
-            { color: isDarkMode ? '#fff' : '#1434a4' }
+            { color: isDarkMode ? '#fff' : '#1434a4' },
           ]}>About us</Text>
           <Text style={styles.introParagraph}>
             At SarvaShine Allrounder Baby Solutions Private Limited, also known as AllrounderBaby.com, we are redefining the way parents nurture their little ones.
@@ -214,20 +214,20 @@ const AboutUs = ({ navigation, route }) => {
         <View style={[
           styles.sectionContainer,
           { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-          { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+          { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
         ]}>
           <View style={styles.sectionHeaderFlex}>
             <Image
               source={require('../img/visionicon.png')}
               style={[
                 styles.Titlelogo,
-                { tintColor: isDarkMode ? '#fff' : '#1434a4' }
+                { tintColor: isDarkMode ? '#fff' : '#1434a4' },
               ]}
               accessibilityLabel="Title Logo"
             />
             <Text style={[
               styles.TitleText,
-              { color: isDarkMode ? '#fff' : '#1434a4' }
+              { color: isDarkMode ? '#fff' : '#1434a4' },
             ]}>
               Our Vision
             </Text>
@@ -239,20 +239,20 @@ const AboutUs = ({ navigation, route }) => {
         <View style={[
           styles.sectionContainer,
           { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-          { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+          { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
         ]}>
           <View style={styles.sectionHeaderFlex}>
             <Image
               source={require('../img/target.png')}
               style={[
                 styles.Titlelogo,
-                { tintColor: isDarkMode ? '#fff' : '#1434a4' }
+                { tintColor: isDarkMode ? '#fff' : '#1434a4' },
               ]}
               accessibilityLabel="Title Logo"
             />
             <Text style={[
               styles.TitleText,
-              { color: isDarkMode ? '#fff' : '#1434a4' }
+              { color: isDarkMode ? '#fff' : '#1434a4' },
             ]}>
               Our Mission
             </Text>
@@ -265,31 +265,31 @@ const AboutUs = ({ navigation, route }) => {
         <View style={[
           styles.sectionContainer,
           { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-          { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+          { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
         ]}>
           <Text style={[
             styles.sectionHeader,
-            { color: isDarkMode ? '#fff' : '#1434a4' }
+            { color: isDarkMode ? '#fff' : '#1434a4' },
           ]}>Our Core Values</Text>
 
           <View style={[
             styles.sectionContainer,
             { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-            { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+            { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
           ]}>
             <View style={styles.sectionHeaderFlex}>
               <Image
                 source={require('../img/heart.png')}
                 style={[
                   styles.Titlelogo,
-                  { tintColor: isDarkMode ? '#fff' : '#dc3545' }
+                  { tintColor: isDarkMode ? '#fff' : '#dc3545' },
                 ]}
                 accessibilityLabel="Heart icon representing empathy"
               />
               <Text
                 style={[
                   styles.TitleText,
-                  { color: isDarkMode ? '#fff' : '#1434a4' }
+                  { color: isDarkMode ? '#fff' : '#1434a4' },
                 ]}
               >
                 Empathy at the Core
@@ -298,7 +298,7 @@ const AboutUs = ({ navigation, route }) => {
 
             <Text style={[
               styles.introParagraph,
-              { color: isDarkMode ? '#fff' : '#4A5568' }
+              { color: isDarkMode ? '#fff' : '#4A5568' },
             ]}>
               We understand the joys and struggles of parenting firsthand. We uplift parents with warmth, kindness, and unwavering support.
             </Text>
@@ -307,20 +307,20 @@ const AboutUs = ({ navigation, route }) => {
           <View style={[
             styles.sectionContainer,
             { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-            { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+            { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
           ]}>
             <View style={styles.sectionHeaderFlex}>
               <Image
                 source={require('../img/lightbulb.png')}
                 style={[
                   styles.Titlelogo,
-                  { tintColor: isDarkMode ? '#fff' : '#ffc107' }
+                  { tintColor: isDarkMode ? '#fff' : '#ffc107' },
                 ]}
                 accessibilityLabel="Title Logo"
               />
               <Text style={[
                 styles.TitleText,
-                { color: isDarkMode ? '#fff' : '#1434a4' }
+                { color: isDarkMode ? '#fff' : '#1434a4' },
               ]}>
                 Innovation & Science-Driven Excellence
               </Text>
@@ -332,7 +332,7 @@ const AboutUs = ({ navigation, route }) => {
           <View style={[
             styles.sectionContainer,
             { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-            { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+            { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
           ]}>
 
             <View style={styles.sectionHeaderFlex}>
@@ -340,13 +340,13 @@ const AboutUs = ({ navigation, route }) => {
                 source={require('../img/shield.png')}
                 style={[
                   styles.Titlelogo,
-                  { tintColor: isDarkMode ? '#fff' : '#198754' }
+                  { tintColor: isDarkMode ? '#fff' : '#198754' },
                 ]}
                 accessibilityLabel="Title Logo"
               />
               <Text style={[
                 styles.TitleText,
-                { color: isDarkMode ? '#fff' : '#1434a4' }
+                { color: isDarkMode ? '#fff' : '#1434a4' },
               ]}>
                 Integrity & Transparency
               </Text>
@@ -358,20 +358,20 @@ const AboutUs = ({ navigation, route }) => {
           <View style={[
             styles.sectionContainer,
             { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-            { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+            { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
           ]}>
             <View style={styles.sectionHeaderFlex}>
               <Image
                 source={require('../img/usersgroup.png')}
                 style={[
                   styles.Titlelogo,
-                  { tintColor: isDarkMode ? '#fff' : '#0dcaf0' }
+                  { tintColor: isDarkMode ? '#fff' : '#0dcaf0' },
                 ]}
                 accessibilityLabel="Title Logo"
               />
               <Text style={[
                 styles.TitleText,
-                { color: isDarkMode ? '#fff' : '#1434a4' }
+                { color: isDarkMode ? '#fff' : '#1434a4' },
               ]}>
                 Community & Collaboration
               </Text>
@@ -383,20 +383,20 @@ const AboutUs = ({ navigation, route }) => {
           <View style={[
             styles.sectionContainer,
             { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-            { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+            { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
           ]}>
             <View style={styles.sectionHeaderFlex}>
               <Image
                 source={require('../img/facesmile.png')}
                 style={[
                   styles.Titlelogo,
-                  { tintColor: isDarkMode ? '#fff' : '#0a58ca' }
+                  { tintColor: isDarkMode ? '#fff' : '#0a58ca' },
                 ]}
                 accessibilityLabel="Title Logo"
               />
               <Text style={[
                 styles.TitleText,
-                { color: isDarkMode ? '#fff' : '#1434a4' }
+                { color: isDarkMode ? '#fff' : '#1434a4' },
               ]}>
                 Spreading fulfillment in Parenting
               </Text>
@@ -410,11 +410,11 @@ const AboutUs = ({ navigation, route }) => {
         <View style={[
           styles.sectionContainer,
           { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-          { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+          { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
         ]}>
           <Text style={[
             styles.sectionHeader,
-            { color: isDarkMode ? '#fff' : '#1434a4' }
+            { color: isDarkMode ? '#fff' : '#1434a4' },
           ]}>Our Objectives</Text>
           <Text style={styles.introParagraph}>
             ✅ To transform parenting through accessible, science- backed early childhood development programs that bring happiness to parents and children alike.
@@ -436,11 +436,11 @@ const AboutUs = ({ navigation, route }) => {
         <View style={[
           styles.sectionContainer,
           { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-          { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+          { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
         ]}>
           <Text style={[
             styles.sectionHeader,
-            { color: isDarkMode ? '#fff' : '#1434a4' }
+            { color: isDarkMode ? '#fff' : '#1434a4' },
           ]}>Our Story</Text>
           <Text style={styles.introParagraph}>
             "Every great company starts with a powerful WHY, and ours is simple: Parents deserve happiness. Children deserve the best."
@@ -463,11 +463,11 @@ const AboutUs = ({ navigation, route }) => {
         <View style={[
           styles.sectionContainer,
           { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
-          { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
+          { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
         ]}>
           <Text style={[
             styles.sectionHeader,
-            { color: isDarkMode ? '#fff' : '#1434a4' }
+            { color: isDarkMode ? '#fff' : '#1434a4' },
           ]}>Join the Happiness Revolution</Text>
           <Text style={styles.introParagraph}>
             Parenting is evolving, and so should the way we nurture our little ones. Join the AllrounderBaby.com community today and be part of a movement that is shaping the next generation with love, laughter, and learning—one empowered parent at a time.

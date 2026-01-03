@@ -1,4 +1,4 @@
-import { Dimensions, Platform, PixelRatio } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -83,14 +83,14 @@ export const getIconSize = (size) => {
 export const getImageDimensions = (width, height) => {
   const maxWidth = isTablet() ? SCREEN_WIDTH * 0.8 : SCREEN_WIDTH - 40;
   const aspectRatio = height / width;
-  
+
   if (width > maxWidth) {
     return {
       width: maxWidth,
       height: maxWidth * aspectRatio,
     };
   }
-  
+
   return { width, height };
 };
 

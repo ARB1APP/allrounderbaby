@@ -56,7 +56,7 @@ const lightThemeColors = {
   modalButtonCloseBackground: '#E2E8F0',
   modalButtonCloseText: '#2D3748',
   overlayBackground: 'rgba(0,0,0,0.6)',
-  statusBarContent: 'dark-content',
+  statusBarContent: 'light-content',
   borderColorD: '#ccc',
   elevation: 5,
 };
@@ -103,7 +103,7 @@ const ReferAndEarn = ({ navigation }) => {
   const styles = createReferAndEarnStyles(theme);
   const isDarkMode = useColorScheme() === 'dark';
 
-  const [code, setCode] = useState("Loading...");
+  const [code, setCode] = useState('Loading...');
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [selectedAge, setSelectedAge] = useState(null);
   const [token, setToken] = useState(null);
@@ -116,7 +116,7 @@ const ReferAndEarn = ({ navigation }) => {
   const [selectedVideoGroup, setSelectedVideoGroup] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  const REFER_EARN_FOLDER_ID = "9ebe21e5639c440c930ba642a07d0a0b";
+  const REFER_EARN_FOLDER_ID = '9ebe21e5639c440c930ba642a07d0a0b';
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -127,8 +127,8 @@ const ReferAndEarn = ({ navigation }) => {
       if (storedToken && storedUserId) {
         handleRefrealcode(storedToken, storedUserId);
       } else {
-        console.warn("Authentication: Token or User ID not found in AsyncStorage.");
-        setCode("Login Req.");
+        console.warn('Authentication: Token or User ID not found in AsyncStorage.');
+        setCode('Login Req.');
       }
     };
     loadUserData();
@@ -161,20 +161,20 @@ const ReferAndEarn = ({ navigation }) => {
   }, [shareModalVisible, isLanguageModalVisible, navigation]);
 
   const ageOptions = [
-    { label: "0-1 year", value: "0-1" },
-    { label: "1-2 years", value: "1-2" },
-    { label: "2-3 years", value: "2-3" },
-    { label: "3-4 years", value: "3-4" },
-    { label: "4-5 years", value: "4-5" },
-    { label: "5-6 years", value: "5-6" },
+    { label: '0-1 year', value: '0-1' },
+    { label: '1-2 years', value: '1-2' },
+    { label: '2-3 years', value: '2-3' },
+    { label: '3-4 years', value: '3-4' },
+    { label: '4-5 years', value: '4-5' },
+    { label: '5-6 years', value: '5-6' },
   ];
 
   const copyToClipboard = () => {
-    if (code && code !== "Loading..." && code !== "N/A" && code !== "Login Req.") {
+    if (code && code !== 'Loading...' && code !== 'N/A' && code !== 'Login Req.') {
       Clipboard.setString(code);
-      Alert.alert("Copied!", "Referral code copied to clipboard.");
+      Alert.alert('Copied!', 'Referral code copied to clipboard.');
     } else {
-      Alert.alert("Information", "Referral code is not yet available or invalid.");
+      Alert.alert('Information', 'Referral code is not yet available or invalid.');
     }
   };
 
@@ -183,11 +183,11 @@ const ReferAndEarn = ({ navigation }) => {
   };
 
   const openShareModal = () => {
-    if (code && code !== "Loading..." && code !== "N/A" && code !== "Login Req.") {
+    if (code && code !== 'Loading...' && code !== 'N/A' && code !== 'Login Req.') {
       setSelectedAge(null);
       setShareModalVisible(true);
     } else {
-      Alert.alert("Information", "Please wait for the referral code to load or ensure you are logged in before sharing.");
+      Alert.alert('Information', 'Please wait for the referral code to load or ensure you are logged in before sharing.');
     }
   };
 
@@ -197,12 +197,12 @@ const ReferAndEarn = ({ navigation }) => {
 
   const performActualShare = async () => {
     if (!selectedAge) {
-      Alert.alert("Please select", "Please select a child's age group before sharing.");
+      Alert.alert('Please select', "Please select a child's age group before sharing.");
       return;
     }
     let shareMessage = `My referral code is: ${code}. Use it on AllrounderBaby.com for a 10% discount!`;
     shareMessage += ` (Age group: ${selectedAge} years)`;
-    shareMessage += ` #AllrounderBaby #ReferAndEarn`;
+    shareMessage += ' #AllrounderBaby #ReferAndEarn';
 
     try {
       const result = await Share.share({ message: shareMessage });
@@ -210,7 +210,7 @@ const ReferAndEarn = ({ navigation }) => {
       } else if (result.action === Share.dismissedAction) {
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred while sharing: ' + error.message);
+      console.error('An error occurred while sharing:', error);
     }
   };
 
@@ -218,13 +218,13 @@ const ReferAndEarn = ({ navigation }) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
       Alert.alert(
-        "No Internet Connection",
-        "Please check your internet connection and try again."
+        'No Internet Connection',
+        'Please check your internet connection and try again.'
       );
       return;
     }
     if (!token) {
-      Alert.alert("Authentication Error", "User not authenticated. Please log in again.");
+      Alert.alert('Authentication Error', 'User not authenticated. Please log in again.');
       return;
     }
     setIsVideoLoading(true);
@@ -234,8 +234,8 @@ const ReferAndEarn = ({ navigation }) => {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
+          'Accept': 'application/json',
+        },
       });
       if (!response.ok) {
         let errorData = { message: `HTTP Error: ${response.status} ${response.statusText}` };
@@ -245,14 +245,14 @@ const ReferAndEarn = ({ navigation }) => {
           const responseText = await response.text();
           errorData = safeJsonParse(responseText, { message: response.statusText });
         }
-        Alert.alert("API Error", `Failed to get video details: ${errorData.message || response.statusText}`);
+        console.error('API Error: Failed to get video details:', errorData);
         return null;
       }
       const videoDetails = await response.json();
       setReferEarnVideos(videoDetails);
       return videoDetails;
     } catch (error) {
-      Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
+      console.error('Network Error while fetching ReferEarn videos:', error);
       return null;
     } finally {
       setIsVideoLoading(false);
@@ -262,13 +262,13 @@ const ReferAndEarn = ({ navigation }) => {
   const vdoCipher_api = async (videoId) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
-      Alert.alert("No Internet Connection", "Please check your internet connection and try again.");
-      return { error: true, message: "No internet connection" };
+      Alert.alert('No Internet Connection', 'Please check your internet connection and try again.');
+      return { error: true, message: 'No internet connection' };
     }
     setIsVideoLoading(true);
     if (!videoId) {
-      Alert.alert("Error", "Missing video ID to play the video.");
-      return { error: true, message: "Missing videoId" };
+      console.error('Missing video ID to play the video.');
+      return { error: true, message: 'Missing videoId' };
     }
     const DETAILS_ENDPOINT = `${url}Vdocipher/GetVDOCipher_VideosDetails?videoId=${videoId}`;
     try {
@@ -276,8 +276,8 @@ const ReferAndEarn = ({ navigation }) => {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
+          'Accept': 'application/json',
+        },
       });
       if (!response.ok) {
         let errorData;
@@ -289,7 +289,7 @@ const ReferAndEarn = ({ navigation }) => {
         }
         return {
           error: true,
-          message: `Failed to get video details: ${errorData.message || response.statusText}`
+          message: `Failed to get video details: ${errorData.message || response.statusText}`,
         };
       }
       const videoDetails = await response.json();
@@ -297,7 +297,7 @@ const ReferAndEarn = ({ navigation }) => {
     } catch (error) {
       return {
         error: true,
-        message: `An unexpected error occurred: ${error.message}`
+        message: `An unexpected error occurred: ${error.message}`,
       };
     } finally {
     }
@@ -317,8 +317,8 @@ const ReferAndEarn = ({ navigation }) => {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${effectiveToken}`,
-          'Accept': 'application/json'
-        }
+          'Accept': 'application/json',
+        },
       });
       if (!response.ok) {
         let errorData;
@@ -328,12 +328,11 @@ const ReferAndEarn = ({ navigation }) => {
         } catch (parseError) {
           errorData = safeJsonParse(responseText, {
             message: response.statusText,
-            rawResponse: responseText
+            rawResponse: responseText,
           });
         }
-        console.error("handleRefrealcode: API Error Response:", errorData);
-        Alert.alert("API Error", `Failed to load user details: ${errorData.message || response.statusText}. Raw response: ${errorData.rawResponse || 'N/A'}`);
-        setCode("Error");
+        console.error('handleRefrealcode: API Error Response:', errorData);
+        setCode('Error');
         return;
       }
       const jsonResponse = await response.json();
@@ -342,16 +341,15 @@ const ReferAndEarn = ({ navigation }) => {
         if (jsonResponse[0].referal_Code) {
           setCode(jsonResponse[0].referal_Code);
         } else {
-          setCode("N/A");
+          setCode('N/A');
         }
       } else {
-        Alert.alert("Data Error", "User data not found or format is invalid.");
-        setCode("N/A");
+        Alert.alert('Data Error', 'User data not found or format is invalid.');
+        setCode('N/A');
       }
     } catch (error) {
-      console.error("handleRefrealcode: Network or unexpected error:", error);
-      Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
-      setCode("Error");
+      console.error('handleRefrealcode: Network or unexpected error:', error);
+      setCode('Error');
     } finally {
       setIsLoading(false);
     }
@@ -360,11 +358,11 @@ const ReferAndEarn = ({ navigation }) => {
   const handleVideoPlayback = async (videoId, language, title, poster) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
-      Alert.alert("No Internet Connection", "Please check your internet connection and try again.");
+      Alert.alert('No Internet Connection', 'Please check your internet connection and try again.');
       return;
     }
     if (!userId) {
-      Alert.alert("Authentication Error", "User ID not available for watermark. Please log in again.");
+      Alert.alert('Authentication Error', 'User ID not available for watermark. Please log in again.');
       setIsVideoLoading(false);
       return;
     }
@@ -388,7 +386,7 @@ const ReferAndEarn = ({ navigation }) => {
     const requestBody = {
       UserId: parseInt(userId, 10),
       VideoId: videoId,
-      annotate: JSON.stringify(annotationObject)
+      annotate: JSON.stringify(annotationObject),
     };
     try {
       if (videoId) {
@@ -406,7 +404,7 @@ const ReferAndEarn = ({ navigation }) => {
           });
           if (!response.ok) {
             const errorData = await response.json();
-            Alert.alert("Error", errorData.message || "Video not found or failed to get OTP.");
+            console.error('Error fetching video OTP/details:', errorData);
             setIsVideoLoading(false);
           } else {
             const data = await response.json();
@@ -425,15 +423,15 @@ const ReferAndEarn = ({ navigation }) => {
             setIsVideoLoading(false);
           }
         } else {
-          Alert.alert("Error", detailsData?.message || "Failed to fetch video details from Vdocipher API.");
+          console.error('Failed to fetch video details from Vdocipher API:', detailsData);
           setIsVideoLoading(false);
         }
       } else {
-        Alert.alert("Error", "Video not found.");
+        console.error('Video not found.');
         setIsVideoLoading(false);
       }
     } catch (err) {
-      Alert.alert("Network Error", `An unexpected error occurred: ${err.message}`);
+      console.error('Network Error while starting playback:', err);
       setIsVideoLoading(false);
     }
   };
@@ -457,7 +455,7 @@ const ReferAndEarn = ({ navigation }) => {
         title: 'English',
         language: 'english',
         poster: englishItem.poster,
-        length: englishItem.length
+        length: englishItem.length,
       });
     }
     if (hindiItem) {
@@ -466,7 +464,7 @@ const ReferAndEarn = ({ navigation }) => {
         title: 'Hindi',
         language: 'hindi',
         poster: hindiItem.poster,
-        length: hindiItem.length
+        length: hindiItem.length,
       });
     }
     return videos;
@@ -486,7 +484,7 @@ const ReferAndEarn = ({ navigation }) => {
       setSelectedVideoGroup(videoGroup);
       setIsLanguageModalVisible(true);
     } else {
-      Alert.alert("Videos Not Available", "Refer & Earn videos could not be loaded. Please try again later.");
+      Alert.alert('Videos Not Available', 'Refer & Earn videos could not be loaded. Please try again later.');
     }
   };
 
@@ -509,12 +507,12 @@ const ReferAndEarn = ({ navigation }) => {
             ) : (
               <Text style={styles.referralCodeText}>{code}</Text>
             )}
-            <TouchableOpacity onPress={copyToClipboard} disabled={isLoading || code === "N/A" || code === "Loading..." || code === "Error" || code === "Login Req."}>
+            <TouchableOpacity onPress={copyToClipboard} disabled={isLoading || code === 'N/A' || code === 'Loading...' || code === 'Error' || code === 'Login Req.'}>
               <Image source={require('../img/copy.png')} style={styles.copyIcon} />
             </TouchableOpacity>
           </View>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.primaryButton} onPress={openShareModal} disabled={isLoading || code === "N/A" || code === "Loading..." || code === "Error" || code === "Login Req."}>
+            <TouchableOpacity style={styles.primaryButton} onPress={openShareModal} disabled={isLoading || code === 'N/A' || code === 'Loading...' || code === 'Error' || code === 'Login Req.'}>
               <Text style={styles.buttonTextPrimary}>Share Code</Text>
             </TouchableOpacity>
             {/* <TouchableOpacity style={styles.secondaryButton} onPress={onPressReferralHistoryBtn}>
@@ -792,7 +790,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     shadowColor: theme.bottomNavShadowColor,
     shadowOffset: {
       width: 0,
-      height: 1
+      height: 1,
     },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -801,7 +799,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor:
       theme.borderColorD,
-    width: "100%",
+    width: '100%',
     marginBottom: 15,
   },
   detailPoint: {
@@ -878,7 +876,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
 
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -954,7 +952,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 4
+      height: 4,
     },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -1032,7 +1030,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     shadowColor: theme.bottomNavShadowColor,
     shadowOffset: {
       width: 0,
-      height: 1
+      height: 1,
     },
     shadowOpacity: 0.05,
     shadowRadius: 1,
@@ -1043,7 +1041,7 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: 'gray',
-    opacity: 0.6
-  }
+    opacity: 0.6,
+  },
 });
 export default ReferAndEarn;

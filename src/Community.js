@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, StatusBar, SafeAreaView, useColorScheme } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
- 
+
 const Community = ({ navigation }) => {
   const isDarkMode = useColorScheme() === 'dark';
   const backgroundStyle = {
@@ -11,7 +11,7 @@ const Community = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.container, backgroundStyle]}>
       <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        barStyle={'light-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
@@ -20,16 +20,16 @@ const Community = ({ navigation }) => {
     </SafeAreaView>
   );
 };
- 
+
 const styles = StyleSheet.create({
-  container: { 
+  container: {
     flex: 1,
   },
-  text: { 
-    fontSize: 20, 
-    textAlign: 'center', 
+  text: {
+    fontSize: 20,
+    textAlign: 'center',
     margin: 10,
   },
 });
- 
+
 export default Community;

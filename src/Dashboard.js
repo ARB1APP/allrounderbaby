@@ -11,7 +11,7 @@ const screenHeight = Dimensions.get('window').height;
 const url = BASE_URL;
 
 const formatDuration = (totalSeconds) => {
-    if (isNaN(totalSeconds) || totalSeconds < 0) return "--:--";
+    if (isNaN(totalSeconds) || totalSeconds < 0) { return '--:--'; }
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = Math.floor(totalSeconds % 60);
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
@@ -42,10 +42,10 @@ const StepListItem = React.forwardRef(
     ({ group, onPress, isCompleted, isLocked, isDarkMode, previousDisplay }, ref) => {
 
         const { stepNumber, displayStepNumber, hindiVideo, englishVideo } = group;
-        if (!hindiVideo && !englishVideo) return null;
+        if (!hindiVideo && !englishVideo) { return null; }
 
         const videoToShowDuration = englishVideo || hindiVideo;
-        const durationText = videoToShowDuration?.length ? formatDuration(videoToShowDuration.length) : "";
+        const durationText = videoToShowDuration?.length ? formatDuration(videoToShowDuration.length) : '';
         const itemStyle = isLocked ? styles.lockedDropdownItemBtn : (isCompleted ? styles.completedDropdownItemBtn : styles.dropdownItemBtn);
         return (
             <View ref={ref} collapsable={false}>
@@ -57,7 +57,7 @@ const StepListItem = React.forwardRef(
                             Alert.alert('Step Locked', `Please complete Step ${prevLabel} to unlock this step.`);
                             return;
                         }
-                        if (typeof onPress === 'function') onPress(stepNumber);
+                        if (typeof onPress === 'function') { onPress(stepNumber); }
                     }}
                     activeOpacity={0.7}
                     accessible={true}
@@ -100,7 +100,7 @@ const VideoStepList = ({ groups, completedSteps, onStepPress, isDarkMode, stepRe
                     <StepListItem
                         key={`step-group-${group.stepNumber}`}
                         ref={(el) => {
-                            if (el) stepRefs.current[group.stepNumber] = el;
+                            if (el) { stepRefs.current[group.stepNumber] = el; }
                         }}
                         group={group}
                         onPress={onStepPress}
@@ -193,15 +193,15 @@ const Dashboard = ({ navigation }) => {
     const scale3AnimRef = useRef(null);
     const isDarkMode = useColorScheme() === 'dark';
     const backgroundStyle = { backgroundColor: isDarkMode ? '#2a3144' : Colors.white };
-    const textColorModal = { color: isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)' }
-    const textColorModalPara = { color: isDarkMode ? Colors.white : '#2a3144' }
+    const textColorModal = { color: isDarkMode ? Colors.white : 'rgba(20, 52, 164, 1)' };
+    const textColorModalPara = { color: isDarkMode ? Colors.white : '#2a3144' };
     const lastBackPressed = useRef(0);
     const levelModalScrollRef = useRef(null);
 
 
     useEffect(() => {
         const onBackPress = () => {
-            if (!isFocused) return false;
+            if (!isFocused) { return false; }
             // Close modal first
             if (isModalVisible) {
                 setIsModalVisible(false);
@@ -228,8 +228,8 @@ const Dashboard = ({ navigation }) => {
                 try {
                     const exitModule = require('./utils/exitApp');
                     const exitFn = exitModule && (exitModule.default || exitModule.exitApp || exitModule);
-                    if (typeof exitFn === 'function') exitFn();
-                    else BackHandler.exitApp();
+                    if (typeof exitFn === 'function') { exitFn(); }
+                    else { BackHandler.exitApp(); }
                 } catch (e) {
                     BackHandler.exitApp();
                 }
@@ -266,15 +266,15 @@ const Dashboard = ({ navigation }) => {
                 console.error('Auth verify error on Dashboard:', err);
             }
         };
-        if (isFocused) verifyAuth();
+        if (isFocused) { verifyAuth(); }
         return undefined;
     }, [isFocused, navigation]);
 
     const groupVideosByApiStep = (videoApiResponse) => {
-        if (!videoApiResponse?.rows?.length) return [];
+        if (!videoApiResponse?.rows?.length) { return []; }
         const groups = {};
         videoApiResponse.rows.forEach(item => {
-            if (!item.title) return;
+            if (!item.title) { return; }
             let apiStepNumber = null;
             let displayStepNumber = null;
 
@@ -294,14 +294,14 @@ const Dashboard = ({ navigation }) => {
                 displayStepNumber = apiStepNumber;
             }
 
-            if (apiStepNumber === null) return;
+            if (apiStepNumber === null) { return; }
 
             if (!groups[apiStepNumber]) {
                 groups[apiStepNumber] = {
                     displayStepNumber: displayStepNumber,
                     apiStepNumber: apiStepNumber,
                     hindiVideo: null,
-                    englishVideo: null
+                    englishVideo: null,
                 };
             }
             if (item.title.toLowerCase().includes('hindi')) {
@@ -315,28 +315,28 @@ const Dashboard = ({ navigation }) => {
         });
     };
 
-    const groupedTrustData = useMemo(() => groupVideosByApiStep(videoData['trust']), [videoData['trust']]);
-    const groupedLoveAndCareData = useMemo(() => groupVideosByApiStep(videoData['loveAndCare']), [videoData['loveAndCare']]);
-    const groupedRespectData = useMemo(() => groupVideosByApiStep(videoData['respect']), [videoData['respect']]);
-    const groupedFamiliarData = useMemo(() => groupVideosByApiStep(videoData['familiar']), [videoData['familiar']]);
-    const groupedSpeechDevData = useMemo(() => groupVideosByApiStep(videoData['speechDevelopment']), [videoData['speechDevelopment']]);
-    const groupedTruthData = useMemo(() => groupVideosByApiStep(videoData['truth']), [videoData['truth']]);
-    const groupedSetBoundariesData = useMemo(() => groupVideosByApiStep(videoData['setBoundaries']), [videoData['setBoundaries']]);
-    const groupedListenFollowData = useMemo(() => groupVideosByApiStep(videoData['listenFollow']), [videoData['listenFollow']]);
-    const groupedCooperationData = useMemo(() => groupVideosByApiStep(videoData['cooperation']), [videoData['cooperation']]);
-    const groupedImaginationData = useMemo(() => groupVideosByApiStep(videoData['imagination']), [videoData['imagination']]);
-    const groupedHelpData = useMemo(() => groupVideosByApiStep(videoData['help']), [videoData['help']]);
-    const groupedDiscussionData = useMemo(() => groupVideosByApiStep(videoData['discussion']), [videoData['discussion']]);
-    const groupedNarrateData = useMemo(() => groupVideosByApiStep(videoData['narrate']), [videoData['narrate']]);
-    const groupedEmotionsData = useMemo(() => groupVideosByApiStep(videoData['emotions']), [videoData['emotions']]);
-    const groupedFeelingsData = useMemo(() => groupVideosByApiStep(videoData['feelings']), [videoData['feelings']]);
-    const groupedKnowledgeData = useMemo(() => groupVideosByApiStep(videoData['knowledge']), [videoData['knowledge']]);
+    const groupedTrustData = useMemo(() => groupVideosByApiStep(videoData.trust), [videoData.trust]);
+    const groupedLoveAndCareData = useMemo(() => groupVideosByApiStep(videoData.loveAndCare), [videoData.loveAndCare]);
+    const groupedRespectData = useMemo(() => groupVideosByApiStep(videoData.respect), [videoData.respect]);
+    const groupedFamiliarData = useMemo(() => groupVideosByApiStep(videoData.familiar), [videoData.familiar]);
+    const groupedSpeechDevData = useMemo(() => groupVideosByApiStep(videoData.speechDevelopment), [videoData.speechDevelopment]);
+    const groupedTruthData = useMemo(() => groupVideosByApiStep(videoData.truth), [videoData.truth]);
+    const groupedSetBoundariesData = useMemo(() => groupVideosByApiStep(videoData.setBoundaries), [videoData.setBoundaries]);
+    const groupedListenFollowData = useMemo(() => groupVideosByApiStep(videoData.listenFollow), [videoData.listenFollow]);
+    const groupedCooperationData = useMemo(() => groupVideosByApiStep(videoData.cooperation), [videoData.cooperation]);
+    const groupedImaginationData = useMemo(() => groupVideosByApiStep(videoData.imagination), [videoData.imagination]);
+    const groupedHelpData = useMemo(() => groupVideosByApiStep(videoData.help), [videoData.help]);
+    const groupedDiscussionData = useMemo(() => groupVideosByApiStep(videoData.discussion), [videoData.discussion]);
+    const groupedNarrateData = useMemo(() => groupVideosByApiStep(videoData.narrate), [videoData.narrate]);
+    const groupedEmotionsData = useMemo(() => groupVideosByApiStep(videoData.emotions), [videoData.emotions]);
+    const groupedFeelingsData = useMemo(() => groupVideosByApiStep(videoData.feelings), [videoData.feelings]);
+    const groupedKnowledgeData = useMemo(() => groupVideosByApiStep(videoData.knowledge), [videoData.knowledge]);
     const masterConfig = useMemo(() => {
         const config = {
             'trust': { name: 'TRUST', folderId: 'fa26d3b1719c47f89b3efc758ad107bd', groupedData: groupedTrustData, image: require('../img/trustimg.png'), prerequisiteCategory: null },
             'loveAndCare': { name: 'LOVE AND CARE', folderId: '9162ff33874a4418b21c46de3293d945', groupedData: groupedLoveAndCareData, image: require('../img/loveandcare.png'), prerequisiteCategory: 'trust' },
             'respect': { name: 'RESPECT', folderId: 'db26175c76ac4b27820ef71c7d8890e0', groupedData: groupedRespectData, image: require('../img/respact.png'), prerequisiteCategory: 'loveAndCare' },
-            'familiar': { name: 'FAMILIAR', folderIds: ["a49ebdb1dea84474afc11d76c4c01591", "21a8a1aa9dbc4146b6565491628c07df"], groupedData: groupedFamiliarData, image: require('../img/familiarimg.png'), prerequisiteCategory: 'respect' },
+            'familiar': { name: 'FAMILIAR', folderIds: ['a49ebdb1dea84474afc11d76c4c01591', '21a8a1aa9dbc4146b6565491628c07df'], groupedData: groupedFamiliarData, image: require('../img/familiarimg.png'), prerequisiteCategory: 'respect' },
             'speechDevelopment': { name: 'SPEECH DEVELOPMENT', folderId: '9d876b85b5544edca3c445cd771c947b', groupedData: groupedSpeechDevData, image: require('../img/2148552491.jpg'), prerequisiteCategory: 'familiar' },
             'truth': { name: 'TRUTH', folderId: 'b6a31ff3d0664ecb8f63d8019c55d6d2', groupedData: groupedTruthData, image: require('../img/truth.png'), prerequisiteCategory: 'speechDevelopment' },
             'setBoundaries': { name: 'SET BOUNDARIES', folderId: '7f46370118364fa0b155cf64eb2646d3', groupedData: groupedSetBoundariesData, image: require('../img/setboundries.png'), prerequisiteCategory: 'truth' },
@@ -348,14 +348,14 @@ const Dashboard = ({ navigation }) => {
             'narrate': { name: 'ABLE TO NARRATE', folderId: 'c9830bc5eed04b18b0cd5919627ad818', groupedData: groupedNarrateData, image: require('../img/abletonarrate.png'), prerequisiteCategory: 'discussion' },
             'emotions': { name: 'EXPRESS EMOTIONS & BALANCE IT', folderId: 'a27799e2c148438ba450a80d546a9555', groupedData: groupedEmotionsData, image: require('../img/expressemotionandcontrol.png'), prerequisiteCategory: 'narrate' },
             'feelings': { name: 'FEELINGS OF OTHERS', folderId: '1471bf13c7f6490fb6f98ae846552a87', groupedData: groupedFeelingsData, image: require('../img/feelingofothers.png'), prerequisiteCategory: 'emotions' },
-            'knowledge': { name: 'KNOWLEDGE & CURIOSITY', folderIds: ["053dc785919e42aa941e6ee070b55325", "945fe57ec6304dbda1f16a10c4d0e2f9"], groupedData: groupedKnowledgeData, image: require('../img/2148812268.jpg'), prerequisiteCategory: 'feelings' },
+            'knowledge': { name: 'KNOWLEDGE & CURIOSITY', folderIds: ['053dc785919e42aa941e6ee070b55325', '945fe57ec6304dbda1f16a10c4d0e2f9'], groupedData: groupedKnowledgeData, image: require('../img/2148812268.jpg'), prerequisiteCategory: 'feelings' },
         };
 
         let cumulativeStepCount = 0;
         const categoryOrder = [
             'trust', 'loveAndCare', 'respect', 'familiar', 'speechDevelopment', 'truth',
             'setBoundaries', 'listenFollow', 'cooperation', 'imagination', 'help',
-            'discussion', 'narrate', 'emotions', 'feelings', 'knowledge'
+            'discussion', 'narrate', 'emotions', 'feelings', 'knowledge',
         ];
 
         categoryOrder.forEach(key => {
@@ -366,7 +366,7 @@ const Dashboard = ({ navigation }) => {
         });
         return config;
     }, [
-        videoData
+        videoData,
     ]);
 
     useEffect(() => {
@@ -398,7 +398,7 @@ const Dashboard = ({ navigation }) => {
 
 
     useEffect(() => {
-        if (!lastViewedRequest || !openCategory) return;
+        if (!lastViewedRequest || !openCategory) { return; }
 
         const stepNumber = lastViewedRequest.step;
 
@@ -463,9 +463,9 @@ const Dashboard = ({ navigation }) => {
     const advancedKeys = ['cooperation', 'imagination', 'help', 'discussion', 'narrate', 'emotions', 'feelings', 'knowledge'];
 
     const getLevelForCategory = (categoryKey) => {
-        if (foundationKeys.includes(categoryKey)) return 'foundation';
-        if (middleKeys.includes(categoryKey)) return 'middle';
-        if (advancedKeys.includes(categoryKey)) return 'advanced';
+        if (foundationKeys.includes(categoryKey)) { return 'foundation'; }
+        if (middleKeys.includes(categoryKey)) { return 'middle'; }
+        if (advancedKeys.includes(categoryKey)) { return 'advanced'; }
         return null;
     };
 
@@ -481,17 +481,17 @@ const Dashboard = ({ navigation }) => {
                     if (level) {
                         setLastViewedRequest({ level, category, step, trigger: Date.now() });
                     } else {
-                        showToast("Could not find the level for your last viewed topic.");
+                        showToast('Could not find the level for your last viewed topic.');
                     }
                 } else {
-                    showToast("No last viewed topic found to continue from.");
+                    showToast('No last viewed topic found to continue from.');
                 }
             } else {
-                showToast("No last viewed topic found to continue from.");
+                showToast('No last viewed topic found to continue from.');
             }
         } catch (error) {
-            console.error("Failed to handle last viewed press:", error);
-            Alert.alert("Error", "Could not retrieve your last viewed topic.");
+            console.error('Failed to handle last viewed press:', error);
+            console.error('Could not retrieve your last viewed topic.');
         }
     };
 
@@ -519,8 +519,8 @@ const Dashboard = ({ navigation }) => {
                     setDataLoaded(true);
                 }
             } catch (error) {
-                console.error("Failed to load initial data:", error);
-                Alert.alert("Error", "Failed to load user data. Please try restarting the app.");
+                console.error('Failed to load initial data:', error);
+                console.error('Failed to load user data. Please try restarting the app.');
             } finally {
                 setIsLoading(false);
             }
@@ -574,7 +574,7 @@ const Dashboard = ({ navigation }) => {
             setTopicCompletionTimes(newCompletionTimes);
             await AsyncStorage.setItem('topicCompletionTimes', JSON.stringify(newCompletionTimes));
         } catch (error) {
-            console.error("Failed to save topic completion time:", error);
+            console.error('Failed to save topic completion time:', error);
         }
     };
 
@@ -585,9 +585,9 @@ const Dashboard = ({ navigation }) => {
             const response = await fetchWithTimeout(endpoint, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
                 },
-                timeout: 15000
+                timeout: 15000,
             });
 
             if (!response.ok) {
@@ -629,7 +629,7 @@ const Dashboard = ({ navigation }) => {
 
 
                             if (item.stage_name) {
-                                console.log("Processing stage name:", item.stage_name);
+                                console.log('Processing stage name:', item.stage_name);
                                 const name = item.stage_name.toString().trim();
 
                                 const match = name.match(/^\s*([^\d]+?)\s*(\d+)?\s*$/);
@@ -639,13 +639,13 @@ const Dashboard = ({ navigation }) => {
                                     loadcategorystep = match[2] ? parseInt(match[2], 10) : null;
 
                                     const normalizeToKey = (str) => {
-                                        if (!str) return null;
+                                        if (!str) { return null; }
                                         let s = str.toLowerCase();
                                         s = s.replace(/&/g, ' and ');
                                         s = s.replace(/[^a-z0-9\s]/g, ' ');
                                         s = s.replace(/\s+/g, ' ').trim();
                                         const parts = s.split(' ');
-                                        if (parts.length === 0) return null;
+                                        if (parts.length === 0) { return null; }
                                         const key = parts[0] + parts.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
                                         return key;
                                     };
@@ -655,8 +655,8 @@ const Dashboard = ({ navigation }) => {
                                         mappedCategory = normalizedKey;
                                     } else {
                                         const firstWord = loadcategory.split(' ')[0];
-                                        if (firstWord && masterConfig[firstWord]) mappedCategory = firstWord;
-                                        else mappedCategory = normalizedKey || loadcategory;
+                                        if (firstWord && masterConfig[firstWord]) { mappedCategory = firstWord; }
+                                        else { mappedCategory = normalizedKey || loadcategory; }
                                     }
                                     mappedLocalCategoryStep = loadcategorystep;
                                 }
@@ -665,14 +665,14 @@ const Dashboard = ({ navigation }) => {
                     }
 
                 });
-                console.log("Mapped Category:", mappedCategory, "Mapped Local Step:", mappedLocalCategoryStep, "Highest Completed Step:", highestCompletedStep);
+                console.log('Mapped Category:', mappedCategory, 'Mapped Local Step:', mappedLocalCategoryStep, 'Highest Completed Step:', highestCompletedStep);
 
                 if (mappedCategory) {
                     try {
                         const lastViewedObj = {
                             step: highestCompletedStep,
                             category: mappedCategory,
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
                         };
                         await AsyncStorage.setItem('lastViewed', JSON.stringify(lastViewedObj));
                         console.log('Primed lastViewed from server progress:', lastViewedObj);
@@ -720,12 +720,12 @@ const Dashboard = ({ navigation }) => {
                 setDataLoaded(true);
             } else {
                 console.warn('fetchUserProgress: unexpected API response', result);
-                Alert.alert('Sync Error', 'Could not load your progress data. Some features may be unavailable.');
+                console.error('Sync Error: Could not load your progress data. Some features may be unavailable.');
                 setDataLoaded(true);
                 return;
             }
         } catch (error) {
-            console.error("Failed to fetch user progress:", error);
+            console.error('Failed to fetch user progress:', error);
         }
     };
 
@@ -736,7 +736,7 @@ const Dashboard = ({ navigation }) => {
                 setCompletedSteps(safeJsonParse(savedSteps, {}));
             }
         } catch (error) {
-            console.error("Failed to load completed steps from storage", error);
+            console.error('Failed to load completed steps from storage', error);
         }
     };
 
@@ -747,7 +747,7 @@ const Dashboard = ({ navigation }) => {
                 setTopicCompletionTimes(safeJsonParse(savedTimes, {}));
             }
         } catch (error) {
-            console.error("Failed to load topic completion times from storage", error);
+            console.error('Failed to load topic completion times from storage', error);
         }
     };
 
@@ -758,7 +758,7 @@ const Dashboard = ({ navigation }) => {
                 setMiddleLevelCompletionTime(new Date(savedTime));
             }
         } catch (error) {
-            console.error("Failed to load middle level completion time from storage", error);
+            console.error('Failed to load middle level completion time from storage', error);
         }
     };
 
@@ -769,7 +769,7 @@ const Dashboard = ({ navigation }) => {
                 setAdvancedLevelCompletionTime(new Date(savedTime));
             }
         } catch (error) {
-            console.error("Failed to load advanced level completion time from storage", error);
+            console.error('Failed to load advanced level completion time from storage', error);
         }
     };
 
@@ -781,7 +781,7 @@ const Dashboard = ({ navigation }) => {
                 return updated;
             });
         } catch (error) {
-            console.error("Failed to save completed step to storage", error);
+            console.error('Failed to save completed step to storage', error);
         }
     };
 
@@ -791,10 +791,10 @@ const Dashboard = ({ navigation }) => {
         return Animated.loop(
             Animated.sequence([
                 Animated.delay(1500),
-                Animated.parallel([Animated.timing(handOpacity, { toValue: 1, duration: 300, useNativeDriver: true }), Animated.timing(handPositionX, { toValue: targetX, duration: 1000, useNativeDriver: true }), Animated.timing(handPositionY, { toValue: targetY, duration: 1000, useNativeDriver: true }),]),
-                Animated.sequence([Animated.timing(handScale, { toValue: 0.85, duration: 150, useNativeDriver: true }), Animated.timing(handScale, { toValue: 1, duration: 150, useNativeDriver: true }),]),
+                Animated.parallel([Animated.timing(handOpacity, { toValue: 1, duration: 300, useNativeDriver: true }), Animated.timing(handPositionX, { toValue: targetX, duration: 1000, useNativeDriver: true }), Animated.timing(handPositionY, { toValue: targetY, duration: 1000, useNativeDriver: true })]),
+                Animated.sequence([Animated.timing(handScale, { toValue: 0.85, duration: 150, useNativeDriver: true }), Animated.timing(handScale, { toValue: 1, duration: 150, useNativeDriver: true })]),
                 Animated.delay(300),
-                Animated.parallel([Animated.timing(handOpacity, { toValue: 0, duration: 300, delay: 700, useNativeDriver: true }), Animated.timing(handPositionX, { toValue: screenWidth * 0.6, duration: 1000, useNativeDriver: true }), Animated.timing(handPositionY, { toValue: screenHeight * 0.4, duration: 1000, useNativeDriver: true }),]),
+                Animated.parallel([Animated.timing(handOpacity, { toValue: 0, duration: 300, delay: 700, useNativeDriver: true }), Animated.timing(handPositionX, { toValue: screenWidth * 0.6, duration: 1000, useNativeDriver: true }), Animated.timing(handPositionY, { toValue: screenHeight * 0.4, duration: 1000, useNativeDriver: true })]),
                 Animated.delay(1000),
             ])
         );
@@ -842,7 +842,7 @@ const Dashboard = ({ navigation }) => {
     }, []);
 
     const fetchVideos = async (folderIds, tokenParam) => {
-        if (!Array.isArray(folderIds)) folderIds = [folderIds];
+        if (!Array.isArray(folderIds)) { folderIds = [folderIds]; }
         const authToken = tokenParam || token;
         let allVideos = { rows: [] };
         for (const folderId of folderIds) {
@@ -851,7 +851,7 @@ const Dashboard = ({ navigation }) => {
                 if (cacheEntry) {
                     if (cacheEntry.promise) {
                         const data = await cacheEntry.promise;
-                        if (data && data.rows) allVideos.rows.push(...data.rows);
+                        if (data && data.rows) { allVideos.rows.push(...data.rows); }
                         continue;
                     }
                     if (cacheEntry.data) {
@@ -863,7 +863,7 @@ const Dashboard = ({ navigation }) => {
                 const fetchPromise = (async () => {
                     const endpoint = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
                     const response = await fetchWithTimeout(endpoint, { headers: { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' }, timeout: 15000 });
-                    if (!response.ok) throw new Error(`Failed to fetch videos for folder ${folderId}`);
+                    if (!response.ok) { throw new Error(`Failed to fetch videos for folder ${folderId}`); }
                     const data = await response.json();
                     // store resolved data in cache
                     videoFetchCacheRef.current[folderId] = { data };
@@ -876,7 +876,7 @@ const Dashboard = ({ navigation }) => {
                 if (data && data.rows) { allVideos.rows.push(...data.rows); }
             } catch (error) {
                 console.error(`Error fetching videos from folder ${folderId}:`, error);
-                Alert.alert("API Error", `Could not load some videos. Please check your connection and try again. Details: ${error.message}`);
+                console.error('API Error: Could not load some videos. Details:', error);
             }
         }
 
@@ -884,10 +884,10 @@ const Dashboard = ({ navigation }) => {
         const unique = [];
         const seen = new Set();
         for (const r of allVideos.rows) {
-            if (!r) continue;
+            if (!r) { continue; }
             const id = r.id ?? `${r.title ?? ''}-${r.length ?? ''}`;
             if (!id) { unique.push(r); continue; }
-            if (seen.has(id)) continue;
+            if (seen.has(id)) { continue; }
             seen.add(id);
             unique.push(r);
         }
@@ -897,7 +897,7 @@ const Dashboard = ({ navigation }) => {
 
 
     const prefetchAllCategoryVideos = async (authToken) => {
-        if (prefetchingRef.current) return;
+        if (prefetchingRef.current) { return; }
         prefetchingRef.current = true;
         try {
             const keys = Object.keys(masterConfig || {});
@@ -928,13 +928,13 @@ const Dashboard = ({ navigation }) => {
     const ensureCategoryDataIsLoaded = async (categoryKey, manageLoading = true) => {
         const config = masterConfig[categoryKey];
         if (config && !videoData[categoryKey]?.rows?.length) {
-            if (manageLoading) setVideoLoader(true);
+            if (manageLoading) { setVideoLoader(true); }
             const videoDetails = await fetchVideos(config.folderIds || [config.folderId]);
-            if (manageLoading) setVideoLoader(false);
+            if (manageLoading) { setVideoLoader(false); }
             if (videoDetails) {
                 setVideoData(prevData => ({
                     ...prevData,
-                    [categoryKey]: videoDetails
+                    [categoryKey]: videoDetails,
                 }));
                 return true;
             }
@@ -954,19 +954,19 @@ const Dashboard = ({ navigation }) => {
     const arePrerequisitesMet = async (categoryKey) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
         const config = masterConfig[categoryKey];
-        if (!config) return false;
+        if (!config) { return false; }
         if (config.prerequisiteCategory) {
             const prereqConfig = masterConfig[config.prerequisiteCategory];
             if (prereqConfig) {
                 const isPrereqDataLoaded = await ensureCategoryDataIsLoaded(config.prerequisiteCategory);
                 if (!isPrereqDataLoaded) {
-                    Alert.alert("Error", "Could not load prerequisite data. Please try again.");
+                    console.error('Could not load prerequisite data. Please try again.');
                     return false;
                 }
                 const allPrereqSteps = prereqConfig.finalGroupedData.map(g => `step${g.stepNumber}`);
                 const areAllPrereqsCompleted = allPrereqSteps.every(stepKey => completedSteps[stepKey]);
                 if (!areAllPrereqsCompleted) {
-                    Alert.alert("Level Locked", `You must complete the "${prereqConfig.name}" stage before accessing this one.`);
+                    Alert.alert('Level Locked', `You must complete the "${prereqConfig.name}" stage before accessing this one.`);
                     return false;
                 }
                 const lastStepOfPrereq = prereqConfig.finalGroupedData[prereqConfig.finalGroupedData.length - 1];
@@ -980,14 +980,14 @@ const Dashboard = ({ navigation }) => {
                         if (data.isSuccess && data.data && data.data.length > 0) {
                             const completionDate = new Date(data.data[0].createOn);
                             let lockDurationHours = 0;
-                            if (foundationKeys.includes(config.prerequisiteCategory)) lockDurationHours = 24;
-                            else if (middleKeys.includes(config.prerequisiteCategory) || advancedKeys.includes(config.prerequisiteCategory)) lockDurationHours = 48;
+                            if (foundationKeys.includes(config.prerequisiteCategory)) { lockDurationHours = 24; }
+                            else if (middleKeys.includes(config.prerequisiteCategory) || advancedKeys.includes(config.prerequisiteCategory)) { lockDurationHours = 48; }
 
                             if (lockDurationHours > 0) {
                                 const hoursSinceCompletion = (new Date() - completionDate) / (1000 * 60 * 60);
                                 if (hoursSinceCompletion < lockDurationHours) {
 
-                                    Alert.alert("Topic Locked", `Great progress! Your next topic will unlock in ${lockDurationHours} hours. Use this time to practice what you’ve learned so far.`);
+                                    Alert.alert('Topic Locked', `Great progress! Your next topic will unlock in ${lockDurationHours} hours. Use this time to practice what you’ve learned so far.`);
                                     return false;
                                 } else {
                                     try {
@@ -1012,8 +1012,8 @@ const Dashboard = ({ navigation }) => {
                         }
                     }
                 } catch (error) {
-                    console.error("Error checking time lock:", error);
-                    Alert.alert("Network Error", "Could not verify topic lock status. Please try again.");
+                    console.error('Error checking time lock:', error);
+                    console.error('Could not verify topic lock status. Please try again.');
                     return false;
                 }
             }
@@ -1023,7 +1023,7 @@ const Dashboard = ({ navigation }) => {
 
     const handleCategoryPress = async (categoryKey) => {
         if (!dataLoaded) {
-            Alert.alert("Please wait", "Loading progress data...");
+            Alert.alert('Please wait', 'Loading progress data...');
             return;
         }
 
@@ -1050,7 +1050,7 @@ const Dashboard = ({ navigation }) => {
             if (loaded) {
                 setOpenCategory(categoryKey);
             } else {
-                Alert.alert('Error', 'Could not load videos for this category. Please try again.');
+                console.error('Could not load videos for this category. Please try again.');
                 setOpenCategory(null);
             }
         }
@@ -1058,13 +1058,13 @@ const Dashboard = ({ navigation }) => {
 
     const handleDropdownItemClick = (stepNumber) => {
         const config = masterConfig[openCategory];
-        if (!config) return;
+        if (!config) { return; }
         const group = config.finalGroupedData.find(g => g.stepNumber === stepNumber);
         if (group) {
             setSelectedStepGroup({ ...group, category: openCategory });
             setIsModalVisible(true);
         } else {
-            Alert.alert('Error', `Video group for step ${stepNumber} not found.`);
+            console.error(`Video group for step ${stepNumber} not found.`);
         }
     };
 
@@ -1072,7 +1072,7 @@ const Dashboard = ({ navigation }) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
 
         if (!selectedStepGroup) {
-            Alert.alert('Error', 'No video selected. Please select a video first.');
+            console.error('No video selected. Please select a video first.');
             return;
         }
 
@@ -1083,53 +1083,67 @@ const Dashboard = ({ navigation }) => {
             let totalWatchCount = 0;
 
             try {
+                debugger;
                 const videoIdsForStep = [hindiVideoId, englishVideoId].filter(Boolean);
+                // Aggregate total finished counts for both language videos (if present)
                 for (const id of videoIdsForStep) {
                     const endpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${id}&DeviceKey=${deviceKey}`;
                     const response = await fetchWithTimeout(endpoint, {
                         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-                        timeout: 15000
+                        timeout: 15000,
                     });
-                    if (response.ok) {
-                        const result = await response.json();
-                        if (result.isSuccess && result.data) {
-                            totalWatchCount += result.data.reduce((sum, record) => sum + (Number(record.is_finished) || 0), 0);
-                        } else {
-                            console.warn('Could not fetch watch counts for video id', id, result);
-                            showToast('Could not verify video watch counts. Please try again later.');
-                            return;
-                        }
+                    if (!response || !response.ok) {
+                        console.warn('Could not fetch watch counts for video id', id);
+                        showToast('Could not verify video watch counts. Please try again later.');
+                        return;
                     }
+                    const result = await response.json();
+                    if (!result || !result.isSuccess || !Array.isArray(result.data)) {
+                        console.warn('Unexpected watch-data response for video id', id, result);
+                        showToast('Could not verify video watch counts. Please try again later.');
+                        return;
+                    }
+                    // Sum up numeric finished counts defensively
+                    const sumForId = result.data.reduce((sum, record) => {
+                        const v = record && (record.is_finished ?? record.isFinished ?? record.finished);
+                        const n = Number(v) || 0;
+                        return sum + n;
+                    }, 0);
+                    totalWatchCount += sumForId;
                 }
 
-                if (totalWatchCount >= 4) {
-                    Alert.alert("Limit Reached", ' You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.');
+                // Enforce combined limit (both languages together)
+                if (Number(totalWatchCount) >= 4) {
+                    Alert.alert('Limit Reached', 'You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.');
                     return;
                 }
+
+                // Fetch watch data specific to the selected video id and language
                 const specificVideoEndpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${videoId}&DeviceKey=${deviceKey}`;
                 const specificVideoResponse = await fetchWithTimeout(specificVideoEndpoint, {
                     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-                    timeout: 15000
+                    timeout: 15000,
                 });
-                if (specificVideoResponse.ok) {
-                    const specificResult = await specificVideoResponse.json();
-                    if (specificResult.isSuccess && specificResult.data) {
-                        const languageRecord = specificResult.data.find(d => d.language.toLowerCase() === language.toLowerCase());
-                        if (languageRecord && Number(languageRecord.is_finished) >= 3) {
-                            Alert.alert("Limit Reached", `You have already watched the ${language} video for this step 3 times.`);
-                            return;
-                        }
-                    } else if (!specificResult.isSuccess) {
-                        Alert.alert("Error", `Could not verify video watch count: ${specificResult.message}. Please try again.`);
-                        return;
-                    }
-                } else {
-                    Alert.alert("Error", "Could not connect to the server to verify video watch count. Please check your internet connection and try again.");
+                if (!specificVideoResponse || !specificVideoResponse.ok) {
+                    console.error('Could not connect to the server to verify video watch count. Please check your internet connection and try again.');
+                    return;
+                }
+                const specificResult = await specificVideoResponse.json();
+                if (!specificResult || !specificResult.isSuccess) {
+                    console.error(`Could not verify video watch count: ${specificResult?.message || 'Unknown error'}. Please try again.`);
+                    return;
+                }
+                const rows = Array.isArray(specificResult.data) ? specificResult.data : [];
+                const normalizedLang = (language || '').toString().trim().toLowerCase();
+                const languageRecord = rows.find(d => (d.language || '').toString().trim().toLowerCase() === normalizedLang);
+                const finishedCount = Number(languageRecord?.is_finished ?? languageRecord?.isFinished ?? languageRecord?.finished) || 0;
+                if (finishedCount >= 3) {
+                    Alert.alert('Limit Reached', `You have already watched the ${language} video for this step ${finishedCount} ${finishedCount === 1 ? 'time' : 'times'}.`);
                     return;
                 }
             } catch (error) {
-                console.error("Error fetching user watch data:", error);
-                Alert.alert("Error", "An unexpected error occurred while checking video permissions.");
+                console.error('Error fetching user watch data:', error);
+                console.error('An unexpected error occurred while checking video permissions.');
                 return;
             }
         }
@@ -1140,7 +1154,7 @@ const Dashboard = ({ navigation }) => {
         try {
             const videoDetails = await vdoCipherApi(videoId);
             if (!videoDetails) {
-                Alert.alert("Error", "Could not fetch video details. Please try again.");
+                console.error('Could not fetch video details. Please try again.');
                 return;
             }
             if (videoDetails && videoDetails.length) {
@@ -1153,37 +1167,64 @@ const Dashboard = ({ navigation }) => {
             const email = await AsyncStorage.getItem('userEmail') || 'N/A';
             const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
             const sessionId = await AsyncStorage.getItem('sessionId');
-            const watermarkText = `${name}, ${email}, ${phone}, ${sessionId}`;
-            const annotationObject = [{
-                type: 'rtext',
-                text: watermarkText,
-                alpha: '0.60',
-                color: '0xFFFFFF',
-                size: '16',
-                interval: '5000',
-            }];
+            const watermarkText = `${name}${email}${phone}${sessionId}`;
+            const annotationObject = [
+                {
+                    type: 'rtext',
+                    text: name,
+                    color: '0xFF0000',
+                    alpha: '0.60',
+                    size: '15',
+                    interval: '3000',
+                },
+                {
+                    type: 'rtext',
+                    text: email,
+                    color: '0x0000FF',
+                    alpha: '0.60',
+                    size: '15',
+                    interval: '3300',
+                },
+                {
+                    type: 'rtext',
+                    text: phone,
+                    color: '0x00FF00',
+                    alpha: '0.60',
+                    size: '15',
+                    interval: '6000',
+                },
+                {
+                    type: 'rtext',
+                    text: sessionId,
+                    color: '0xFFFFFF',
+                    alpha: '0.60',
+                    size: '15',
+                    interval: '7500',
+                },
+            ];
+
             const requestBody = {
                 UserId: parseInt(userId, 10),
                 VideoId: videoId,
-                annotate: JSON.stringify(annotationObject)
+                annotate: JSON.stringify(annotationObject),
             };
 
             const response = await fetchWithTimeout(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
                 method: 'POST',
                 headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(requestBody),
-                timeout: 15000
+                timeout: 15000,
             });
-            if (!response.ok) { throw new Error("Video not found or failed to get OTP."); }
+            if (!response.ok) { throw new Error('Video not found or failed to get OTP.'); }
             const data = await response.json();
-            if (!data) return;
+            if (!data) { return; }
 
             await saveCompletedStep(`step${step}`);
             try {
                 const lastViewedObj = {
                     step: step,
                     category: openCategory || selectedStepGroup?.category || null,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
                 };
                 await AsyncStorage.setItem('lastViewed', JSON.stringify(lastViewedObj));
             } catch (err) {
@@ -1234,10 +1275,10 @@ const Dashboard = ({ navigation }) => {
                 step: step,
                 displayStep: selectedStepGroup?.displayStepNumber || selectedStepGroup?.apiStepNumber || selectedStepGroup?.stepNumber,
                 total_time: total_time,
-                stage_name: masterConfig[openCategory]?.name ?? 'Unknown'
+                stage_name: masterConfig[openCategory]?.name ?? 'Unknown',
             });
         } catch (err) {
-            Alert.alert("Error", err.message);
+            console.error('Error while starting playback:', err);
         } finally {
             setVideoLoader(false);
         }
@@ -1247,7 +1288,7 @@ const Dashboard = ({ navigation }) => {
     const vdoCipherApi = async (videoId) => {
         setVideoLoader(true);
         if (!videoId) {
-            Alert.alert("Error", "Missing video ID to get details.");
+            console.error('Missing video ID to get details.');
             setVideoLoader(false);
             return null;
         }
@@ -1257,16 +1298,16 @@ const Dashboard = ({ navigation }) => {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
                 },
-                timeout: 15000
+                timeout: 15000,
             });
             if (!response.ok) {
-                throw new Error("Failed to get video details.");
+                throw new Error('Failed to get video details.');
             }
             return await response.json();
         } catch (error) {
-            Alert.alert("API Error", `An unexpected error occurred: ${error.message}`);
+            console.error('API Error while fetching video details:', error);
             return null;
         } finally {
             setVideoLoader(false);
@@ -1274,12 +1315,12 @@ const Dashboard = ({ navigation }) => {
     };
 
     const handleIntroductionPress = async (introType) => {
-        if (introType === 2 && !completedSteps['step1001']) {
-            Alert.alert("Locked", "Please complete Introduction I before starting Introduction II.");
+        if (introType === 2 && !completedSteps.step1001) {
+            Alert.alert('Locked', 'Please complete Introduction I before starting Introduction II.');
             return;
         }
 
-        const folderId = "8a15a7910bcb41a897b50111ec4f95d9";
+        const folderId = '8a15a7910bcb41a897b50111ec4f95d9';
         setVideoLoader(true);
         const videoDetails = await fetchVideos([folderId]);
         if (introType === 2) { }
@@ -1287,20 +1328,20 @@ const Dashboard = ({ navigation }) => {
         if (videoDetails?.rows?.length >= 4) {
             setVideoData(prevData => ({
                 ...prevData,
-                ['introduction']: videoDetails
+                ['introduction']: videoDetails,
             }));
             const group = introType === 1 ? { stepNumber: 1001, hindiVideo: videoDetails.rows[2], englishVideo: videoDetails.rows[3] } : { stepNumber: 1002, hindiVideo: videoDetails.rows[0], englishVideo: videoDetails.rows[1] };
             setSelectedStepGroup(group);
             setIsModalVisible(true);
         } else {
-            Alert.alert("Video Data Error", `Not enough videos found for Introduction ${introType}.`);
+            Alert.alert('Video Data Error', `Not enough videos found for Introduction ${introType}.`);
         }
     };
 
     const handleLevelPress = async (level) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
         if (!dataLoaded) {
-            Alert.alert("Loading...", "Please wait until your progress is fully loaded.");
+            Alert.alert('Loading...', 'Please wait until your progress is fully loaded.');
             return;
         }
 
@@ -1316,7 +1357,7 @@ const Dashboard = ({ navigation }) => {
                     setVideoData(prevData => {
                         const newData = { ...prevData };
                         results.forEach(({ key, details }) => {
-                            if (details) newData[key] = details;
+                            if (details) { newData[key] = details; }
                         });
                         return newData;
                     });
@@ -1340,7 +1381,7 @@ const Dashboard = ({ navigation }) => {
                 setVideoData(prevData => {
                     const newData = { ...prevData };
                     results.forEach(({ key, details }) => {
-                        if (details) newData[key] = details;
+                        if (details) { newData[key] = details; }
                     });
                     return newData;
                 });
@@ -1354,7 +1395,7 @@ const Dashboard = ({ navigation }) => {
             const areAllPrereqsCompleted = allPrereqSteps.every(stepKey => completedSteps[stepKey]);
 
             if (!areAllPrereqsCompleted) {
-                Alert.alert("Level Locked", `You must complete all steps in the ${levelName} Level to unlock this level.`);
+                Alert.alert('Level Locked', `You must complete all steps in the ${levelName} Level to unlock this level.`);
                 return false;
             }
 
@@ -1362,8 +1403,8 @@ const Dashboard = ({ navigation }) => {
         };
 
         if (level === 'foundation') {
-            if (!completedSteps['step1002']) {
-                Alert.alert("Locked", "Please complete Introduction II before starting the Foundation Level.");
+            if (!completedSteps.step1002) {
+                Alert.alert('Locked', 'Please complete Introduction II before starting the Foundation Level.');
                 return;
             }
             await loadLevelVideos(foundationKeys);
@@ -1374,19 +1415,23 @@ const Dashboard = ({ navigation }) => {
                     const response = await fetchWithTimeout(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }, timeout: 15000 });
                     if (response.ok) {
                         const result = await response.json();
-                        if (result.isSuccess && result.data && result.data.length > 0) {
-                            const completionDate = new Date(result.data[0].createOn);
-                            const hoursSinceCompletion = (new Date() - completionDate) / (1000 * 60 * 60);
-                            if (hoursSinceCompletion > 170) {
-                                Alert.alert('You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.');
-                                return;
+                        if (result.isSuccess) {
+                            if (result.data && result.data.length > 0) {
+                                const completionDate = new Date(result.data[0].createOn);
+                                const hoursSinceCompletion = (new Date() - completionDate) / (1000 * 60 * 60);
+                                if (hoursSinceCompletion > 170) {
+                                    Alert.alert('You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.');
+                                    return;
+                                }
+                            } else {
+                                // No watch data found — treat as not completed without warning.
                             }
                         } else {
                             console.warn('Could not check lastStepOfMiddle lock status', result);
                             showToast('Could not verify unlock status. Please try again later.');
                         }
                     }
-                } catch (error) { console.error("Could not check foundation lock time", error); }
+                } catch (error) { console.error('Could not check foundation lock time', error); }
             }
             setActiveLevel(level);
         }
@@ -1401,19 +1446,23 @@ const Dashboard = ({ navigation }) => {
                         const response = await fetchWithTimeout(endpoint, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }, timeout: 15000 });
                         if (response.ok) {
                             const result = await response.json();
-                            if (result.isSuccess && result.data && result.data.length > 0) {
-                                const completionDate = new Date(result.data[0].createOn);
-                                const hoursSinceCompletion = (new Date() - completionDate) / (1000 * 60 * 60);
-                                if (hoursSinceCompletion > 170) {
-                                    Alert.alert(" You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.");
-                                    return;
+                            if (result.isSuccess) {
+                                if (result.data && result.data.length > 0) {
+                                    const completionDate = new Date(result.data[0].createOn);
+                                    const hoursSinceCompletion = (new Date() - completionDate) / (1000 * 60 * 60);
+                                    if (hoursSinceCompletion > 170) {
+                                        Alert.alert(' You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.');
+                                        return;
+                                    }
+                                } else {
+                                    // No watch data found — treat as not completed without warning.
                                 }
                             } else {
                                 console.warn('Could not check StepOfAdvance lock status', result);
                                 showToast('Could not verify unlock status. Please try again later.');
                             }
                         }
-                    } catch (error) { console.error("Could not check foundation lock time", error); }
+                    } catch (error) { console.error('Could not check foundation lock time', error); }
                 }
                 setActiveLevel(level);
             }
@@ -1438,7 +1487,7 @@ const Dashboard = ({ navigation }) => {
     };
 
     const renderLevelModal = () => {
-        if (!activeLevel) return null;
+        if (!activeLevel) { return null; }
 
         const levelKeys = {
             foundation: foundationKeys,
@@ -1450,7 +1499,7 @@ const Dashboard = ({ navigation }) => {
 
         return <LevelModal levelName={levelName} onClose={handleCloseModal} isDarkMode={isDarkMode} scrollRef={levelModalScrollRef}>{levelKeys.map(key => {
             const config = masterConfig[key];
-            if (!config) return null;
+            if (!config) { return null; }
             const allSteps = config.finalGroupedData?.map(g => `step${g.stepNumber}`) || [];
             const isComplete = allSteps.length > 0 && allSteps.every(stepKey => completedSteps[stepKey]);
             return (
@@ -1459,25 +1508,27 @@ const Dashboard = ({ navigation }) => {
                     {openCategory === key && <VideoStepList groups={config.finalGroupedData} completedSteps={completedSteps} onStepPress={handleDropdownItemClick} isDarkMode={isDarkMode} stepRefs={stepRefs} />}
                 </React.Fragment>
             );
-        })}</LevelModal>
-    }
-    //scroll to top 
+        })}</LevelModal>;
+    };
+    //scroll to top
     useEffect(() => {
-        if (lastViewedRequest) return;
+        if (lastViewedRequest) { return; }
 
-        if (!levelModalScrollRef.current) return;
+        if (!levelModalScrollRef.current) { return; }
 
         const timeout = setTimeout(() => {
+            const ref = levelModalScrollRef.current;
+            if (!ref || typeof ref.scrollTo !== 'function') { return; }
+
             try {
-                levelModalScrollRef.current.scrollTo({
-                    y: 0,
-                    animated: true,
-                });
+                ref.scrollTo({ y: 0, animated: true });
             } catch (e) {
                 console.warn('Failed to scroll level modal to top:', e);
                 try {
-                    // fallback: try without animation or with a short timeout
-                    levelModalScrollRef.current.scrollTo({ y: 0, animated: false });
+                    // fallback: try without animation
+                    if (ref && typeof ref.scrollTo === 'function') {
+                        ref.scrollTo({ y: 0, animated: false });
+                    }
                 } catch (err) {
                     console.error('Fallback scrollTo also failed:', err);
                 }
@@ -1491,9 +1542,9 @@ const Dashboard = ({ navigation }) => {
 
     //categories (keys) in a level are fully completed
     const isLevelComplete = (keys) => {
-        if (!keys || !keys.length) return false;
+        if (!keys || !keys.length) { return false; }
         const allSteps = keys.flatMap(key => masterConfig[key]?.finalGroupedData.map(g => `step${g.stepNumber}`) || []);
-        if (allSteps.length === 0) return false;
+        if (allSteps.length === 0) { return false; }
         return allSteps.every(stepKey => completedSteps[stepKey]);
     };
 
@@ -1508,7 +1559,7 @@ const Dashboard = ({ navigation }) => {
                     <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(1)}>
                         <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 5 }]}>
                             <Image source={require('../img/Intro1.png')} style={styles.image} resizeMode="cover" />
-                            <View style={[completedSteps['step1001'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
+                            <View style={[completedSteps.step1001 ? styles.completedCategoryOverlay : styles.textOverlay]}>
                                 <Text style={styles.text}>Introduction I</Text>
                             </View>
                         </Animated.View>
@@ -1516,7 +1567,7 @@ const Dashboard = ({ navigation }) => {
                     <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(2)}>
                         <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}>
                             <Image source={require('../img/Intro2.png')} style={styles.image} resizeMode="cover" />
-                            <View style={[completedSteps['step1002'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
+                            <View style={[completedSteps.step1002 ? styles.completedCategoryOverlay : styles.textOverlay]}>
                                 <Text style={styles.text}>Introduction II</Text>
                             </View>
                         </Animated.View>
@@ -1564,14 +1615,14 @@ const Dashboard = ({ navigation }) => {
                         <View style={styles.modalButtons}>
                             <TouchableOpacity
                                 style={[styles.modalButton, !selectedStepGroup.hindiVideo && styles.disabledButton]}
-                                onPress={() => { if (!selectedStepGroup?.hindiVideo) return; handleVideo(selectedStepGroup.hindiVideo.id, selectedStepGroup.stepNumber, 'hindi'); }}
+                                onPress={() => { if (!selectedStepGroup?.hindiVideo) { return; } handleVideo(selectedStepGroup.hindiVideo.id, selectedStepGroup.stepNumber, 'hindi'); }}
                                 disabled={!selectedStepGroup.hindiVideo}
                             >
                                 <Text style={styles.modalButtonText}>Hindi</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.modalButton, !selectedStepGroup.englishVideo && styles.disabledButton]}
-                                onPress={() => { if (!selectedStepGroup?.englishVideo) return; handleVideo(selectedStepGroup.englishVideo.id, selectedStepGroup.stepNumber, 'english'); }}
+                                onPress={() => { if (!selectedStepGroup?.englishVideo) { return; } handleVideo(selectedStepGroup.englishVideo.id, selectedStepGroup.stepNumber, 'english'); }}
                                 disabled={!selectedStepGroup.englishVideo}
                             >
                                 <Text style={styles.modalButtonText}>English</Text>
@@ -1595,7 +1646,7 @@ const Dashboard = ({ navigation }) => {
     );
 };
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: 'transparent', },
+    container: { flex: 1, backgroundColor: 'transparent' },
     imageContainer: {
         flex: 1,
         flexDirection: 'column',
@@ -1605,23 +1656,23 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
 
-    button: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
-    buttonNested: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
-    image: { width: width - 20, height: 250, resizeMode: 'center', borderRadius: 5, },
-    imagenested: { width: width - 48, height: height / 2.8, borderRadius: 5, },
-    textOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, },
-    completedCategoryOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#4DB6AC', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, },
-    completedTextOverlayTwo: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#4DB6AC', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, flexDirection: 'row', justifyContent: 'space-between', },
+    button: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5 },
+    buttonNested: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5 },
+    image: { width: width - 20, height: 250, resizeMode: 'center', borderRadius: 5 },
+    imagenested: { width: width - 48, height: height / 2.8, borderRadius: 5 },
+    textOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5 },
+    completedCategoryOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#4DB6AC', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5 },
+    completedTextOverlayTwo: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#4DB6AC', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, flexDirection: 'row', justifyContent: 'space-between' },
     lockedDropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)' },
     completedDropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: '#4DB6AC' },
-    textOverlayTwo: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, flexDirection: 'row', justifyContent: 'space-between', },
+    textOverlayTwo: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, flexDirection: 'row', justifyContent: 'space-between' },
     text: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
-    dropdownContent: { borderBottomLeftRadius: 5, borderBottomRightRadius: 5, width: '100%', marginBottom: 10, paddingHorizontal: 0, },
+    dropdownContent: { borderBottomLeftRadius: 5, borderBottomRightRadius: 5, width: '100%', marginBottom: 10, paddingHorizontal: 0 },
     dropdownItemBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, gap: 10, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.8)' },
     imageVideo: { width: 35, height: 35, borderRadius: 5 },
     durationContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' },
-    timerImage: { width: 16, height: 16, marginRight: 4, },
-    durationText: { color: 'white', fontSize: 14, },
+    timerImage: { width: 16, height: 16, marginRight: 4 },
+    durationText: { color: 'white', fontSize: 14 },
     dropdownItem: { fontSize: 16, color: '#fff', fontWeight: '500', flex: 1 },
     modalContent: { width: width * 0.8, backgroundColor: '#fff', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20, borderRadius: 10, alignItems: 'center' },
     modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
@@ -1629,23 +1680,23 @@ const styles = StyleSheet.create({
     modalButtons: { flexDirection: 'row', gap: 15 },
     modalButton: { backgroundColor: 'rgba(20, 52, 164, 1)', paddingVertical: 10, width: 100, borderRadius: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5 },
     disabledButton: { backgroundColor: '#a0a0a0' },
-    modalButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center', },
-    videolist: { paddingHorizontal: 10, width: '100%', },
+    modalButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
+    videolist: { paddingHorizontal: 10, width: '100%' },
     tabimage: { width: 25, height: 22 },
-    modalContentClose: { color: '#000', fontSize: 16, fontWeight: 'bold', },
-    modalContentMainDiv: { flexDirection: "row", justifyContent: "space-between", width: '100%', },
-    borderLine: { borderBottomWidth: 1, borderBottomColor: "#ccc", width: "100%", marginBottom: 15 },
-    loadingText: { marginTop: 10, color: '#FFFFFF', fontSize: 16, },
-    modalContents: { backgroundColor: '#dee2e6', borderRadius: 10, overflow: 'hidden', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5, },
-    modalHeader: { width: '100%', paddingVertical: 10, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(20, 52, 164, 1)', backgroundColor: 'rgba(20, 52, 164, 1)', },
-    modalHeaderText: { fontSize: 18, fontWeight: 'bold', color: '#fff', },
+    modalContentClose: { color: '#000', fontSize: 16, fontWeight: 'bold' },
+    modalContentMainDiv: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    borderLine: { borderBottomWidth: 1, borderBottomColor: '#ccc', width: '100%', marginBottom: 15 },
+    loadingText: { marginTop: 10, color: '#FFFFFF', fontSize: 16 },
+    modalContents: { backgroundColor: '#dee2e6', borderRadius: 10, overflow: 'hidden', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
+    modalHeader: { width: '100%', paddingVertical: 10, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(20, 52, 164, 1)', backgroundColor: 'rgba(20, 52, 164, 1)' },
+    modalHeaderText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
     closeButton: { padding: 5 },
-    closeButtonText: { fontSize: 18, fontWeight: 'bold', color: '#fff', },
-    modalScrollView: { flex: 1, width: '100%', },
-    modalScrollViewContent: { paddingHorizontal: 5, paddingVertical: 10, },
-    modalLikeContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 1000, },
-    fullScreenPressable: { flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%', padding: 20, },
-    modalLikeContentBox: { width: '95%', maxHeight: '95%', backgroundColor: '#dee2e6', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5, },
+    closeButtonText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
+    modalScrollView: { flex: 1, width: '100%' },
+    modalScrollViewContent: { paddingHorizontal: 5, paddingVertical: 10 },
+    modalLikeContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
+    fullScreenPressable: { flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%', padding: 20 },
+    modalLikeContentBox: { width: '95%', maxHeight: '95%', backgroundColor: '#dee2e6', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
     loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     handImage: { position: 'absolute', width: 50, height: 50, zIndex: 10 },
     customButton: {

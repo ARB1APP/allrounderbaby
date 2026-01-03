@@ -99,7 +99,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#2a3144' : Colors.white,
   };
-  
+
   const policyContent = [
     { type: 'header', text: 'Introduction' },
     { type: 'paragraph', text: 'Welcome to Allrounderbaby.com. We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about our policy, or our practices with regards to your personal information, please contact us.' },
@@ -135,17 +135,17 @@ const PrivacyPolicy = ({ navigation, route }) => {
       }, [navigation]);
 
   return (
-  
+
     <View style={[styles.container, backgroundStyle]}>
       <ScreenScroll contentContainerStyle={styles.scrollContainer}>
          <View  style={[
                 styles.sectionContainer,
-                { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, 
-                { borderColor: isDarkMode ? '#444' : '#e0e0e0' } 
+                { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
+                { borderColor: isDarkMode ? '#444' : '#e0e0e0' },
               ]}>
               <Text  style={[
                   styles.pageTitle,
-                 { color: isDarkMode ? '#fff' : '#1434a4' }
+                 { color: isDarkMode ? '#fff' : '#1434a4' },
                  ]}>
                  Privacy Policy</Text>
               <Text style={styles.leadText}>
@@ -255,7 +255,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
                             styles.sectionHeader,
                             { color: isDarkMode ? '#fff' : '#1434a4',
                                marginTop: 10,
-                             }
+                             },
                         ]}>
                1. Personal Information</Text>
               <Text style={styles.leadText}>
@@ -302,12 +302,12 @@ const PrivacyPolicy = ({ navigation, route }) => {
     <View style={styles.information}>
       <View style={styles.infoListItem}>
         <View style={styles.infoListItemContent}>
-          <Text 
+          <Text
            style={[
                 styles.sectionTitle,
                 { color: isDarkMode ? '#000' : '#00796B',
                  marginLeft: 5,
-              }
+              },
             ]}>
           Contact Information:</Text>
           <Text style={styles.leadText}>
@@ -321,12 +321,12 @@ const PrivacyPolicy = ({ navigation, route }) => {
 
       <View style={styles.infoListItem}>
         <View style={styles.infoListItemContent}>
-           <Text 
+           <Text
            style={[
                 styles.sectionTitle,
                 { color: isDarkMode ? '#000' : '#00796B',
                    marginLeft: 5,
-                 }
+                 },
             ]}>
           Personalized Information:</Text>
           <Text style={styles.leadText}>
@@ -338,12 +338,12 @@ const PrivacyPolicy = ({ navigation, route }) => {
       </View>
       <View style={styles.infoListItem}>
         <View style={styles.infoListItemContent}>
-           <Text 
+           <Text
            style={[
                 styles.sectionTitle,
                 { color: isDarkMode ? '#000' : '#00796B',
                  marginLeft: 5,
-                  }
+                  },
             ]}>
           Transaction and Technical Information:</Text>
           <Text style={styles.leadText}>
@@ -360,12 +360,12 @@ const PrivacyPolicy = ({ navigation, route }) => {
 
       <View style={styles.infoListItem}>
         <View style={styles.infoListItemContent}>
-          <Text 
+          <Text
            style={[
                 styles.sectionTitle,
                 { color: isDarkMode ? '#000' : '#00796B',
                    marginLeft: 5,
-                 }
+                 },
             ]}>
           Third-Party Data:</Text>
           <Text style={styles.leadText}>
@@ -381,12 +381,12 @@ const PrivacyPolicy = ({ navigation, route }) => {
 
       <View style={styles.infoListItem}>
         <View style={styles.infoListItemContent}>
-           <Text 
+           <Text
            style={[
                 styles.sectionTitle,
                 { color: isDarkMode ? '#000' : '#00796B',
                  marginLeft: 5,
-                 }
+                 },
             ]}>
           Other Data:</Text>
           <Text style={styles.leadText}>
@@ -400,10 +400,10 @@ const PrivacyPolicy = ({ navigation, route }) => {
          <Text  style={[
                             styles.leadText,
                             { marginTop: 20,
-                            
-                            }
+
+                            },
                         ]}>
-         
+
                 We may be required to share the aforesaid information with
                 government authorities and agencies for the purposes of
                 verification of identity or for prevention, detection or
@@ -528,10 +528,10 @@ const PrivacyPolicy = ({ navigation, route }) => {
               <View style={styles.section} id="third-party">
               <Text style={[
                             styles.sectionHeader,
-                           { 
+                           {
                             color: isDarkMode ? '#fff' : '#1434a4',
-                            marginTop: 10
-                          }
+                            marginTop: 10,
+                          },
                         ]}>2. Third Party Activities</Text>
               <Text style={styles.leadText}>
                 The Platform acts as a platform to facilitate education
@@ -654,7 +654,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
              <View style={styles.section} id="cookies">
               <Text style={[
                             styles.sectionHeader,
-                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                            { color: isDarkMode ? '#fff' : '#1434a4' },
                         ]}>3. Cookies</Text>
               <Text style={styles.leadText}>
                 When You use the Platform, We try to make that experience
@@ -712,7 +712,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
              <View style={styles.section} id="data-retention">
               <Text style={[
                             styles.sectionHeader,
-                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                            { color: isDarkMode ? '#fff' : '#1434a4' },
                         ]}>4. Data Retention</Text>
               <Text style={styles.leadText}>
                 We will only retain Your personal data for as long as necessary
@@ -742,7 +742,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
                 <View style={styles.section} id="unsubscribe">
               <Text style={[
                             styles.sectionHeader,
-                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                            { color: isDarkMode ? '#fff' : '#1434a4' },
                         ]}>5. Right to Unsubscribe</Text>
               <Text style={styles.leadText}>
                 You always have the option to not provide information by choosing
@@ -780,7 +780,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
               <View style={styles.section} id="user-eligibility">
               <Text style={[
                             styles.sectionHeader,
-                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                            { color: isDarkMode ? '#fff' : '#1434a4' },
                         ]}>
                 6. Persons Allowed to Use the Platform
               </Text>
@@ -809,7 +809,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
              <View style={styles.section} id="grievances">
               <Text style={[
                             styles.sectionHeader,
-                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                            { color: isDarkMode ? '#fff' : '#1434a4' },
                         ]}>7. Grievances</Text>
               <Text style={styles.leadText}>
                 Allrounder Baby strives to address any of Your concerns
@@ -819,18 +819,18 @@ const PrivacyPolicy = ({ navigation, route }) => {
 
             <View
       style={{
-        margin: 5, 
-        padding: 10, 
+        margin: 5,
+        padding: 10,
         backgroundColor: '#f8f8f8',
         borderRadius: 8,
-        borderWidth: 1, 
+        borderWidth: 1,
         borderColor: '#ddd',
         marginBottom: 20,
       }}
     >
       <Text style={{ fontWeight: 'bold', marginBottom: 10 }}>Name: Anurag Vaishya</Text>
       <Text  style={{ marginBottom: 10 }}>
-        <Text style={{ fontWeight: 'bold',  }}>Email:</Text>{' '}
+        <Text style={{ fontWeight: 'bold'  }}>Email:</Text>{' '}
         <Text
           style={{ color: 'blue', textDecorationLine: 'underline' }}
           onPress={() => Linking.openURL('mailto:admin@allrounderbaby.in')}
@@ -842,19 +842,19 @@ const PrivacyPolicy = ({ navigation, route }) => {
       <Text>
         <Text style={{ fontWeight: 'bold' }}>Address:</Text>{' '}
         <Text
-          style={{ color: 'blue', textDecorationLine: 'underline' }} 
+          style={{ color: 'blue', textDecorationLine: 'underline' }}
         >
           Flat A 304 Royal City, Potiya Road, Durg - 491001, Chattisgarh, India
         </Text>
       </Text>
     </View>
-           
+
             </View>
 
             <View style={styles.section} id="grievances">
               <Text style={[
                             styles.sectionHeader,
-                            { color: isDarkMode ? '#fff' : '#1434a4' }
+                            { color: isDarkMode ? '#fff' : '#1434a4' },
                         ]}>8. Changes to This Privacy Policy</Text>
               <Text style={styles.leadText}>
                 We reserve the right to update or change Our Privacy Policy at any time and You should check this Privacy Policy periodically. Your continued use of the Service and the Platform after We post any modifications to the Privacy Policy on this page will constitute Your acknowledgment of the modifications and Your consent to abide and be bound by the modified Privacy Policy.
@@ -863,14 +863,14 @@ const PrivacyPolicy = ({ navigation, route }) => {
                We reserve the right to update or modify this Privacy Policy at any time, including changes related to payment processing, foreign exchange handling, and KYC compliance. Any material changes will be communicated via a notice on the Platform and/or email notification to affected users. Continued use of the Platform following such updates constitutes acceptance of the revised policy.
               </Text>
 
-              <Text style={styles.leadText}>  
+              <Text style={styles.leadText}>
                 If We make any material changes to this Privacy Policy, We will notify You either by placing a prominent notice on the Platform and/or Services.
               </Text>
             </View>
-            </View>     
+            </View>
   </ScreenScroll>
     </View>
-       
+
   );
 };
 

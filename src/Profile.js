@@ -63,7 +63,7 @@ const AppColors = {
         bottomNavActiveTint: '#60b5f6',
         bottomNavInactiveTint: '#718096',
         sectionTitle: '#C1CAD4',
-    }
+    },
 };
 
 const url = BASE_URL;
@@ -73,10 +73,10 @@ const Profile = ({ navigation, route }) => {
     const theme = isDarkMode ? AppColors.dark : AppColors.light;
 
     const handleLogout = async () => {
-        Alert.alert("Logout", "Are you sure you want to log out?", [
-            { text: "Cancel", style: "cancel" },
+        Alert.alert('Logout', 'Are you sure you want to log out?', [
+            { text: 'Cancel', style: 'cancel' },
             {
-                text: "OK",
+                text: 'OK',
                 onPress: async () => {
                     try {
                         const token = await AsyncStorage.getItem('token');
@@ -100,9 +100,9 @@ const Profile = ({ navigation, route }) => {
                             const response = await fetch(endpoint, {
                                 headers: {
                                     'Authorization': `Bearer ${token}`,
-                                    'Accept': 'application/json'
+                                    'Accept': 'application/json',
                                 },
-                                signal: controller.signal
+                                signal: controller.signal,
                             });
 
                             clearTimeout(timeoutId);
@@ -111,8 +111,8 @@ const Profile = ({ navigation, route }) => {
                                 const errorText = await response.text();
                                 console.error('Server-side logout failed:', errorText);
                                 Alert.alert(
-                                    "Logout Warning",
-                                    "Failed to log out from the server, but your local session has been cleared."
+                                    'Logout Warning',
+                                    'Failed to log out from the server, but your local session has been cleared.'
                                 );
                             }
                         } catch (fetchError) {
@@ -127,11 +127,11 @@ const Profile = ({ navigation, route }) => {
                         await clearLocalSessionAndNavigate();
                     } catch (error) {
                         console.error('Error during logout process:', error);
-                        Alert.alert("Logout Error", "An unexpected error occurred during logout. Clearing local session as a fallback.");
+                        console.error('An unexpected error occurred during logout. Clearing local session as a fallback.');
                         await clearLocalSessionAndNavigate();
                     }
                 },
-            }
+            },
         ]);
     };
 
@@ -150,7 +150,7 @@ const Profile = ({ navigation, route }) => {
                 'topicCompletionTimes',
                 'middleLevelCompletionTime',
                 'advancedLevelCompletionTime',
-                'userProgress'
+                'userProgress',
             ];
 
             if (rememberPreference !== 'true') {
@@ -188,7 +188,7 @@ const Profile = ({ navigation, route }) => {
             }
         } catch (localError) {
             console.error('Error clearing local storage:', localError);
-            Alert.alert("Local Session Error", "Failed to clear local session data. Please restart the app.");
+            console.error('Failed to clear local session data. Please restart the app.');
         }
     };
 

@@ -1,6 +1,13 @@
 <resources>
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
-        <item name="android:windowIsTranslucent">true</item> 
+        <!-- Ensure system bars draw their backgrounds so we can set statusBarColor -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- Use app header color for status bar so icons stay white -->
+        <item name="android:statusBarColor">#1434A4</item>
+        <!-- Ensure system chooses light status bar icons (false => light icons) -->
+        <item name="android:windowLightStatusBar">false</item>
+        <!-- If translucent was previously enabled, disable it so status bar color is applied -->
+        <item name="android:windowIsTranslucent">false</item>
     </style>
 </resources>

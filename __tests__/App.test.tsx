@@ -13,7 +13,7 @@ it('renders correctly', async () => {
     // Wait for any async operations to complete
     await new Promise(resolve => setTimeout(resolve, 100));
   });
-  
+
   // Clean up
   if (component) {
     await act(async () => {

@@ -64,14 +64,14 @@ const ReferralHistory = ({ navigation, route }) => {
         if (storedToken && storedUserId) {
           fetchReferralHistory(storedToken, storedUserId);
         } else {
-          console.warn("Authentication: Token or User ID not available for fetching referral history.");
+          console.warn('Authentication: Token or User ID not available for fetching referral history.');
           setIsLoading(false);
-          Alert.alert("Authentication Required", "Please log in to view your referral history.");
+          Alert.alert('Authentication Required', 'Please log in to view your referral history.');
         }
       } catch (error) {
-        console.error("Failed to load user data from AsyncStorage:", error);
+        console.error('Failed to load user data from AsyncStorage:', error);
         setIsLoading(false);
-        Alert.alert("Error", "Failed to load user data for authentication.");
+        console.error('Failed to load user data for authentication.');
       }
     };
     loadUserData();
@@ -105,8 +105,7 @@ const ReferralHistory = ({ navigation, route }) => {
         } catch (parseError) {
           errorData = { message: response.statusText, rawResponse: responseText };
         }
-        console.error("ReferralHistory API Error:", errorData);
-        Alert.alert("API Error", `Failed to load referral history: ${errorData.message || response.statusText}. Raw response: ${errorData.rawResponse || 'N/A'}`);
+        console.error('ReferralHistory API Error:', errorData);
         setReferralHistory([]);
         return;
       }
@@ -124,8 +123,8 @@ const ReferralHistory = ({ navigation, route }) => {
       }
 
     } catch (error) {
-      console.error("Network or unexpected error fetching referral history:", error);
-      Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
+      console.error('Network or unexpected error fetching referral history:', error);
+      console.error('Network Error', error);
       setReferralHistory([]);
     } finally {
       setIsLoading(false);
@@ -160,7 +159,7 @@ const ReferralHistory = ({ navigation, route }) => {
 
   return (
     <View style={[styles.container, backgroundStyle]}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={theme.screenBackground} />
+      <StatusBar barStyle={'light-content'} backgroundColor={theme.screenBackground} />
       <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handlereferAndearnBackpress} style={styles.backButton}>

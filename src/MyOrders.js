@@ -31,26 +31,26 @@ const lightThemeColors = {
   shadowOpacity: 0.15,
   shadowRadius: 3,
   elevation: 4,
-  statusBarContent: 'dark-content',
-  
+  statusBarContent: 'light-content',
+
 };
 
 const darkThemeColors = {
   screenBackground: '#121212',
-  cardBackground: '#1E1E1E',  
+  cardBackground: '#1E1E1E',
   cardBorder: '#3A3A3A',
-  textPrimary: '#E0E0E0',  
+  textPrimary: '#E0E0E0',
   textSecondary: '#B0B0B0',
-  inputBackground: '#2C2C2C',   
+  inputBackground: '#2C2C2C',
   inputBorderColor: '#4A4A4A',
-  inputText: '#E0E0E0',       
+  inputText: '#E0E0E0',
   inputPlaceholderText: '#777777',
-  buttonBackground: 'rgba(30, 62, 174, 1)', 
+  buttonBackground: 'rgba(30, 62, 174, 1)',
   buttonTextColor: '#FFFFFF',
-  shadowColor: '#000000', 
-  shadowOpacity: 0.3, 
-  shadowRadius: 5,  
-  elevation: 0, 
+  shadowColor: '#000000',
+  shadowOpacity: 0.3,
+  shadowRadius: 5,
+  elevation: 0,
   statusBarContent: 'light-content',
 };
 
@@ -67,7 +67,7 @@ const createMyOrdersStyles = (theme) => StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 30,
   },
-  
+
   headerRow: {
     marginHorizontal: 15,
     marginTop: 20,
@@ -306,35 +306,35 @@ const MyOrders = ({ navigation, route }) => {
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-     <View style={[{ paddingLeft: 8, paddingRight: 7}]}>
-           <View style={styles.headerRow}>
-            <Text style={styles.sectionTitle}>My Orders</Text>
+          <View style={[{ paddingLeft: 8, paddingRight: 7 }]}>
+            <View style={styles.headerRow}>
+              <Text style={styles.sectionTitle}>My Orders</Text>
             </View>
 
-          <View style={styles.searchRow}>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search by Order ID or Product Name..."
-              placeholderTextColor={theme.inputPlaceholderText}
-              style={styles.searchInput}
-            />
-            <TouchableOpacity style={styles.filterButton} onPress={() => { /* open filter */ }}>
-              <Text style={styles.filterText}>All Orders</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.searchRow}>
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search by Order ID or Product Name..."
+                placeholderTextColor={theme.inputPlaceholderText}
+                style={styles.searchInput}
+              />
+              <TouchableOpacity style={styles.filterButton} onPress={() => { /* open filter */ }}>
+                <Text style={styles.filterText}>All Orders</Text>
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.ordersList}>
-            {sampleOrders.filter(o => {
-              if (!query) return true;
-              const q = query.toLowerCase();
-              if (o.id.toLowerCase().includes(q)) return true;
-              return o.items.some(i => i.name.toLowerCase().includes(q));
-            }).map(o => (
-              <OrderCard key={o.id} order={o} />
-            ))}
+            <View style={styles.ordersList}>
+              {sampleOrders.filter(o => {
+                if (!query) {return true;}
+                const q = query.toLowerCase();
+                if (o.id.toLowerCase().includes(q)) {return true;}
+                return o.items.some(i => i.name.toLowerCase().includes(q));
+              }).map(o => (
+                <OrderCard key={o.id} order={o} />
+              ))}
+            </View>
           </View>
-     </View>
         </ScrollView>
       </View>
     </KeyboardAvoidingView>

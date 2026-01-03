@@ -40,7 +40,7 @@ const NotificationSettings = ({ navigation, route }) => {
   const theme = mode === 'dark' ? dark : light;
   const popupTheme = mode === 'dark' ? popupDark : popupLight;
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false); 
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [generalEnabled, setGeneralEnabled] = useState(true);
   const [showPermissionPopup, setShowPermissionPopup] = useState(false);
 
@@ -51,7 +51,7 @@ const NotificationSettings = ({ navigation, route }) => {
     if (Platform.OS === 'android' && Platform.Version >= 33) {
       return PERMISSIONS.ANDROID.POST_NOTIFICATIONS;
     }
-    return null; 
+    return null;
   }, []);
 
   const checkNotificationPermission = useCallback(async () => {

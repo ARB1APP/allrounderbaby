@@ -21,7 +21,7 @@ const lightThemeColors = {
   shadowOpacity: 0.15,
   shadowRadius: 3,
   elevation: 4,
-  statusBarContent: 'dark-content',
+  statusBarContent: 'light-content',
 };
 
 const darkThemeColors = {
@@ -44,9 +44,9 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
     backgroundColor: theme.screenBackground,
   },
   scrollContainer: {
-     flexGrow: 1,
-     paddingBottom: 20,
-     paddingHorizontal: 15,
+    flexGrow: 1,
+    paddingBottom: 20,
+    paddingHorizontal: 15,
   },
   title: {
     fontSize: 22,
@@ -57,53 +57,53 @@ const createMyReferralsStyles = (theme) => StyleSheet.create({
     color: theme.textPrimary,
   },
   statsContainer: {
-     flexDirection: 'row',
-     justifyContent: 'space-around',
-     backgroundColor: theme.cardBackground,
-     paddingVertical: 15,
-     borderRadius: 8,
-     marginBottom: 25,
-     elevation: theme.elevation,
-     shadowColor: theme.shadowColor,
-     shadowOffset: { width: 0, height: 1 },
-     shadowOpacity: theme.shadowOpacity,
-     shadowRadius: theme.shadowRadius,
-     borderColor: theme.cardBorder,
-     borderWidth: Platform.OS === 'android' && theme.elevation === 0 ? 1 : 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: theme.cardBackground,
+    paddingVertical: 15,
+    borderRadius: 8,
+    marginBottom: 25,
+    elevation: theme.elevation,
+    shadowColor: theme.shadowColor,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: theme.shadowOpacity,
+    shadowRadius: theme.shadowRadius,
+    borderColor: theme.cardBorder,
+    borderWidth: Platform.OS === 'android' && theme.elevation === 0 ? 1 : 0,
   },
   statBox: {
-      alignItems: 'center',
+    alignItems: 'center',
   },
   statValue: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: theme.textPrimary,
-      marginBottom: 3,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.textPrimary,
+    marginBottom: 3,
   },
   statLabel: {
-      fontSize: 12,
-      color: theme.textSecondary,
+    fontSize: 12,
+    color: theme.textSecondary,
   },
   placeholderContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-      minHeight: 200,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    minHeight: 200,
   },
   placeholderText: {
-      fontSize: 16,
-      color: theme.textPlaceholder,
-      textAlign: 'center',
-      lineHeight: 22,
+    fontSize: 16,
+    color: theme.textPlaceholder,
+    textAlign: 'center',
+    lineHeight: 22,
   },
   listContainer: {
   },
   listHeader: {
-     fontSize: 18,
-     fontWeight: 'bold',
-     color: theme.textPrimary,
-     marginBottom: 15,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.textPrimary,
+    marginBottom: 15,
   },
   referralItem: {},
 });
@@ -134,12 +134,12 @@ const MyReferrals = ({ navigation, route }) => {
     };
 
     const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        backAction
+      'hardwareBackPress',
+      backAction
     );
 
     return () => {
-        backHandler.remove();
+      backHandler.remove();
     };
   }, [navigation]);
 
@@ -150,21 +150,21 @@ const MyReferrals = ({ navigation, route }) => {
         <Text style={styles.title}>My Referrals</Text>
 
         <View style={styles.statsContainer}>
-           <View style={styles.statBox}>
-               <Text style={styles.statValue}>{referrals.length}</Text>
-               <Text style={styles.statLabel}>Total Referrals</Text>
-                <Text style={styles.statLabel}>your referral code used</Text>
-           </View>
-           <View style={styles.statBox}>
-               <Text style={styles.statValue}>{referrals.filter(r => r.status === 'Completed').length}</Text>
-               <Text style={styles.statLabel}>Completed</Text>
-                <Text style={styles.statLabel}>Payout initiated</Text>
-           </View>
-           <View style={styles.statBox}>
-               <Text style={styles.statValue}>{referrals.filter(r => r.status === 'Pending').length}</Text>
-               <Text style={styles.statLabel}>Pending</Text>
-                 <Text style={styles.statLabel}>Payout pending</Text>
-           </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{referrals.length}</Text>
+            <Text style={styles.statLabel}>Total Referrals</Text>
+            <Text style={styles.statLabel}>your referral code used</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{referrals.filter(r => r.status === 'Completed').length}</Text>
+            <Text style={styles.statLabel}>Completed</Text>
+            <Text style={styles.statLabel}>Payout initiated</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{referrals.filter(r => r.status === 'Pending').length}</Text>
+            <Text style={styles.statLabel}>Pending</Text>
+            <Text style={styles.statLabel}>Payout pending</Text>
+          </View>
         </View>
 
         {referrals.length === 0 ? (

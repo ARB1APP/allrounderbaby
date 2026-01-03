@@ -15,9 +15,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f2f2',
   },
   scrollContainer: {
-     flexGrow: 1,
-     paddingBottom: 90,
-     paddingHorizontal: 15,
+    flexGrow: 1,
+    paddingBottom: 90,
+    paddingHorizontal: 15,
   },
   title: {
     fontSize: 22,
@@ -101,7 +101,7 @@ const FAQ = ({ navigation }) => {
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#2a3144' : '#f1f2f2',
   };
-  
+
   const faqData = [
     { q: 'How does the Cashback for Feedback work?', a: 'Submit genuine feedback through our website form. Our team reviews it, and if approved based on quality, you receive cashback up to ₹1,000 (or specified amount) within 1-60 days.' },
     { q: 'How does the Refer and Earn program work?', a: 'Share your unique referral code. When someone signs up using your code and completes the required action (e.g., makes a purchase, subscribes), you both earn rewards as specified in the program terms.' },
@@ -114,7 +114,7 @@ const FAQ = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.container, backgroundStyle]}>
       <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        barStyle={'light-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
       <ScrollView contentContainerStyle={styles.scrollContainer}>

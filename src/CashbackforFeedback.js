@@ -43,7 +43,7 @@ const lightThemeColors = {
   bottomNavActiveTint: 'rgba(20, 52, 164, 1)',
   bottomNavInactiveTint: '#A0AEC0',
   bottomNavShadowColor: '#000000',
-  statusBarContent: 'dark-content',
+  statusBarContent: 'light-content',
   elevation: 5,
 };
 
@@ -199,13 +199,13 @@ const CashbackforFeedback = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        Alert.alert("API Error", `Failed to get video details: ${errorData.message || response.statusText}`);
+        console.error('API Error: Failed to get video details:', errorData);
       } else {
         const videoDetails = await response.json();
         setCashbackVideos(videoDetails);
       }
     } catch (error) {
-      Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
+      console.error('Network Error while fetching cashback videos:', error);
     } finally {
       setIsVideoLoading(false);
     }
@@ -215,7 +215,7 @@ const CashbackforFeedback = () => {
     setIsVideoLoading(true);
 
     if (!videoId) {
-      Alert.alert("Error", "Missing video ID to play the video.");
+      console.error('Missing video ID to play the video.');
       return null;
     }
 
@@ -231,13 +231,13 @@ const CashbackforFeedback = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        Alert.alert("API Error", `Failed to get video details: ${errorData.message || response.statusText}`);
+        console.error('API Error: Failed to get video details:', errorData);
         return null;
       }
 
       return await response.json();
     } catch (error) {
-      Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
+      console.error('Network Error while fetching vdocipher video details:', error);
       return null;
     } finally {
       setIsVideoLoading(false);
@@ -256,16 +256,23 @@ const CashbackforFeedback = () => {
     const name = await AsyncStorage.getItem('Name') || 'N/A';
     const email = await AsyncStorage.getItem('userEmail') || 'N/A';
     const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
-    const sessionId = await AsyncStorage.getItem('sessionId');
-    const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
-    const annotationObject = [{
+    const sessionId = await AsyncStorage.getItem('sessionId') || '';
+    const watermarkText = `${name}\n${email}\n${phone}\n${sessionId}`;
+
+    const colors = ['0xFFFFFF', '0xFF0000', '0x00FF00', '0x0000FF']; // white, red, green, blue
+
+    const annotationObject = colors.map((color, index) => ({
       type: 'rtext',
       text: watermarkText,
+      color: color,
       alpha: '0.60',
-      color: '0xFFFFFF',
-      size: '16',
-      interval: '5000',
-    }];
+      size: '17',
+      interval: `${5000 * (index + 1)}`, // each color appears after 5s, 10s, 15s, ...
+      yOffset: `${index * 20}`, // shift each watermark vertically
+    }));
+
+    console.log(annotationObject);
+
 
     const requestBody = {
       UserId: parseInt(userId, 10),
@@ -295,7 +302,9 @@ const CashbackforFeedback = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          Alert.alert("Error", errorData.message || "Video not found or failed to get OTP.");
+          console.error('Failed to get video OTP/details:', errorData);
+          setIsVideoLoading(false);
+          return;
         } else {
           const data = await response.json();
           if (!data) { setIsVideoLoading(false); return; }
@@ -313,7 +322,9 @@ const CashbackforFeedback = () => {
         }
       }
     } catch (err) {
-      Alert.alert("Network Error", `An unexpected error occurred: ${err.message}`);
+      console.error('Network Error while starting playback:', err);
+      setIsVideoLoading(false);
+      return;
     } finally {
       setIsVideoLoading(false);
     }

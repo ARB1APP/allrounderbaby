@@ -19,7 +19,7 @@ const lightThemeColors = {
   textSecondary: '#4A5568',
   linkColor: 'rgba(20, 52, 164, 1)',
   borderColor: '#E2E8F0',
-  statusBarContent: 'dark-content',
+  statusBarContent: 'light-content',
 };
 
 const darkThemeColors = {

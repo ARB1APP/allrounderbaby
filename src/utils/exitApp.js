@@ -7,7 +7,7 @@ export const exitApp = ({ confirm = false, toastMessage = null } = {}) => {
             'Are you sure you want to exit?',
             [
                 { text: 'Cancel', style: 'cancel' },
-                { text: 'Exit', style: 'destructive', onPress: () => BackHandler.exitApp() }
+                { text: 'Exit', style: 'destructive', onPress: () => BackHandler.exitApp() },
             ],
             { cancelable: true }
         );

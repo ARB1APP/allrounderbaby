@@ -34,9 +34,27 @@ const VideoPlayerScreen = () => {
     total_time,
     stage_name,
     displayStep,
+    watermarkText,
   } = route.params || {};
 
   const isDarkMode = useColorScheme() === 'dark';
+  const parseAnnotationColor = (col, alpha) => {
+    try {
+      if (!col) { return `rgba(255,255,255,${alpha || 0.22})`; }
+      let hex = col;
+      if (hex.startsWith('0x')) { hex = hex.slice(2); }
+      if (hex.length === 6) {
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        const a = typeof alpha !== 'undefined' ? parseFloat(alpha) : 0.22;
+        if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) { return 'rgba(255,255,255,0.22)'; }
+        return `rgba(${r},${g},${b},${a})`;
+      }
+    } catch (e) {
+    }
+    return `rgba(255,255,255,${alpha || 0.22})`;
+  };
   const playerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,7 +63,7 @@ const VideoPlayerScreen = () => {
   const progressUpdated = useRef(false);
 
   const updateVideoProgress = useCallback(async (isFinished) => {
-    if (progressUpdated.current) return;
+    if (progressUpdated.current) { return; }
     progressUpdated.current = true;
 
     const userId = await AsyncStorage.getItem('userId');
@@ -72,15 +90,15 @@ const VideoPlayerScreen = () => {
           previousFinishCount = videoProgress.is_finished || 0;
         }
       }
-    } catch (e) { console.error("Failed to get local video progress:", e); }
+    } catch (e) { console.error('Failed to get local video progress:', e); }
 
     const currentTimeInSeconds = Math.round(currentTime / 1000);
     const finishThresholdPercent = 0.8; // 80%
     const isNowConsideredFinished = isFinished ||
       (totalDuration > 0 && currentTimeInSeconds >= totalDuration * finishThresholdPercent);
-    const newFinishCount = isNowConsideredFinished && previousFinishCount === 0
-      ? 1
-      : previousFinishCount;
+    const newFinishCount = isNowConsideredFinished
+      ? (previousFinishCount || 0) + 1
+      : (previousFinishCount || 0);
 
     const payload = {
       User_id: parseInt(userId, 10),
@@ -93,7 +111,7 @@ const VideoPlayerScreen = () => {
       total_views: currentViews + 1,
       otp: otp,
       playback: playbackInfo,
-      stage_name: (stage_name ? stage_name : '') + " " + (typeof displayStep !== 'undefined' && displayStep !== null ? displayStep : step),
+      stage_name: (stage_name ? stage_name : '') + ' ' + (typeof displayStep !== 'undefined' && displayStep !== null ? displayStep : step),
       deviceKey: deviceKey,
     };
 
@@ -118,10 +136,10 @@ const VideoPlayerScreen = () => {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
-        timeout: 15000
+        timeout: 15000,
       });
 
       const responseData = await response.json();
@@ -147,16 +165,14 @@ const VideoPlayerScreen = () => {
           }
           await AsyncStorage.setItem('userProgress', JSON.stringify(progressData));
         } catch (e) {
-          console.error("Failed to update local userProgress cache:", e);
+          console.error('Failed to update local userProgress cache:', e);
         }
       } else {
         const errorMessage = responseData.message || `HTTP Error: ${response.status}`;
-        console.error("Failed to update video progress on server:", errorMessage);
-        Alert.alert("Sync Error", `Could not save video progress to the server: ${errorMessage}`);
+        console.error('Failed to update video progress on server:', errorMessage);
       }
     } catch (e) {
-      console.error("A network error occurred while updating video progress:", e);
-      Alert.alert("Network Error", "A network error occurred while saving your progress. Please check your connection.");
+      console.error('A network error occurred while updating video progress:', e);
     }
   }, [videoId, currentTime, language, step, totalDuration, otp, playbackInfo, stage_name]);
 
@@ -191,9 +207,9 @@ const VideoPlayerScreen = () => {
       try {
         if (playerRef.current) {
           try {
-            if (typeof playerRef.current.pause === 'function') playerRef.current.pause();
-            if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
-            if (typeof playerRef.current.release === 'function') playerRef.current.release();
+            if (typeof playerRef.current.pause === 'function') { playerRef.current.pause(); }
+            if (typeof playerRef.current.stop === 'function') { playerRef.current.stop(); }
+            if (typeof playerRef.current.release === 'function') { playerRef.current.release(); }
           } catch (e) {
             console.error('Unmount: Error cleaning up video player via ref:', e);
           } finally {
@@ -218,7 +234,7 @@ const VideoPlayerScreen = () => {
       const methodNames = ['stop', 'pause', 'release', 'releasePlayer', 'destroy', 'stopPlayer'];
 
       modulesToTry.forEach(mod => {
-        if (!mod) return;
+        if (!mod) { return; }
         methodNames.forEach(m => {
           try {
             if (typeof mod[m] === 'function') {
@@ -287,32 +303,26 @@ const VideoPlayerScreen = () => {
 
   const handleInitFailure = useCallback((err) => {
     setIsLoading(false);
-    const errorMessage = err.errorDescription || "Video initialization failed. Please try again.";
+    const errorMessage = err.errorDescription || 'Video initialization failed. Please try again.';
     setError(errorMessage);
-    Alert.alert("Video Error", errorMessage,
-      [{ text: "OK", onPress: () => backAction() }],
-      { cancelable: false }
-    );
+    console.error('Video Error', errorMessage);
+    backAction();
   }, [navigation, cameFrom, backAction]);
 
   const handleLoadError = useCallback(({ errorDescription }) => {
     setIsLoading(false);
-    const errorMessage = errorDescription || "Video failed to load. Please try again.";
+    const errorMessage = errorDescription || 'Video failed to load. Please try again.';
     setError(errorMessage);
-    Alert.alert("Video Error", errorMessage,
-      [{ text: "OK", onPress: () => backAction() }],
-      { cancelable: false }
-    );
+    console.error('Video Error', errorMessage);
+    backAction();
   }, [navigation, cameFrom, backAction]);
 
   const handleError = useCallback(({ errorDescription }) => {
     setIsLoading(false);
-    const errorMessage = errorDescription || "An unknown playback error occurred. Please try again.";
+    const errorMessage = errorDescription || 'An unknown playback error occurred. Please try again.';
     setError(errorMessage);
-    Alert.alert("Video Error", errorMessage,
-      [{ text: "OK", onPress: () => backAction() }],
-      { cancelable: false }
-    );
+    console.error('Video Error', errorMessage);
+    backAction();
   }, [navigation, cameFrom, backAction]);
 
   const handleInitializationSuccess = useCallback(() => {
@@ -341,9 +351,9 @@ const VideoPlayerScreen = () => {
         (async () => {
           if (playerRef.current) {
             try {
-              if (typeof playerRef.current.pause === 'function') playerRef.current.pause();
-              if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
-              if (typeof playerRef.current.release === 'function') playerRef.current.release();
+              if (typeof playerRef.current.pause === 'function') { playerRef.current.pause(); }
+              if (typeof playerRef.current.stop === 'function') { playerRef.current.stop(); }
+              if (typeof playerRef.current.release === 'function') { playerRef.current.release(); }
             } catch (e) {
               console.error('AppState: Error cleaning up video player via ref:', e);
             } finally {
@@ -410,7 +420,7 @@ const VideoPlayerScreen = () => {
   if (!otp || !playbackInfo) {
     return (
       <View style={[styles.container, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter, justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={isDarkMode ? Colors.darker : Colors.lighter} />
+        <StatusBar barStyle={'light-content'} backgroundColor={isDarkMode ? Colors.darker : Colors.lighter} />
         <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
           The video details (OTP or playback information) are missing. Please back up and try restarting.
         </Text>
@@ -420,7 +430,7 @@ const VideoPlayerScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: 'black' }]}>
-      <StatusBar barStyle='light-content' backgroundColor='black' />
+      <StatusBar barStyle="light-content" backgroundColor="black" />
       {error && !isLoading ? (
         <View style={[styles.errorContainer, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
           <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
@@ -428,24 +438,46 @@ const VideoPlayerScreen = () => {
           </Text>
         </View>
       ) : (
-        <VdoPlayerView
-          ref={playerRef}
-          style={styles.player}
-          embedInfo={{
-            otp: otp,
-            playbackInfo: playbackInfo,
-            id: videoId,
-          }}
-          onInitializationSuccess={handleInitializationSuccess}
-          onInitializationFailure={handleInitFailure}
-          onLoading={() => setIsLoading(true)}
-          onLoaded={handleLoaded}
-          onLoadError={handleLoadError}
-          onError={handleError}
-          onMediaEnded={handleEnded}
-          onProgress={handleProgress}
-          onPlayerStateChanged={handlePlayerStateChange}
-        />
+        <View style={styles.playerContainer}>
+          <VdoPlayerView
+            ref={playerRef}
+            style={styles.player}
+            embedInfo={{
+              otp: otp,
+              playbackInfo: playbackInfo,
+              id: videoId,
+            }}
+            onInitializationSuccess={handleInitializationSuccess}
+            onInitializationFailure={handleInitFailure}
+            onLoading={() => setIsLoading(true)}
+            onLoaded={handleLoaded}
+            onLoadError={handleLoadError}
+            onError={handleError}
+            onMediaEnded={handleEnded}
+            onProgress={handleProgress}
+            onPlayerStateChanged={handlePlayerStateChange}
+          />
+          {watermarkText ? (
+            <View pointerEvents="none" style={styles.watermarkOverlay}>
+              {Array.isArray(watermarkText) ? (
+                watermarkText.map((w, i) => {
+                  const text = w && w.text ? String(w.text) : '';
+                  const color = parseAnnotationColor(w && w.color, w && w.alpha);
+                  return (
+                    <Text
+                      key={i}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={[styles.watermarkText, { color, marginBottom: 6 }]}
+                    >{text}</Text>
+                  );
+                })
+              ) : (
+                <Text numberOfLines={1} ellipsizeMode="middle" style={styles.watermarkText}>{String(watermarkText)}</Text>
+              )}
+            </View>
+          ) : null}
+        </View>
       )}
     </View>
   );
@@ -462,6 +494,27 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 16 / 9,
     backgroundColor: '#000',
+  },
+  playerContainer: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#000',
+    position: 'relative',
+  },
+  watermarkOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+    paddingLeft: 10,
+    paddingBottom: 8,
+  },
+  watermarkText: {
+    color: 'rgba(255,255,255,0.22)',
+    fontSize: 12,
+    backgroundColor: 'transparent',
   },
   loadingOverlay: {
     position: 'absolute',

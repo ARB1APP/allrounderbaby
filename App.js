@@ -1,5 +1,5 @@
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions, Platform, StatusBar } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
@@ -9,9 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from './SplashScreen';
 import LoginPage from './src/LoginPage';
 import Dashboard from './src/Dashboard';
-import ErrorLogs from './src/ErrorLogs';
-import ErrorBoundary from './src/components/ErrorBoundary';
-import { logError } from './src/utils/errorLogger';
+// ErrorLogs and logError removed per request
 import ChasCashbackforFeedback from './src/CashbackforFeedback';
 import ReferAndEarn from './src/ReferAndEarn';
 import Profile from './src/Profile';
@@ -109,17 +107,17 @@ const createAppStyles = (theme) =>
   });
 
 export const drawerItems = [
-  { key: "home", label: "Home", navigateTo: "Home", icon: require('./img/home.png'), iconSize: { width: 24, height: 24 } },
-  { key: "profile", label: "My Profile", navigateTo: "My Profile", icon: require('./img/proflie.png'), iconSize: { width: 24, height: 24 } },
-  { key: "about", label: "About Us", navigateTo: "About Us", icon: require('./img/about.png'), iconSize: { width: 22, height: 22 } },
-  { key: "terms", label: "Terms of Service", navigateTo: "Terms of Service", icon: require('./img/pr.png'), iconSize: { width: 24, height: 24 } },
-  { key: "privacy", label: "Privacy Policy", navigateTo: "Privacy Policy", icon: require('./img/tm.png'), iconSize: { width: 23, height: 23 } },
-  { key: "rate", label: "Update App / Rate us", navigateTo: "Rate us / Update App", icon: require('./img/upadate.png'), iconSize: { width: 20, height: 20 } },
-  { key: "version", label: "Version info", navigateTo: "App Version", icon: require('./img/info.png'), iconSize: { width: 24, height: 24 } },
-  { key: "feedback", label: "Feedback", navigateTo: "Get Help", icon: require('./img/feedback.png'), iconSize: { width: 26, height: 26 } },
-  { key: "contact", label: "Contact us", navigateTo: "Get Help", icon: require('./img/call.png'), iconSize: { width: 22, height: 22 } },
-  { key: "logout", label: "Logout", navigateTo: "Login", icon: require('./img/logout.png'), iconSize: { width: 22, height: 22 } },
-  { key: "logs", label: "Error Logs", navigateTo: "Error Logs", icon: require('./img/info.png'), iconSize: { width: 20, height: 20 } },
+  { key: 'home', label: 'Home', navigateTo: 'Home', icon: require('./img/home.png'), iconSize: { width: 24, height: 24 } },
+  { key: 'profile', label: 'My Profile', navigateTo: 'My Profile', icon: require('./img/proflie.png'), iconSize: { width: 24, height: 24 } },
+  { key: 'about', label: 'About Us', navigateTo: 'About Us', icon: require('./img/about.png'), iconSize: { width: 22, height: 22 } },
+  { key: 'terms', label: 'Terms of Service', navigateTo: 'Terms of Service', icon: require('./img/pr.png'), iconSize: { width: 24, height: 24 } },
+  { key: 'privacy', label: 'Privacy Policy', navigateTo: 'Privacy Policy', icon: require('./img/tm.png'), iconSize: { width: 23, height: 23 } },
+  { key: 'rate', label: 'Update App / Rate us', navigateTo: 'Rate us / Update App', icon: require('./img/upadate.png'), iconSize: { width: 20, height: 20 } },
+  { key: 'version', label: 'Version info', navigateTo: 'App Version', icon: require('./img/info.png'), iconSize: { width: 24, height: 24 } },
+  { key: 'feedback', label: 'Feedback', navigateTo: 'Get Help', icon: require('./img/feedback.png'), iconSize: { width: 26, height: 26 } },
+  { key: 'contact', label: 'Contact us', navigateTo: 'Get Help', icon: require('./img/call.png'), iconSize: { width: 22, height: 22 } },
+  { key: 'logout', label: 'Logout', navigateTo: 'Login', icon: require('./img/logout.png'), iconSize: { width: 22, height: 22 } },
+  // Error Logs entry removed
 ];
 
 const isDrawerItemFocused = (item, props) => {
@@ -239,7 +237,7 @@ const App = () => {
     try {
       if (typeof ErrorUtils !== 'undefined' && ErrorUtils && typeof ErrorUtils.setGlobalHandler === 'function') {
         ErrorUtils.setGlobalHandler((error, isFatal) => {
-          try { logError(error, { isFatal }); } catch (e) { console.error('global logError failed', e); }
+          console.error('Uncaught error (global handler):', error, { isFatal });
         });
       }
     } catch (e) {
@@ -250,7 +248,7 @@ const App = () => {
     try {
       if (typeof global !== 'undefined' && typeof global.addEventListener === 'function') {
         global.addEventListener('unhandledrejection', (ev) => {
-          try { logError(ev.reason || ev, { type: 'unhandledrejection' }); } catch (e) { console.error('rejection log failed', e); }
+          console.error('Unhandled rejection:', ev.reason || ev);
         });
       }
     } catch (e) {
@@ -267,7 +265,7 @@ const App = () => {
         const hasToken = !!token;
         isLoggedInRef.current = hasToken;
 
-        if (!isMounted) return;
+        if (!isMounted) { return; }
 
         if (!isFirstTime && !hasToken) {
           setInitialRoute('Splash');
@@ -297,18 +295,18 @@ const App = () => {
   const onNavigationReady = React.useCallback(async () => {
     const guestPages = ['Login', 'LoginPage', 'Splash', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
 
-    if (!navigationRef.isReady()) return;
+    if (!navigationRef.isReady()) { return; }
 
     try {
       const origNavigate = navigationRef.navigate.bind(navigationRef);
       navigationRef.navigate = async (...args) => {
-        if (skipNavigationGuards.current) return origNavigate(...args);
+        if (skipNavigationGuards.current) { return origNavigate(...args); }
         try {
           const token = await AsyncStorage.getItem('token');
           const isLoggedIn = !!token || isLoggedInRef.current;
           let name = null;
-          if (typeof args[0] === 'string') name = args[0];
-          else if (typeof args[0] === 'object' && args[0]?.name) name = args[0].name;
+          if (typeof args[0] === 'string') { name = args[0]; }
+          else if (typeof args[0] === 'object' && args[0]?.name) { name = args[0].name; }
           if (isLoggedIn && name && guestPages.includes(name)) {
             Alert.alert('Access Restricted', 'Please logout before accessing this page.');
             return;
@@ -329,30 +327,30 @@ const App = () => {
     try {
       const origDispatch = navigationRef.dispatch.bind(navigationRef);
       navigationRef.dispatch = async (action) => {
-        if (skipNavigationGuards.current) return origDispatch(action);
+        if (skipNavigationGuards.current) { return origDispatch(action); }
         try {
           const token = await AsyncStorage.getItem('token');
           const isLoggedIn = !!token || isLoggedInRef.current;
 
           const containsGuestRoute = (act) => {
-            if (!act) return false;
+            if (!act) { return false; }
             const payload = act.payload || act;
             if (payload && Array.isArray(payload.routes)) {
               return payload.routes.some(r => guestPages.includes(r.name));
             }
-            if (payload && payload.name) return guestPages.includes(payload.name);
-            if (act?.route && act.route.name) return guestPages.includes(act.route.name);
+            if (payload && payload.name) { return guestPages.includes(payload.name); }
+            if (act?.route && act.route.name) { return guestPages.includes(act.route.name); }
             return false;
           };
 
           const containsProtectedRoute = (act) => {
-            if (!act) return false;
+            if (!act) { return false; }
             const payload = act.payload || act;
             if (payload && Array.isArray(payload.routes)) {
               return payload.routes.some(r => !guestPages.includes(r.name));
             }
-            if (payload && payload.name) return !guestPages.includes(payload.name);
-            if (act?.route && act.route.name) return !guestPages.includes(act.route.name);
+            if (payload && payload.name) { return !guestPages.includes(payload.name); }
+            if (act?.route && act.route.name) { return !guestPages.includes(act.route.name); }
             return false;
           };
 
@@ -377,7 +375,7 @@ const App = () => {
       if (typeof navigationRef.resetRoot === 'function') {
         const origResetRoot = navigationRef.resetRoot.bind(navigationRef);
         navigationRef.resetRoot = async (state) => {
-          if (skipNavigationGuards.current) return origResetRoot(state);
+          if (skipNavigationGuards.current) { return origResetRoot(state); }
           try {
             const token = await AsyncStorage.getItem('token');
             const isLoggedIn = !!token || isLoggedInRef.current;
@@ -452,7 +450,7 @@ const App = () => {
   useEffect(() => {
     const onBackPress = () => {
       try {
-        if (!navigationRef.isReady()) return false;
+        if (!navigationRef.isReady()) { return false; }
         const rootState = navigationRef.getRootState && navigationRef.getRootState();
         const rootRoute = rootState && rootState.routes && rootState.routes[rootState.index] && rootState.routes[rootState.index].name;
 
@@ -486,15 +484,15 @@ const App = () => {
   const handleGlobalLogout = useCallback(
     () => {
       Alert.alert(
-        "Logout",
-        "Are you sure you want to log out?",
+        'Logout',
+        'Are you sure you want to log out?',
         [
           {
-            text: "Cancel",
-            style: "cancel"
+            text: 'Cancel',
+            style: 'cancel',
           },
           {
-            text: "OK",
+            text: 'OK',
             onPress: async () => {
               try {
                 debugger;
@@ -515,16 +513,16 @@ const App = () => {
                 });
                 if (!response.ok) {
                   const errorText = await response.text();
-                  Alert.alert("Logout Warning", "Failed to log out from the server. Your local session has been cleared.");
+                  Alert.alert('Logout Warning', 'Failed to log out from the server. Your local session has been cleared.');
                 }
                 clearLocalSessionAndNavigate();
               } catch (error) {
                 console.error('Error during logout process:', error);
-                Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
+                Alert.alert('Logout Error', 'Failed to log out. Please check your network connection and try again.');
                 clearLocalSessionAndNavigate();
               }
-            }
-          }
+            },
+          },
         ]
       );
     },
@@ -594,7 +592,7 @@ const App = () => {
         <Drawer.Screen name="Cashback for Feedback Conditions" component={CashbackforFeedbackConditions} options={{}} />
         <Drawer.Screen name="Rate us / Update App" component={RateStarsStore} options={{}} />
         <Drawer.Screen name="Get Help" component={GetHelp} options={{}} />
-        <Drawer.Screen name="Error Logs" component={ErrorLogs} options={{}} />
+        {/* Error Logs screen removed */}
       </Drawer.Navigator>
     ),
     [currentThemeColors, handleGlobalLogout]
@@ -606,7 +604,7 @@ const App = () => {
       width: '100%', flexDirection: 'row',
       backgroundColor: '#fff',
       borderRadius: 0, alignItems: 'center',
-      justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee'
+      justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee',
     },
     footerItem: { alignItems: 'center', justifyContent: 'center' },
     footerIcon: { width: footerIconSize, height: footerIconSize, tintColor: '#888' },
@@ -619,7 +617,7 @@ const App = () => {
     const navigateTo = async (routeName) => {
       try {
         skipNavigationGuards.current = true;
-        if (navigationRef.isReady()) navigationRef.navigate(routeName);
+        if (navigationRef.isReady()) { navigationRef.navigate(routeName); }
       } catch (e) {
       } finally {
         skipNavigationGuards.current = false;
@@ -664,70 +662,79 @@ const App = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <SafeAreaProvider>
+        <StatusBar barStyle={'light-content'} backgroundColor={currentThemeColors.headerBackground} />
         <View style={{ flex: 1 }}>
-          <ErrorBoundary>
-            <NavigationContainer
-              ref={navigationRef}
-              theme={navigationTheme}
-              onReady={onNavigationReady}
-              onStateChange={() => {
-                try {
-                  if (!navigationRef.isReady()) return;
-                  const rootState = typeof navigationRef.getRootState === 'function' ? navigationRef.getRootState() : null;
+          <NavigationContainer
+            ref={navigationRef}
+            theme={navigationTheme}
+            onReady={onNavigationReady}
+            onStateChange={() => {
+              try {
+                if (!navigationRef.isReady()) { return; }
+                const rootState = typeof navigationRef.getRootState === 'function' ? navigationRef.getRootState() : null;
 
-                  if (rootState && rootState.routes && typeof rootState.index === 'number') {
-                    const top = rootState.routes[rootState.index];
-                    if (top && top.name) {
-                      setActiveFooter(top.name);
-                    }
-                  } else {
-                    const r = navigationRef.getCurrentRoute();
-                    if (r && r.name) setActiveFooter(r.name);
+                if (rootState && rootState.routes && typeof rootState.index === 'number') {
+                  const top = rootState.routes[rootState.index];
+                  if (top && top.name) {
+                    setActiveFooter(top.name);
                   }
-
-                  const detectDrawerOpen = (state) => {
-                    if (!state) return false;
-                    try {
-                      if (Array.isArray(state.history) && state.history.length) {
-                        const drawerEntry = state.history.slice().reverse().find(h => h && h.type === 'drawer');
-                        if (drawerEntry) {
-                          if (drawerEntry.status === 'open') return true;
-                          if (typeof drawerEntry.status === 'undefined') return true;
-                        }
-                      }
-
-                      if (state.isDrawerOpen) return true;
-                      const idx = typeof state.index === 'number' ? state.index : 0;
-                      const route = state.routes && state.routes[idx];
-                      if (route && route.state) return detectDrawerOpen(route.state);
-                    } catch (e) {
-                    }
-                    return false;
-                  };
-
-                  const drawerOpen = detectDrawerOpen(rootState);
-                  if (prevDrawerOpenRef.current !== !!drawerOpen) {
-                    console.log('[App] drawerOpen changed ->', !!drawerOpen);
-                    prevDrawerOpenRef.current = !!drawerOpen;
-                  }
-                  setIsDrawerOpen(!!drawerOpen);
-
-                } catch (e) {
+                } else {
+                  const r = navigationRef.getCurrentRoute();
+                  if (r && r.name) { setActiveFooter(r.name); }
                 }
-              }}
-            >
-              {initialRoute === 'Splash' ? (
-                <SplashScreen onVideoEnd={handleVideoEnd} onSkip={() => setInitialRoute('Login')} />
-              ) : (
-                renderDrawerNavigator(initialRoute)
-              )}
-            </NavigationContainer>
-          </ErrorBoundary>
+
+                const detectDrawerOpen = (state) => {
+                  if (!state) { return false; }
+                  try {
+                    if (Array.isArray(state.history) && state.history.length) {
+                      const drawerEntry = state.history.slice().reverse().find(h => h && h.type === 'drawer');
+                      if (drawerEntry) {
+                        if (drawerEntry.status === 'open') { return true; }
+                        if (typeof drawerEntry.status === 'undefined') { return true; }
+                      }
+                    }
+
+                    if (state.isDrawerOpen) { return true; }
+                    const idx = typeof state.index === 'number' ? state.index : 0;
+                    const route = state.routes && state.routes[idx];
+                    if (route && route.state) { return detectDrawerOpen(route.state); }
+                  } catch (e) {
+                  }
+                  return false;
+                };
+
+                const drawerOpen = detectDrawerOpen(rootState);
+                if (prevDrawerOpenRef.current !== !!drawerOpen) {
+                  console.log('[App] drawerOpen changed ->', !!drawerOpen);
+                  prevDrawerOpenRef.current = !!drawerOpen;
+                }
+                setIsDrawerOpen(!!drawerOpen);
+
+                // Ensure status bar icons remain white on navigation changes
+                try {
+                  StatusBar.setBarStyle('light-content', true);
+                  if (Platform.OS === 'android' && StatusBar.setBackgroundColor) {
+                    StatusBar.setBackgroundColor(currentThemeColors.headerBackground, true);
+                  }
+                } catch (e) {
+                  // ignore
+                }
+
+              } catch (e) {
+              }
+            }}
+          >
+            {initialRoute === 'Splash' ? (
+              <SplashScreen onVideoEnd={handleVideoEnd} onSkip={() => setInitialRoute('Login')} />
+            ) : (
+              renderDrawerNavigator(initialRoute)
+            )}
+          </NavigationContainer>
         </View>
         {(() => {
           const guestFooterPages = ['Login', 'LoginPage', 'Splash', 'VideoPlayerScreen', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
           try {
-            if (initialRoute === 'Splash') return null;
+            if (initialRoute === 'Splash') { return null; }
             if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
               const rootState = navigationRef.getRootState && navigationRef.getRootState();
               if (rootState) {
@@ -737,14 +744,14 @@ const App = () => {
                 while (state) {
                   const idx = typeof state.index === 'number' ? state.index : 0;
                   const route = state.routes && state.routes[idx];
-                  if (!route) break;
+                  if (!route) { break; }
                   activeNames.push(route.name);
-                  if (route.params && route.params.hideFooter) hideFooterParam = true;
+                  if (route.params && route.params.hideFooter) { hideFooterParam = true; }
                   state = route.state;
                 }
                 const isGuest = activeNames.some(n => guestFooterPages.includes(n));
-                if (isGuest || hideFooterParam) return null;
-                if (isDrawerOpen) return null;
+                if (isGuest || hideFooterParam) { return null; }
+                if (isDrawerOpen) { return null; }
               }
             }
           } catch (e) {
@@ -752,7 +759,7 @@ const App = () => {
           return !guestFooterPages.includes(activeFooter) ? <FooterBar /> : null;
         })()}
       </SafeAreaProvider>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 };
 

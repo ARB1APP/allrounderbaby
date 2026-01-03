@@ -3,9 +3,9 @@ import { StyleSheet, Text, View, Image, BackHandler, StatusBar, useColorScheme }
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const AppVersion = ({ navigation }) => {
-  const isDarkMode = useColorScheme() === 'dark'; 
+  const isDarkMode = useColorScheme() === 'dark';
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? '#1a202c' : '#f0f4f8', 
+    backgroundColor: isDarkMode ? '#1a202c' : '#f0f4f8',
   };
 
   const textColor = {
@@ -48,31 +48,31 @@ const AppVersion = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contentWrapper: {
-    alignItems: 'center', 
+    alignItems: 'center',
     padding: 0,
-    borderRadius: 20, 
+    borderRadius: 20,
   },
   logo: {
-    width: 250, 
+    width: 250,
     height: 130,
-    resizeMode: 'cover', 
+    resizeMode: 'cover',
     marginBottom: 15,
-    borderRadius: 50, 
+    borderRadius: 50,
   },
   appName: {
-    fontSize: 28, 
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 10,
     letterSpacing: 0.5,
   },
   versionText: {
-    fontSize: 18, 
-    fontWeight: '600', 
+    fontSize: 18,
+    fontWeight: '600',
     opacity: 0.7,
   },
 });

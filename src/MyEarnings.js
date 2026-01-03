@@ -14,7 +14,7 @@ import {
   StatusBar,
   Alert,
   ActivityIndicator,
-  Linking
+  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import safeJsonParse from './utils/safeJsonParse';
@@ -46,7 +46,7 @@ const lightThemeColors = {
   shadowOpacitySection: 0.15,
   shadowRadiusSection: 3,
   elevationSection: 4,
-  statusBarContent: 'dark-content',
+  statusBarContent: 'light-content',
 
   bottomNavBackground: '#ffffff',
   activeIconTint: 'rgba(20, 52, 164, 1)',
@@ -282,7 +282,7 @@ const MyEarnings = ({ navigation, route }) => {
 
   const [token, setToken] = useState(null);
   const [userId, setUserID] = useState(null);
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [bankDetails, setBankDetails] = useState(null);
 
@@ -307,12 +307,12 @@ const MyEarnings = ({ navigation, route }) => {
             await Promise.all([
               handleBankDetails(storedToken, storedUserId),
               handleEarningDetails(storedToken, storedUserId),
-              handleFeedbackEarnings(storedToken, storedUserId)
+              handleFeedbackEarnings(storedToken, storedUserId),
             ]);
           } else {
           }
         } catch (error) {
-          console.error("Failed to load data from storage", error);
+          console.error('Failed to load data from storage', error);
         } finally {
           setIsLoading(false);
         }
@@ -374,7 +374,7 @@ const MyEarnings = ({ navigation, route }) => {
         setBankDetails(null);
       }
     } catch (error) {
-      console.error("handleBankDetails: Network or unexpected error:", error);
+      console.error('handleBankDetails: Network or unexpected error:', error);
       setBankDetails(null);
     } finally {
       setIsLoading(false);
@@ -393,8 +393,8 @@ const MyEarnings = ({ navigation, route }) => {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
+          'Accept': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -405,10 +405,10 @@ const MyEarnings = ({ navigation, route }) => {
         } catch (parseError) {
           errorData = { message: response.statusText, rawResponse: responseText };
         }
-        console.error("handleEarningDetails: API Error Response:", errorData);
+        console.error('handleEarningDetails: API Error Response:', errorData);
         setReferralCount(0);
         setEarningsPerReferral(3000);
-        if (code === "Login Req." || code === "") setCode("N/A");
+        if (code === 'Login Req.' || code === '') { setCode('N/A'); }
         return;
       }
 
@@ -433,7 +433,7 @@ const MyEarnings = ({ navigation, route }) => {
         if (referralTransactions.length > 0 && referralTransactions[0].referralCodeName) {
           setCode(referralTransactions[0].referralCodeName);
         } else {
-          if (code === "Login Req." || code === "") setCode("N/A");
+          if (code === 'Login Req.' || code === '') { setCode('N/A'); }
         }
 
       } else if (jsonResponse && jsonResponse.data && !Array.isArray(jsonResponse.data)) {
@@ -442,21 +442,21 @@ const MyEarnings = ({ navigation, route }) => {
         setReferralCount(0);
         setEarningsPerReferral(3000);
         setPendingReferralCount(0);
-        if (code === "Login Req." || code === "") setCode("N/A");
+        if (code === 'Login Req.' || code === '') { setCode('N/A'); }
       } else {
         setReferralCount(0);
         setEarningsPerReferral(3000);
         setPendingReferralCount(0);
-        if (code === "Login Req." || code === "") setCode("N/A");
+        if (code === 'Login Req.' || code === '') { setCode('N/A'); }
       }
 
     } catch (error) {
-      console.error("handleEarningDetails: Network or unexpected error:", error);
-      Alert.alert("Error", "Could not load your referral earnings. Please check your connection and try again.");
+      console.error('handleEarningDetails: Network or unexpected error:', error);
+      console.error('Could not load your referral earnings. Please check your connection and try again.');
       setReferralCount(0);
       setEarningsPerReferral(3000);
       setPendingReferralCount(0);
-      if (code === "Login Req." || code === "") setCode("Error");
+      if (code === 'Login Req.' || code === '') { setCode('Error'); }
     } finally {
     }
   };
@@ -473,8 +473,8 @@ const MyEarnings = ({ navigation, route }) => {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${currentToken}`,
-          'Accept': 'application/json'
-        }
+          'Accept': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -493,7 +493,7 @@ const MyEarnings = ({ navigation, route }) => {
       }
 
     } catch (error) {
-      console.error("handleFeedbackEarnings: Network or unexpected error:", error);
+      console.error('handleFeedbackEarnings: Network or unexpected error:', error);
       setFeedbackEarnings('0.00');
     }
   };
@@ -502,7 +502,7 @@ const MyEarnings = ({ navigation, route }) => {
     const feedbackUrl = 'https://allrounderbaby.com/feedback';
     Linking.openURL(feedbackUrl).catch(err => {
       console.error("Couldn't load page", err);
-      Alert.alert('Error', 'Unable to open feedback page. Please try again later.');
+      console.error('Unable to open feedback page. Please try again later.');
     });
   };
 

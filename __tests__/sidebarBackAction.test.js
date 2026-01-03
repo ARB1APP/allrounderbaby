@@ -5,8 +5,8 @@ import App, { drawerItems } from '../App';
 // Mock navigation and AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(async (key) => {
-    if (key === 'first_time_opened') return 'true';
-    if (key === 'token') return 'token';
+    if (key === 'first_time_opened') {return 'true';}
+    if (key === 'token') {return 'token';}
     return null;
   }),
   setItem: jest.fn(),
