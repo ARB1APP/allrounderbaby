@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useIsFocused } from '@react-navigation/native';
+import { StatusBar } from 'react-native';
 import { StyleSheet, Text, View, TouchableOpacity, Image, useColorScheme, Alert } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -71,6 +73,12 @@ const url = BASE_URL;
 const Profile = ({ navigation, route }) => {
     const isDarkMode = useColorScheme() === 'dark';
     const theme = isDarkMode ? AppColors.dark : AppColors.light;
+    const isFocused = useIsFocused();
+    useEffect(() => {
+        if (isFocused) {
+            StatusBar.setBarStyle('light-content');
+        }
+    }, [isFocused]);
 
     const handleLogout = async () => {
         Alert.alert("Logout", "Are you sure you want to log out?", [

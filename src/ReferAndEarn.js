@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { StatusBar } from 'react-native';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import {
   StyleSheet,
   Text,
@@ -12,10 +14,10 @@ import {
   Share,
   Platform,
   Pressable,
-  StatusBar,
   BackHandler,
   ActivityIndicator,
   Animated,
+  Easing,
   Dimensions,
 } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
@@ -114,9 +116,16 @@ const ReferAndEarn = ({ navigation }) => {
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [selectedVideoGroup, setSelectedVideoGroup] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const pulseAnim = useRef(new Animated.Value(0)).current;
 
   const REFER_EARN_FOLDER_ID = "9ebe21e5639c440c930ba642a07d0a0b";
 
+  const isFocused = useIsFocused();
+  useEffect(() => {
+      if (isFocused) {
+          StatusBar.setBarStyle('light-content');
+      }
+  }, [isFocused]);
   useEffect(() => {
     const loadUserData = async () => {
       const storedToken = await AsyncStorage.getItem('token');
@@ -138,6 +147,21 @@ const ReferAndEarn = ({ navigation }) => {
       fetchReferEarnVideos(REFER_EARN_FOLDER_ID);
     }
   }, [token]);
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.timing(pulseAnim, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+        isInteraction: false,
+      }),
+      { iterations: -1 }
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [pulseAnim]);
 
   useEffect(() => {
     const backAction = () => {
@@ -209,7 +233,8 @@ const ReferAndEarn = ({ navigation }) => {
       } else if (result.action === Share.dismissedAction) {
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred while sharing: ' + error.message);
+      const errMsg = typeof error?.message === 'string' ? error.message : 'Unknown error';
+      Alert.alert('Error', 'An error occurred while sharing: ' + errMsg);
     }
   };
 
@@ -243,14 +268,16 @@ const ReferAndEarn = ({ navigation }) => {
         } catch (parseError) {
           errorData = { message: response.statusText };
         }
-        Alert.alert("API Error", `Failed to get video details: ${errorData.message || response.statusText}`);
+        const errMessage = typeof errorData?.message === 'string' ? errorData.message : String(response.statusText);
+        Alert.alert("API Error", `Failed to get video details: ${errMessage}`);
         return null;
       }
       const videoDetails = await response.json();
       setReferEarnVideos(videoDetails);
       return videoDetails;
     } catch (error) {
-      Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
+      const errMsg = typeof error?.message === 'string' ? error.message : 'Unknown error';
+      Alert.alert("Network Error", `An unexpected error occurred: ${errMsg}`);
       return null;
     } finally {
       setIsVideoLoading(false);
@@ -329,7 +356,9 @@ const ReferAndEarn = ({ navigation }) => {
           };
         }
         console.error("handleRefrealcode: API Error Response:", errorData);
-        Alert.alert("API Error", `Failed to load user details: ${errorData.message || response.statusText}. Raw response: ${errorData.rawResponse || 'N/A'}`);
+        const errMessage = typeof errorData?.message === 'string' ? errorData.message : String(response.statusText);
+        const rawResp = typeof errorData?.rawResponse === 'string' ? errorData.rawResponse : 'N/A';
+        Alert.alert("API Error", `Failed to load user details: ${errMessage}. Raw response: ${rawResp}`);
         setCode("Error");
         return;
       }
@@ -347,7 +376,8 @@ const ReferAndEarn = ({ navigation }) => {
       }
     } catch (error) {
       console.error("handleRefrealcode: Network or unexpected error:", error);
-      Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
+      const errMsg = typeof error?.message === 'string' ? error.message : 'Unknown error';
+      Alert.alert("Network Error", `An unexpected error occurred: ${errMsg}`);
       setCode("Error");
     } finally {
       setIsLoading(false);
@@ -365,28 +395,84 @@ const ReferAndEarn = ({ navigation }) => {
       setIsVideoLoading(false);
       return;
     }
-
     setIsVideoLoading(true);
 
-    const name = await AsyncStorage.getItem('Name') || 'N/A';
-    const email = await AsyncStorage.getItem('userEmail') || 'N/A';
-    const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
-    const sessionId = await AsyncStorage.getItem('sessionId');
-    const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
+  const nameRaw = await AsyncStorage.getItem('Name');
+  const emailRaw = await AsyncStorage.getItem('userEmail');
+  const phoneRaw = await AsyncStorage.getItem('phoneNumber');
+  const sessionIdRaw = await AsyncStorage.getItem('sessionId');
 
-    const annotationObject = [{
-      type: 'rtext',
-      text: watermarkText,
-      alpha: '0.60',
-      color: '0xFFFFFF',
-      size: '16',
-      interval: '5000',
-    }];
+// Ensure all values are string
+const name = typeof nameRaw === 'string' ? nameRaw : JSON.stringify(nameRaw);
+const email = typeof emailRaw === 'string' ? emailRaw : JSON.stringify(emailRaw);
+const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
+const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
+
+console.log("Watermark Details:", { name, email, phone, sessionId });
+
+// Define safe positions
+const startX = 20;   // all watermarks start 5 units from left
+const startY = 5;  // top padding
+const spacing = 10; // vertical spacing between watermarks
+const maxY = 50;    // maximum y to avoid cutting at bottom
+
+const annotationObject = [
+  {
+    type: 'rtext',
+    text: name,
+    alpha: 0.5,
+    color: '0xFFFFFF',
+    size: 14,
+    interval: 5000,
+    skip: 2000,
+    x: startX,
+    y: startY
+  },
+  {
+    type: 'rtext',
+    text: email,
+    alpha: 0.4,
+    color: '0x00FFFF',
+    interval: 10000,
+    skip: 1000,
+    size: 14,
+    x: startX,
+    y: Math.min(startY + spacing, maxY)
+  },
+  {
+    type: 'rtext',
+    text: phone,
+    alpha: 0.4,
+    color: '0x00FF00',
+    interval: 10000,
+    skip: 1000,
+    size: 14,
+    x: startX,
+    y: Math.min(startY + 1 * spacing, maxY)
+  },
+  {
+    type: 'rtext',
+    text: sessionId,
+    alpha: 0.4,
+    color: '0xFF00FF',
+    interval: 10000,
+    skip: 500,
+    size: 14,
+    x: startX,
+    y: Math.min(startY + 2 * spacing, maxY)
+  }
+];
+
+console.log("Final Annotation Object:", annotationObject);
+
+
+    console.log("Annotation Object:", JSON.stringify(annotationObject));
     const requestBody = {
       UserId: parseInt(userId, 10),
       VideoId: videoId,
       annotate: JSON.stringify(annotationObject)
     };
+    console.log("Request Body:", JSON.stringify(requestBody));
     try {
       if (videoId) {
         const detailsData = await vdoCipher_api(videoId);
@@ -401,12 +487,18 @@ const ReferAndEarn = ({ navigation }) => {
             },
             body: JSON.stringify(requestBody),
           });
+            console.log('Request Body for VdoCipher Video Fetch:', JSON.stringify(requestBody));  
+          const status = response.status;
+          const text = await response.text();
+          let parsed = null;
+          try { parsed = JSON.parse(text); } catch (e) { }
           if (!response.ok) {
-            const errorData = await response.json();
-            Alert.alert("Error", errorData.message || "Video not found or failed to get OTP.");
+            const errorMsg = (parsed && (parsed.message || parsed.error)) || text || `HTTP ${status}`;
+            console.error('VdoCipher POST failed', { status, body: text, parsed });
+            Alert.alert("Error", errorMsg);
             setIsVideoLoading(false);
           } else {
-            const data = await response.json();
+            const data = parsed || JSON.parse(text);
             navigation.navigate('VideoPlayerScreen', {
               id: videoId,
               otp: data.otp,
@@ -420,16 +512,25 @@ const ReferAndEarn = ({ navigation }) => {
             });
             setIsVideoLoading(false);
           }
-        } else {
-          Alert.alert("Error", detailsData?.message || "Failed to fetch video details from Vdocipher API.");
+        }
+         else {
+          let errMsg = "Failed to fetch video details from Vdocipher API.";
+          if (detailsData && typeof detailsData.message === 'string') {
+            errMsg = detailsData.message;
+          } else if (detailsData && detailsData.message) {
+            errMsg = String(detailsData.message);
+          }
+          Alert.alert("Error", errMsg);
           setIsVideoLoading(false);
         }
       } else {
         Alert.alert("Error", "Video not found.");
         setIsVideoLoading(false);
       }
-    } catch (err) {
-      Alert.alert("Network Error", `An unexpected error occurred: ${err.message}`);
+    } 
+    catch (err) {
+      const errMsg = typeof err?.message === 'string' ? err.message : 'Unknown error';
+      Alert.alert("Network Error", `An unexpected error occurred: ${errMsg}`);
       setIsVideoLoading(false);
     }
   };
@@ -520,14 +621,30 @@ const ReferAndEarn = ({ navigation }) => {
         </View>
         <View style={styles.sectionDivider} />
         <View style={styles.importantDetailsBox}>
-          <TouchableOpacity onPress={handleThumbnailClickForReferAndEarn}>
-            <Text style={styles.contentParagraph}>
-              <Text style={styles.introParagraph}>
-                <Text style={styles.Thumbnail}>One video window – full width thumbnail will be provided</Text>
-                {'\n'}
-                <Text style={styles.emphasisTexts}>Upon click it will ask Hindi / English</Text>
-              </Text>
-            </Text>
+          <TouchableOpacity onPress={handleThumbnailClickForReferAndEarn} activeOpacity={0.9} style={{ alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <View style={styles.thumbnailWrapper}>
+              <Image source={require('../img/REFERnEARN.png')} style={styles.image} />
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.pulseShadow,
+                  {
+                    backgroundColor: 'rgba(30,144,255,1)',
+                    opacity: pulseAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.7, 0.4, 0] }),
+                    transform: [
+                      { translateX: -40 },
+                      { translateY: -40 },
+                      { scale: pulseAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.36, 1.33] }) },
+                    ],
+                  },
+                ]}
+              />
+              <View pointerEvents="none" style={styles.playButtonContainer}>
+                <View style={[styles.playButtonCircle, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}>
+                  <Text style={styles.playButtonText}>▶</Text>
+                </View>
+              </View>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -1039,6 +1156,12 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
   disabledButton: {
     backgroundColor: 'gray',
     opacity: 0.6
-  }
+  },
+  image: { width: width -70, height: 180, borderRadius: 5, },
+  thumbnailWrapper: { width: width - 70, height: 180, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  pulseShadow: { position: 'absolute', width: 80, height: 80, borderRadius: 40, left: '50%', top: '50%', zIndex: 2 },
+  playButtonContainer: { position: 'absolute', left: '50%', top: '50%', zIndex: 3, transform: [{ translateX: -30 }, { translateY: -30 }] },
+  playButtonCircle: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center', elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  playButtonText: { color: '#1e90ff', fontSize: 26, marginLeft: 3, fontWeight: '600', marginBottom: 5, },
 });
 export default ReferAndEarn;

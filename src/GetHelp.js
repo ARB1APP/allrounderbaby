@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import {
   StyleSheet,
   Text,
@@ -96,6 +97,12 @@ const GetHelp = ({ navigation }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const styles = createGetHelpStyles(theme);
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (isFocused) {
+      StatusBar.setBarStyle('light-content');
+    }
+  }, [isFocused]);
   const handleEmailPress = () => {
     Linking.openURL('mailto:support@allrounderbaby.com').catch(err =>
       console.error('Failed to open mail app:', err)

@@ -67,9 +67,7 @@ describe('Sidebar navigation back action', () => {
     });
     // Wait for the page to appear (simulate page content by label)
     await findByText(label);
-    // Simulate back action: go back to Home
-    // In real app, this is handled by navigation stack reset
-    // For test, simulate by pressing Home in sidebar
+
     const homeItem = getByText('Home');
     act(() => {
       fireEvent.press(homeItem);

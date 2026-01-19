@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { StatusBar } from 'react-native';
 import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Alert, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler, findNodeHandle } from 'react-native';
 import { CommonActions, useIsFocused } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
@@ -130,6 +131,11 @@ const CategoryButton = ({ image, title, onPress, isOpen, isComplete }) => (
 
 const Dashboard = ({ navigation }) => {
     const isFocused = useIsFocused();
+    useEffect(() => {
+        if (isFocused) {
+            StatusBar.setBarStyle('light-content');
+        }
+    }, [isFocused]);
     const stepRefs = useRef({});
     const [token, setToken] = useState(null);
     const [userId, setUserID] = useState(null);
@@ -1007,23 +1013,98 @@ const Dashboard = ({ navigation }) => {
                 console.warn(`Could not fetch video duration for videoId: ${videoId}. Defaulting to 0.`);
             }
 
-            const name = await AsyncStorage.getItem('Name') || 'N/A';
-            const email = await AsyncStorage.getItem('userEmail') || 'N/A';
-            const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
-            const sessionId = await AsyncStorage.getItem('sessionId');
-            const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
-            const annotationObject = [{
-                type: 'rtext',
-                text: watermarkText,
-                alpha: '0.60',
-                color: '0xFFFFFF',
-                size: '16',
-                interval: '5000',
-            }];
+            // const name = await AsyncStorage.getItem('Name') || 'N/A';
+            // const email = await AsyncStorage.getItem('userEmail') || 'N/A';
+            // const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
+            // const sessionId = await AsyncStorage.getItem('sessionId');
+            // const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
+            // const annotationObject = [{
+            //     type: 'rtext',
+            //     text: watermarkText,
+            //     alpha: '0.60',
+            //     color: '0xFFFFFF',
+            //     size: '16',
+            //     interval: '5000',
+            // }];
+            // const requestBody = {
+            //     UserId: parseInt(userId, 10),
+            //     VideoId: videoId,
+            //     annotate: JSON.stringify(annotationObject)
+            // };
+
+             const nameRaw = await AsyncStorage.getItem('Name');
+              const emailRaw = await AsyncStorage.getItem('userEmail');
+              const phoneRaw = await AsyncStorage.getItem('phoneNumber');
+              const sessionIdRaw = await AsyncStorage.getItem('sessionId');
+            
+            // Ensure all values are string
+            const name = typeof nameRaw === 'string' ? nameRaw : JSON.stringify(nameRaw);
+            const email = typeof emailRaw === 'string' ? emailRaw : JSON.stringify(emailRaw);
+            const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
+            const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
+            
+            console.log("Watermark Details:", { name, email, phone, sessionId });
+            
+            // Define safe positions
+            const startX = 20;   // all watermarks start 5 units from left
+            const startY = 5;  // top padding
+            const spacing = 10; // vertical spacing between watermarks
+            const maxY = 50;    // maximum y to avoid cutting at bottom
+            
+                        const annotationObject = [
+                            {
+                                type: 'rtext',
+                                text: name,
+                                alpha: 0.5,
+                                color: '0xFFFFFF',
+                                size: 14,
+                                interval: 5000,
+                                skip: 2000,
+                                x: startX,
+                                y: startY
+                            },
+                            {
+                                type: 'rtext',
+                                text: email,
+                                alpha: 0.4,
+                                color: '0x00FFFF',
+                                interval: 10000,
+                                skip: 1000,
+                                size: 14,
+                                x: startX,
+                                y: Math.min(startY + spacing, maxY)
+                            },
+                            {
+                                type: 'rtext',
+                                text: phone,
+                                alpha: 0.4,
+                                color: '0x00FF00',
+                                interval: 10000,
+                                skip: 1000,
+                                size: 14,
+                                x: startX,
+                                y: Math.min(startY + 1 * spacing, maxY)
+                            },
+                            {
+                                type: 'rtext',
+                                text: sessionId,
+                                alpha: 0.4,
+                                color: '0xFF00FF',
+                                interval: 10000,
+                                skip: 500,
+                                size: 14,
+                                x: startX,
+                                y: Math.min(startY + 2 * spacing, maxY)
+                            }
+                        ];
+            
+            console.log("Final Annotation Object:", annotationObject);
+
+            // Build the request body expected by the VdoCipher endpoint
             const requestBody = {
-                UserId: parseInt(userId, 10),
+                UserId: userId ? parseInt(userId, 10) : null,
                 VideoId: videoId,
-                annotate: JSON.stringify(annotationObject)
+                annotate: JSON.stringify(annotationObject),
             };
 
             const response = await fetch(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
@@ -1031,8 +1112,16 @@ const Dashboard = ({ navigation }) => {
                 headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(requestBody),
             });
-            if (!response.ok) { throw new Error("Video not found or failed to get OTP."); }
-            const data = await response.json();
+            const status = response.status;
+            const text = await response.text();
+            let parsed = null;
+            try { parsed = JSON.parse(text); } catch (e) { }
+            if (!response.ok) {
+                const msg = (parsed && (parsed.message || parsed.error)) || text || `HTTP ${status}`;
+                console.error('VdoCipher POST failed', { status, body: text, parsed });
+                throw new Error(msg || 'Video not found or failed to get OTP.');
+            }
+            const data = parsed || JSON.parse(text);
 
             await saveCompletedStep(`step${step}`);
             try {

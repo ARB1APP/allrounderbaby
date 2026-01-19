@@ -11,6 +11,7 @@ import {
   BackHandler,
   Alert,
   Animated,
+  Easing,
   Dimensions,
   ActivityIndicator,
   Pressable,
@@ -78,7 +79,7 @@ const createCashbackStyles = (theme) => StyleSheet.create({
   gradientHeaderText: { fontSize: 17, textAlign: 'center', fontWeight: '600', color: '#1A202C', lineHeight: 24 },
   gradientHeaderSubText: { fontWeight: '400' },
   Thumbnail: { fontSize: 16, lineHeight: 24 },
-  introParagraph: { marginHorizontal: 20, fontSize: 15, lineHeight: 22, color: theme.textSecondary, marginBottom: 5 },
+  introParagraph: { marginHorizontal: 0, fontSize: 15, lineHeight: 22, color: theme.textSecondary, marginBottom: 5 },
   sectionHeader: { marginHorizontal: 0, marginTop: 0, marginBottom: 12, fontSize: 24, fontWeight: '600' },
 
 
@@ -102,6 +103,8 @@ const createCashbackStyles = (theme) => StyleSheet.create({
   emphasisText: { fontWeight: '600', color: theme.textPrimary },
   emphasisTexts: { fontWeight: '800', color: theme.textPrimary },
   sectionLinkDivider: { marginHorizontal: 0 },
+  image: { width: width -70, height: 180, borderRadius: 5, },
+  thumbnailWrapper: { width: width - 70, height: 180, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   subListItem: { marginHorizontal: 10, fontSize: 15, lineHeight: 20, color: theme.textSecondary, marginBottom: 6 },
   finalCallToAction: { fontSize: 16, textAlign: 'center', color: theme.textPrimary, fontWeight: '600' },
   linkButton: { alignSelf: 'flex-end', marginHorizontal: 20, marginTop: 15, marginBottom: 20 },
@@ -117,6 +120,10 @@ const createCashbackStyles = (theme) => StyleSheet.create({
   modalButton: { backgroundColor: theme.accentColorbg, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, width: '45%', alignItems: 'center' },
   modalButtonText: { color: theme.cardBackgroundText, fontSize: 16, fontWeight: 'bold' },
   disabledButton: { backgroundColor: theme.textMuted },
+  pulseShadow: { position: 'absolute', width: 80, height: 80, borderRadius: 40, left: '50%', top: '50%', zIndex: 2 },
+  playButtonContainer: { position: 'absolute', left: '50%', top: '50%', zIndex: 3, transform: [{ translateX: -30 }, { translateY: -30 }] },
+  playButtonCircle: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center', elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  playButtonText: { color: '#1e90ff', fontSize: 26, marginLeft: 3, fontWeight: '600', marginBottom: 5, },
 });
 
 const CashbackforFeedback = () => {
@@ -132,6 +139,7 @@ const CashbackforFeedback = () => {
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [selectedVideoGroup, setSelectedVideoGroup] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const pulseAnim = useRef(new Animated.Value(0)).current;
   const CASHBACK_FOLDER_ID = "3b7737b5e34740318231b0f1c0797b34";
 
   useEffect(() => {
@@ -166,6 +174,22 @@ const CashbackforFeedback = () => {
     };
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    // continuous 2s shadow-wave: 0% -> 50% -> 100% mapped via interpolation
+    const anim = Animated.loop(
+      Animated.timing(pulseAnim, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+        isInteraction: false,
+      }),
+      { iterations: -1 }
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [pulseAnim]);
 
   useEffect(() => {
     if (token) {
@@ -253,29 +277,88 @@ const CashbackforFeedback = () => {
 
     setIsVideoLoading(true);
 
-    const name = await AsyncStorage.getItem('Name') || 'N/A';
-    const email = await AsyncStorage.getItem('userEmail') || 'N/A';
-    const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
-    const sessionId = await AsyncStorage.getItem('sessionId');
-    const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
-    const annotationObject = [{
-      type: 'rtext',
-      text: watermarkText,
-      alpha: '0.60',
-      color: '0xFFFFFF',
-      size: '16',
-      interval: '5000',
-    }];
+      const nameRaw = await AsyncStorage.getItem('Name');
+  const emailRaw = await AsyncStorage.getItem('userEmail');
+  const phoneRaw = await AsyncStorage.getItem('phoneNumber');
+  const sessionIdRaw = await AsyncStorage.getItem('sessionId');
 
+  const name = typeof nameRaw === 'string' ? nameRaw : JSON.stringify(nameRaw);
+  const email = typeof emailRaw === 'string' ? emailRaw : JSON.stringify(emailRaw);
+  const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
+  const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
+
+  console.log("Watermark Details:", { name, email, phone, sessionId });
+
+  const startX = 20;  
+  const startY = 5;  
+  const spacing = 10; 
+  const maxY = 50;    
+
+  const annotationObject = [
+    {
+      type: 'rtext',
+      text: name,
+      alpha: 0.5,
+      color: '0xFFFFFF',
+      size: 14,
+      interval: 5000,
+      skip: 2000,
+      x: startX,
+      y: startY
+    },
+    {
+      type: 'rtext',
+      text: email,
+      alpha: 0.4,
+      color: '0x00FFFF',
+      interval: 10000,
+      skip: 1000,
+      size: 14,
+      x: startX,
+      y: Math.min(startY + spacing, maxY)
+    },
+    {
+      type: 'rtext',
+      text: phone,
+      alpha: 0.4,
+      color: '0x00FF00',
+      interval: 10000,
+      skip: 1000,
+      size: 14,
+      x: startX,
+      y: Math.min(startY + 1 * spacing, maxY)
+    },
+    {
+      type: 'rtext',
+      text: sessionId,
+      alpha: 0.4,
+      color: '0xFF00FF',
+      interval: 10000,
+      skip: 500,
+      size: 14,
+      x: startX,
+      y: Math.min(startY + 2 * spacing, maxY)
+    }
+  ];
+
+console.log("Final Annotation Object:", annotationObject);
+
+
+    console.log("Annotation Object:", JSON.stringify(annotationObject));
     const requestBody = {
       UserId: parseInt(userId, 10),
       VideoId: videoId,
       annotate: JSON.stringify(annotationObject)
     };
-
     try {
       if (!videoId) {
         Alert.alert("Error", "Video not found.");
+        setIsVideoLoading(false);
+        return;
+      }
+
+      if (!userId) {
+        Alert.alert("Authentication Error", "User ID not available for watermark. Please log in again.");
         setIsVideoLoading(false);
         return;
       }
@@ -293,11 +376,17 @@ const CashbackforFeedback = () => {
           body: JSON.stringify(requestBody),
         });
 
+        const status = response.status;
+        const text = await response.text();
+        let parsed = null;
+        try { parsed = JSON.parse(text); } catch (e) { /* not json */ }
+
         if (!response.ok) {
-          const errorData = await response.json();
-          Alert.alert("Error", errorData.message || "Video not found or failed to get OTP.");
+          const serverMsg = (parsed && (parsed.message || parsed.error)) || text || `HTTP ${status}`;
+          console.error('VdoCipher POST failed', { status, body: text, parsed });
+          Alert.alert("Error", serverMsg || "Video not found or failed to get OTP.");
         } else {
-          const data = await response.json();
+          const data = parsed || JSON.parse(text);
           navigation.navigate('VideoPlayerScreen', {
             id: videoId,
             otp: data.otp,
@@ -312,6 +401,7 @@ const CashbackforFeedback = () => {
         }
       }
     } catch (err) {
+      console.error('VdoCipher request error', err);
       Alert.alert("Network Error", `An unexpected error occurred: ${err.message}`);
     } finally {
       setIsVideoLoading(false);
@@ -391,12 +481,30 @@ const CashbackforFeedback = () => {
         <View style={styles.sectionDivider} />
 
         <View style={styles.importantDetailsBox}>
-          <TouchableOpacity onPress={handleThumbnailClick}>
-            <Text style={styles.introParagraph}>
-              <Text style={styles.Thumbnail}>One video window – Full width thumbnail will be provided</Text>
-              {'\n'}
-              <Text style={styles.emphasisTexts}>Upon click it will ask Hindi / English</Text>
-            </Text>
+          <TouchableOpacity onPress={handleThumbnailClick} activeOpacity={0.9} style={{ alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <View style={styles.thumbnailWrapper}>
+                <Image source={require('../img/CASHBACK.png')} style={styles.image}  />
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.pulseShadow,
+                    {
+                      backgroundColor: 'rgba(30,144,255,1)',
+                      opacity: pulseAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.7, 0.4, 0] }),
+                      transform: [
+                        { translateX: -40 },
+                        { translateY: -40 },
+                        { scale: pulseAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.36, 1.33] }) },
+                      ],
+                    },
+                  ]}
+                />
+                <View pointerEvents="none" style={styles.playButtonContainer}>
+                  <View style={[styles.playButtonCircle, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}>
+                    <Text style={styles.playButtonText}>▶</Text>
+                  </View>
+                </View>
+              </View>
           </TouchableOpacity>
         </View>
         <View style={styles.sectionDivider} />

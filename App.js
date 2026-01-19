@@ -1,5 +1,5 @@
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions, Platform, StatusBar } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
@@ -612,7 +612,7 @@ const App = () => {
           </TouchableOpacity>
 
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Refer and Earn')}>
-            <Image source={require('./img/usersgroup.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#888' }]} />
+            <Image source={require('./img/money.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#888' }]} />
             <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#666' }]}>Refer</Text>
           </TouchableOpacity>
 
@@ -635,92 +635,94 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Global StatusBar for white icons */}
+      <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
       <SafeAreaProvider>
-      <View style={{ flex: 1 }}>
-      <NavigationContainer
-        ref={navigationRef}
-        theme={navigationTheme}
-        onReady={onNavigationReady}
-        onStateChange={() => {
-          try {
-            if (!navigationRef.isReady()) return;
-            const rootState = typeof navigationRef.getRootState === 'function' ? navigationRef.getRootState() : null;
-
-            if (rootState && rootState.routes && typeof rootState.index === 'number') {
-              const top = rootState.routes[rootState.index];
-              if (top && top.name) {
-                setActiveFooter(top.name);
-              }
-            } else {
-              const r = navigationRef.getCurrentRoute();
-              if (r && r.name) setActiveFooter(r.name);
-            }
-
-            const detectDrawerOpen = (state) => {
-              if (!state) return false;
+        <View style={{ flex: 1 }}>
+          <NavigationContainer
+            ref={navigationRef}
+            theme={navigationTheme}
+            onReady={onNavigationReady}
+            onStateChange={() => {
               try {
-                if (Array.isArray(state.history) && state.history.length) {
-                  const drawerEntry = state.history.slice().reverse().find(h => h && h.type === 'drawer');
-                  if (drawerEntry) {
-                    if (drawerEntry.status === 'open') return true;
-                    if (typeof drawerEntry.status === 'undefined') return true;
+                if (!navigationRef.isReady()) return;
+                const rootState = typeof navigationRef.getRootState === 'function' ? navigationRef.getRootState() : null;
+
+                if (rootState && rootState.routes && typeof rootState.index === 'number') {
+                  const top = rootState.routes[rootState.index];
+                  if (top && top.name) {
+                    setActiveFooter(top.name);
                   }
+                } else {
+                  const r = navigationRef.getCurrentRoute();
+                  if (r && r.name) setActiveFooter(r.name);
                 }
 
-                if (state.isDrawerOpen) return true;
-               const idx = typeof state.index === 'number' ? state.index : 0;
-                const route = state.routes && state.routes[idx];
-                if (route && route.state) return detectDrawerOpen(route.state);
+                const detectDrawerOpen = (state) => {
+                  if (!state) return false;
+                  try {
+                    if (Array.isArray(state.history) && state.history.length) {
+                      const drawerEntry = state.history.slice().reverse().find(h => h && h.type === 'drawer');
+                      if (drawerEntry) {
+                        if (drawerEntry.status === 'open') return true;
+                        if (typeof drawerEntry.status === 'undefined') return true;
+                      }
+                    }
+
+                    if (state.isDrawerOpen) return true;
+                    const idx = typeof state.index === 'number' ? state.index : 0;
+                    const route = state.routes && state.routes[idx];
+                    if (route && route.state) return detectDrawerOpen(route.state);
+                  } catch (e) {
+                  }
+                  return false;
+                };
+
+                const drawerOpen = detectDrawerOpen(rootState);
+                if (prevDrawerOpenRef.current !== !!drawerOpen) {
+                  console.log('[App] drawerOpen changed ->', !!drawerOpen);
+                  prevDrawerOpenRef.current = !!drawerOpen;
+                }
+                setIsDrawerOpen(!!drawerOpen);
+
               } catch (e) {
               }
-              return false;
-            };
-
-            const drawerOpen = detectDrawerOpen(rootState);
-            if (prevDrawerOpenRef.current !== !!drawerOpen) {
-              console.log('[App] drawerOpen changed ->', !!drawerOpen);
-              prevDrawerOpenRef.current = !!drawerOpen;
+            }}
+          >
+            {initialRoute === 'Splash' ? (
+              <SplashScreen onVideoEnd={handleVideoEnd} onSkip={() => setInitialRoute('Login')} />
+            ) : (
+              renderDrawerNavigator(initialRoute)
+            )}
+          </NavigationContainer>
+        </View>
+        {(() => {
+          const guestFooterPages = ['Login', 'LoginPage', 'Splash', 'VideoPlayerScreen', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
+          try {
+            if (initialRoute === 'Splash') return null;
+            if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
+              const rootState = navigationRef.getRootState && navigationRef.getRootState();
+              if (rootState) {
+                const activeNames = [];
+                let state = rootState;
+                let hideFooterParam = false;
+                while (state) {
+                  const idx = typeof state.index === 'number' ? state.index : 0;
+                  const route = state.routes && state.routes[idx];
+                  if (!route) break;
+                    activeNames.push(route.name);
+                    if (route.params && route.params.hideFooter) hideFooterParam = true;
+                    state = route.state;
+                }
+                  const isGuest = activeNames.some(n => guestFooterPages.includes(n));
+                  if (isGuest || hideFooterParam) return null;
+                  if (isDrawerOpen) return null;
+              }
             }
-            setIsDrawerOpen(!!drawerOpen);
-
           } catch (e) {
           }
-        }}
-      >
-        {initialRoute === 'Splash' ? (
-          <SplashScreen onVideoEnd={handleVideoEnd} onSkip={() => setInitialRoute('Login')} />
-        ) : (
-          renderDrawerNavigator(initialRoute)
-        )}
-      </NavigationContainer>
-      </View>
-      {(() => {
-        const guestFooterPages = ['Login', 'LoginPage', 'Splash', 'VideoPlayerScreen', 'TermsofServicewithoutLog', 'PrivacyPolicywithoutLog'];
-        try {
-          if (initialRoute === 'Splash') return null;
-          if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
-            const rootState = navigationRef.getRootState && navigationRef.getRootState();
-            if (rootState) {
-              const activeNames = [];
-              let state = rootState;
-              let hideFooterParam = false;
-              while (state) {
-                const idx = typeof state.index === 'number' ? state.index : 0;
-                const route = state.routes && state.routes[idx];
-                if (!route) break;
-                  activeNames.push(route.name);
-                  if (route.params && route.params.hideFooter) hideFooterParam = true;
-                  state = route.state;
-              }
-                const isGuest = activeNames.some(n => guestFooterPages.includes(n));
-                if (isGuest || hideFooterParam) return null;
-                if (isDrawerOpen) return null;
-            }
-          }
-        } catch (e) {
-        }
-        return !guestFooterPages.includes(activeFooter) ? <FooterBar /> : null;
-      })()}
+          return !guestFooterPages.includes(activeFooter) ? <FooterBar /> : null;
+        })()}
       </SafeAreaProvider>
     </SafeAreaView>
   );

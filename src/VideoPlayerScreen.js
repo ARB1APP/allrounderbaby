@@ -1,4 +1,6 @@
+import { StatusBar } from 'react-native';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import {
   StyleSheet,
   Text,
@@ -6,9 +8,9 @@ import {
   BackHandler,
   AppState,
   useColorScheme,
-  StatusBar,
   Alert,
   NativeModules,
+  Dimensions,
 } from 'react-native';
 import { VdoPlayerView } from 'vdocipher-rn-bridge';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -19,9 +21,19 @@ import { BASE_URL } from './config/api';
 const url = BASE_URL;
 import Orientation from 'react-native-orientation-locker';
 
-const VideoPlayerScreen = () => {
+const VideoPlayerScreen = (props) => {
+      const isFocused = useIsFocused();
+      useEffect(() => {
+        if (isFocused) {
+          StatusBar.setBarStyle('light-content');
+        }
+      }, [isFocused]);
+    useEffect(() => {
+      StatusBar.setBarStyle('light-content');
+    }, []);
   const route = useRoute();
   const navigation = useNavigation();
+  const [orientation, setOrientation] = useState('PORTRAIT');
 
   const {
     id: videoId,
@@ -40,8 +52,35 @@ const VideoPlayerScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
-  const [totalDuration, setTotalDuration] = useState(route.params.total_time || 0);
+  const [totalDuration, setTotalDuration] = useState(route.params?.total_time || 0);
   const progressUpdated = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      Orientation.unlockAllOrientations();
+
+      const orientationListener = (o) => {
+        setOrientation(o);
+        navigation.setOptions({
+          headerShown: !(o && o.includes && o.includes('LANDSCAPE')),
+        });
+      };
+
+      Orientation.addOrientationListener(orientationListener);
+
+      Orientation.getOrientation((o) => {
+        setOrientation(o);
+        navigation.setOptions({
+          headerShown: !(o && o.includes && o.includes('LANDSCAPE')),
+        });
+      });
+
+      return () => {
+        Orientation.removeOrientationListener(orientationListener);
+        Orientation.lockToPortrait();
+      };
+    }, [navigation])
+  );
 
   const updateVideoProgress = useCallback(async (isFinished) => {
     if (progressUpdated.current) return;
@@ -88,7 +127,6 @@ const VideoPlayerScreen = () => {
     };
 
     try {
-      
       const endpoint = `${url}User/User_Video_Data`;
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -121,36 +159,17 @@ const VideoPlayerScreen = () => {
       } else {
         const errorMessage = responseData.message || `HTTP Error: ${response.status}`;
         console.error("Failed to update video progress on server:", errorMessage);
-        Alert.alert("Sync Error", `Could not save video progress to the server: ${errorMessage}`);
       }
     } catch (e) {
       console.error("A network error occurred while updating video progress:", e);
-      Alert.alert("Network Error", "A network error occurred while saving your progress. Please check your connection.");
     }
   }, [videoId, currentTime, language, step, totalDuration, otp, playbackInfo, stage_name]);
 
   useFocusEffect(
     useCallback(() => {
-     
       progressUpdated.current = false;
-
       return () => {
-        if (playerRef.current) {
-          try {
-            if (typeof playerRef.current.pause === 'function') {
-              playerRef.current.pause();
-            }
-            if (typeof playerRef.current.stop === 'function') {
-              playerRef.current.stop();
-            }
-            if (typeof playerRef.current.release === 'function') {
-              playerRef.current.release();
-            }
-          } catch (e) {
-            console.error('Cleanup: Error stopping video via ref:', e);
-          }
-        }
-        stopNativePlayer();
+        progressUpdated.current = false;
       };
     }, [])
   );
@@ -164,7 +183,7 @@ const VideoPlayerScreen = () => {
             if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
             if (typeof playerRef.current.release === 'function') playerRef.current.release();
           } catch (e) {
-            console.error('Unmount: Error cleaning up video player via ref:', e);
+            console.error('Unmount cleanup error:', e);
           } finally {
             playerRef.current = null;
           }
@@ -193,24 +212,32 @@ const VideoPlayerScreen = () => {
             if (typeof mod[m] === 'function') {
               mod[m]();
             }
-          } catch (e) {
-          }
+          } catch (e) {}
         });
       });
     } catch (e) {
-      console.error('stopNativePlayer: error while attempting native stop/release', e);
+      console.error('stopNativePlayer: error', e);
     }
   }, []);
 
   const backAction = useCallback(async () => {
+    if (orientation && orientation.includes('LANDSCAPE')) {
+      try {
+        Orientation.lockToPortrait();
+        if (playerRef.current && typeof playerRef.current.exitFullscreen === 'function') {
+          playerRef.current.exitFullscreen();
+        }
+        navigation.setOptions({ headerShown: true });
+      } catch (e) {
+        console.error('Error exiting fullscreen on back:', e);
+      }
+      return true;
+    }
+
     if (playerRef.current) {
       try {
-        if (typeof playerRef.current.pause === 'function') {
-          playerRef.current.pause();
-        }
-        if (typeof playerRef.current.stop === 'function') {
-          playerRef.current.stop();
-        }
+        if (typeof playerRef.current.pause === 'function') playerRef.current.pause();
+        if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
       } catch (e) {
         console.error('Error stopping video on back:', e);
       }
@@ -227,17 +254,13 @@ const VideoPlayerScreen = () => {
       navigation.goBack();
     }
     return true;
-  }, [navigation, cameFrom, updateVideoProgress]);
+  }, [navigation, cameFrom, updateVideoProgress, stopNativePlayer, orientation]);
 
   const handleEnded = useCallback(async () => {
    if (playerRef.current) {
       try {
-        if (typeof playerRef.current.pause === 'function') {
-          playerRef.current.pause();
-        }
-        if (typeof playerRef.current.stop === 'function') {
-          playerRef.current.stop();
-        }
+        if (typeof playerRef.current.pause === 'function') playerRef.current.pause();
+        if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
       } catch (e) {
         console.error('Error stopping video on end:', e);
       }
@@ -252,7 +275,7 @@ const VideoPlayerScreen = () => {
     } else {
       navigation.goBack();
     }
-  }, [navigation, cameFrom, updateVideoProgress]);
+  }, [navigation, cameFrom, updateVideoProgress, stopNativePlayer]);
 
   const handleInitFailure = useCallback((err) => {
     setIsLoading(false);
@@ -262,7 +285,7 @@ const VideoPlayerScreen = () => {
       [{ text: "OK", onPress: () => backAction() }],
       { cancelable: false }
     );
-  }, [navigation, cameFrom, backAction]);
+  }, [backAction]);
 
   const handleLoadError = useCallback(({ errorDescription }) => {
     setIsLoading(false);
@@ -272,7 +295,7 @@ const VideoPlayerScreen = () => {
       [{ text: "OK", onPress: () => backAction() }],
       { cancelable: false }
     );
-  }, [navigation, cameFrom, backAction]);
+  }, [backAction]);
 
   const handleError = useCallback(({ errorDescription }) => {
     setIsLoading(false);
@@ -282,10 +305,9 @@ const VideoPlayerScreen = () => {
       [{ text: "OK", onPress: () => backAction() }],
       { cancelable: false }
     );
-  }, [navigation, cameFrom, backAction]);
+  }, [backAction]);
 
-  const handleInitializationSuccess = useCallback(() => {
-  }, []);
+  const handleInitializationSuccess = useCallback(() => {}, []);
 
   const handleProgress = useCallback((progress) => {
     setCurrentTime(progress.currentTime);
@@ -295,13 +317,11 @@ const VideoPlayerScreen = () => {
     if (state.duration && state.duration > 0 && state.duration !== totalDuration) {
       setTotalDuration(state.duration);
     }
-  }, [totalDuration, setTotalDuration]);
+  }, [totalDuration]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-    return () => {
-      backHandler.remove();
-    };
+    return () => backHandler.remove();
   }, [backAction]);
 
   useEffect(() => {
@@ -311,15 +331,10 @@ const VideoPlayerScreen = () => {
           if (playerRef.current) {
             try {
               if (typeof playerRef.current.pause === 'function') playerRef.current.pause();
-              if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
-              if (typeof playerRef.current.release === 'function') playerRef.current.release();
             } catch (e) {
-              console.error('AppState: Error cleaning up video player via ref:', e);
-            } finally {
-              playerRef.current = null;
+              console.error('AppState pause error:', e);
             }
           }
-          stopNativePlayer();
           try {
             await updateVideoProgress(false);
           } catch (e) {
@@ -331,75 +346,42 @@ const VideoPlayerScreen = () => {
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => {
-      try {
-        subscription.remove();
-      } catch (e) {
-        AppState.removeEventListener && AppState.removeEventListener('change', handleAppStateChange);
-      }
+      subscription.remove();
     };
-  }, [updateVideoProgress]);
+  }, [updateVideoProgress, stopNativePlayer]);
   
-  useEffect(() => {
-    const onBlur = () => {
-      (async () => {
-        if (playerRef.current) {
-          try {
-            if (typeof playerRef.current.pause === 'function') {
-              playerRef.current.pause();
-            }
-            if (typeof playerRef.current.stop === 'function') {
-              playerRef.current.stop();
-            }
-            if (typeof playerRef.current.release === 'function') {
-              playerRef.current.release();
-            }
-          } catch (e) {
-            console.error('Blur: Error cleaning up video player:', e);
-          } finally {
-            playerRef.current = null;
-          }
-        }
-        stopNativePlayer();
-
-        try {
-          await updateVideoProgress(false);
-        } catch (e) {
-          console.error('Blur: Error saving progress:', e);
-        }
-
-        Orientation.lockToPortrait();
-      })();
-    };
-
-    const unsubscribe = navigation.addListener('blur', onBlur);
-    return unsubscribe;
-  }, [navigation, updateVideoProgress]);
-
 
   if (!otp || !playbackInfo) {
     return (
       <View style={[styles.container, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter, justifyContent: 'center', alignItems: 'center' }]}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={isDarkMode ? Colors.darker : Colors.lighter} />
         <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
-          The video details (OTP or playback information) are missing. Please back up and try restarting.
+          The video details (OTP or playback information) are missing.
         </Text>
       </View>
     );
   }
 
+  const isLandscape = orientation.includes('LANDSCAPE');
+
+  const windowWidth = Dimensions.get('window').width;
+  const portraitHeight = Math.round((windowWidth * 9) / 16);
+  const playerStyle = isLandscape ? styles.playerLandscape : [styles.player, { height: portraitHeight }];
+
   return (
-    <View style={[styles.container, { backgroundColor: 'black' }]}>
-      <StatusBar barStyle='light-content' backgroundColor='black' />
+    <View style={styles.container}> 
+      <StatusBar hidden={isLandscape} barStyle='light-content' backgroundColor='black' />
       {error && !isLoading ? (
-        <View style={[styles.errorContainer, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
-          <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
+        <View style={[styles.errorContainer, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter }]}> 
+          <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}> 
             Error: {error}
           </Text>
         </View>
       ) : (
         <VdoPlayerView
+          key={isLandscape ? 'player-landscape' : 'player-portrait'}
           ref={playerRef}
-          style={styles.player}
+          style={StyleSheet.flatten(playerStyle)}
           embedInfo={{
             otp: otp,
             playbackInfo: playbackInfo,
@@ -429,24 +411,13 @@ const styles = StyleSheet.create({
   },
   player: {
     width: '100%',
-    aspectRatio: 16 / 9,
     backgroundColor: '#000',
   },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    zIndex: 10,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#FFFFFF',
-    fontSize: 16,
+  playerLandscape: {
+    width: '88%', 
+    height: '100%',
+    backgroundColor: '#000',
+    alignSelf: 'center',
   },
   errorContainer: {
     flex: 1,
