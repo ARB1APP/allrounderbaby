@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, ScrollView, 
-    StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, Dimensions, BackHandler, ToastAndroid
+    StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, useWindowDimensions, BackHandler, ToastAndroid
 } from 'react-native';
 import { exitApp } from './utils/exitApp';
 import CheckBox from 'react-native-check-box';
@@ -22,9 +22,7 @@ const keychainAvailable = Keychain && (
     (typeof Keychain.getGenericPassword === 'function' && typeof Keychain.setGenericPassword === 'function')
 );
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const isTablet = SCREEN_WIDTH >= 600;
-const contentMaxWidth = isTablet ? 500 : SCREEN_WIDTH * 0.9;
+// compute screen sizing inside the component using useWindowDimensions
 
 const LoginPage = ({ navigation }) => {
     const isFocused = useIsFocused();
@@ -36,8 +34,8 @@ const LoginPage = ({ navigation }) => {
     const [password, setPassword] = useState('');
     const [usernameError, setUsernameError] = useState('');
     const [passwordError, setPasswordError] = useState('');
-    const [termsAccepted, setTermsAccepted] = useState(true);
-    const [rememberMe, setRememberMe] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const [rememberMe, setRememberMe] = useState(true);
     const [isLoadingCredentials, setIsLoadingCredentials] = useState(true);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const welcomeOpacity = useRef(new Animated.Value(1)).current;
@@ -50,6 +48,22 @@ const LoginPage = ({ navigation }) => {
     const rememberMePosition = useRef(new Animated.Value(0)).current;
 
     const backgroundStyle = { backgroundColor: isDarkMode ? '#2a3144' : Colors.white };
+
+    const { width } = useWindowDimensions();
+    const isTabletLocal = width >= 600;
+    const contentMaxWidthLocal = isTabletLocal ? 500 : width * 0.9;
+    const dynamicStyles = {
+        welcomeImage: { height: isTabletLocal ? '55%' : '60%', borderBottomRightRadius: isTabletLocal ? 200 : 150 },
+        startAppText: { fontSize: isTabletLocal ? 28 : 24 },
+        customButtonInnerStart: { width: contentMaxWidthLocal },
+        image: { height: isTabletLocal ? 160 : 130, width: isTabletLocal ? contentMaxWidthLocal : '90%', marginTop: 10, marginBottom: 20 },
+        fieldset: { width: isTabletLocal ? contentMaxWidthLocal : '90%' },
+        legend: { width: isTabletLocal ? contentMaxWidthLocal : '90%', fontSize: isTabletLocal ? 16 : 14 },
+        input: { height: isTabletLocal ? 52 : 45, fontSize: isTabletLocal ? 16 : 14 },
+        customButton: { width: isTabletLocal ? contentMaxWidthLocal : '90%', height: isTabletLocal ? 56 : 50 },
+        checkboxesContainer: { width: isTabletLocal ? contentMaxWidthLocal : '90%' },
+        buttonText: { fontSize: isTabletLocal ? 18 : 16 },
+    };
 
     useEffect(() => {
         const loadCredentials = async () => {
@@ -224,33 +238,33 @@ const LoginPage = ({ navigation }) => {
             
             {!showLoginForm ? (
                 <Animated.View style={[styles.container, { opacity: welcomeOpacity }]}>
-                    <Image style={styles.welcomeImage} source={require('../img/babyone.jpg')} />
+                    <Image style={[styles.welcomeImage, dynamicStyles.welcomeImage]} source={require('../img/babyone.jpg')} />
                     <View style={styles.fullDiv}>
-                        <Text style={[styles.startAppText, { color: isDarkMode ? Colors.white : Colors.black }]}>
+                        <Text style={[styles.startAppText, dynamicStyles.startAppText, { color: isDarkMode ? Colors.white : Colors.black }]}> 
                             Start Early, <Text style={styles.highlightText}>Shine Always!</Text>
                         </Text>
                         <Text style={[styles.excitedLink, { color: isDarkMode ? Colors.white : Colors.black }]}>
                             Excited to begin?
                         </Text>
-                        <TouchableOpacity style={styles.customButtonInnerStart} onPress={handleStartPress}>
-                            <Text style={styles.buttonText}>Let's Get Started</Text>
+                        <TouchableOpacity style={[styles.customButtonInnerStart, dynamicStyles.customButtonInnerStart]} onPress={handleStartPress}>
+                            <Text style={[styles.buttonText, dynamicStyles.buttonText]}>Let's Get Started</Text>
                         </TouchableOpacity>
                     </View>
                 </Animated.View>
             ) : (
                 <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                     <ScrollView style={backgroundStyle} contentContainerStyle={styles.loginContainer} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                        <Animated.Image style={[styles.image, { opacity: imageOpacity }]} source={NEW_LAUNCH_IMAGE} resizeMode="contain" />
+                        <Animated.Image style={[styles.image, dynamicStyles.image, { opacity: imageOpacity }]} source={NEW_LAUNCH_IMAGE} resizeMode="contain" />
                          <Animated.Text style={[styles.loginInstructionText, { transform: [{ translateX: emailTextPosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
                             Please enter login details below
                         </Animated.Text>
 
-                        <Animated.Text style={[ { marginTop: 5 },styles.legend, usernameError ? styles.errorLegend : null, { transform: [{ translateX: usernamePosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
+                        <Animated.Text style={[ { marginTop: 5 },styles.legend, dynamicStyles.legend, usernameError ? styles.errorLegend : null, { transform: [{ translateX: usernamePosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
                             Login ID
                         </Animated.Text>
-                        <Animated.View style={[styles.fieldset, usernameError ? styles.errorFieldset : null, { transform: [{ translateX: usernamePosition }] }]}>
+                        <Animated.View style={[styles.fieldset, dynamicStyles.fieldset, usernameError ? styles.errorFieldset : null, { transform: [{ translateX: usernamePosition }] }]}>
                             <TextInput
-                                style={[styles.input, usernameError ? styles.errorTextInput : null, { color: isDarkMode ? Colors.white : Colors.black }]}
+                                style={[styles.input, dynamicStyles.input, usernameError ? styles.errorTextInput : null, { color: isDarkMode ? Colors.white : Colors.black }]}
                                 placeholder="Enter your username"
                                 placeholderTextColor="#a6a6a6"
                                 value={username}
@@ -260,12 +274,12 @@ const LoginPage = ({ navigation }) => {
                         </Animated.View>
                         {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
 
-                        <Animated.Text style={[ { marginTop: 9 }, styles.legend, passwordError ? styles.errorLegend : null, { transform: [{ translateX: passwordPosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
+                        <Animated.Text style={[ { marginTop: 9 }, styles.legend, dynamicStyles.legend, passwordError ? styles.errorLegend : null, { transform: [{ translateX: passwordPosition }], color: isDarkMode ? Colors.white : Colors.black }]}>
                             Password
                         </Animated.Text>
-                        <Animated.View style={[styles.fieldset, passwordError ? styles.errorFieldset : null, { transform: [{ translateX: passwordPosition }] }]}>
+                        <Animated.View style={[styles.fieldset, dynamicStyles.fieldset, passwordError ? styles.errorFieldset : null, { transform: [{ translateX: passwordPosition }] }]}>
                             <TextInput
-                                style={[styles.input, passwordError ? styles.errorTextInput : null, { color: isDarkMode ? Colors.white : Colors.black }]}
+                                style={[styles.input, dynamicStyles.input, passwordError ? styles.errorTextInput : null, { color: isDarkMode ? Colors.white : Colors.black }]}
                                 secureTextEntry
                                 placeholder="Enter your password"
                                 placeholderTextColor="#a6a6a6"
@@ -275,7 +289,7 @@ const LoginPage = ({ navigation }) => {
                         </Animated.View>
                         {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
-                        <View style={styles.checkboxesContainer}>
+                        <View style={[styles.checkboxesContainer, dynamicStyles.checkboxesContainer]}>
                             <Animated.View style={[styles.checkboxContainer, { transform: [{ translateX: checkboxPosition }] }]}>
                                     <CheckBox isChecked={termsAccepted} onClick={() => setTermsAccepted(!termsAccepted)} checkBoxColor="#1434A4" />
                                     <View style={styles.checkboxTextContainer}>
@@ -310,8 +324,8 @@ const LoginPage = ({ navigation }) => {
                         </View>
 
                         <Animated.View style={styles.shakeContainer}>
-                            <TouchableOpacity style={[styles.customButton, isLoggingIn && styles.buttonDisabled]} onPress={handleLogin} disabled={isLoggingIn}>
-                                {isLoggingIn ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Login</Text>}
+                            <TouchableOpacity style={[styles.customButton, dynamicStyles.customButton, isLoggingIn && styles.buttonDisabled]} onPress={handleLogin} disabled={isLoggingIn}>
+                                {isLoggingIn ? <ActivityIndicator color="#FFFFFF" /> : <Text style={[styles.buttonText, dynamicStyles.buttonText]}>Login</Text>}
                             </TouchableOpacity>
                         </Animated.View>
 
@@ -327,22 +341,22 @@ const styles = StyleSheet.create({
     outermostContainer: { flex: 1 },
     loadingContainer: { justifyContent: 'center', alignItems: 'center' },
     container: { flex: 1, justifyContent: 'space-between', alignItems: 'center' },
-    welcomeImage: { height: isTablet ? '55%' : '60%', width: '100%', borderBottomRightRadius: isTablet ? 200 : 150 },
+    welcomeImage: { height: '55%', width: '100%', borderBottomRightRadius: 150 },
     fullDiv: { width: '100%', alignItems: 'center', paddingBottom: 40 },
-    startAppText: { fontSize: isTablet ? 28 : 24, fontStyle: 'italic', fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 20 },
+    startAppText: { fontSize: 24, fontStyle: 'italic', fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 20 },
     highlightText: { color: '#1434A4' },
     excitedLink: { marginTop: 10, fontSize: 16, marginBottom: 20 },
-    customButtonInnerStart: { backgroundColor: '#1434A4', width: contentMaxWidth, height: 50, justifyContent: 'center', alignItems: 'center', borderRadius: 5, elevation: 5 },
+    customButtonInnerStart: { backgroundColor: '#1434A4', width: '90%', height: 50, justifyContent: 'center', alignItems: 'center', borderRadius: 5, elevation: 5 },
     loginContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 30 },
-    image: { height: isTablet ? 160 : 130, width: isTablet ? contentMaxWidth : '90%', marginTop: 10, marginBottom: 20 },
-    loginInstructionText: { marginTop: 15, marginBottom: 15, fontSize: isTablet ? 18 : 16 },
-    fieldset: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', borderColor: '#ced4da', borderWidth: 1, paddingHorizontal: 10, marginTop: 5, borderRadius: 5, backgroundColor: '#fff', elevation: 3 },
-    legend: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', fontSize: isTablet ? 16 : 14, marginBottom: 2, paddingHorizontal: 10 },
-    input: { height: isTablet ? 52 : 45, paddingHorizontal: 10, fontSize: isTablet ? 16 : 14 },
-    customButton: { marginTop: 25, width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, height: isTablet ? 56 : 50, borderRadius: 5, backgroundColor: '#1434A4', justifyContent: 'center', alignItems: 'center', elevation: 5 },
+    image: { height: 130, width: '90%', marginTop: 10, marginBottom: 20 },
+    loginInstructionText: { marginTop: 15, marginBottom: 15, fontSize: 16 },
+    fieldset: { width: '90%', maxWidth: 500, alignSelf: 'center', borderColor: '#ced4da', borderWidth: 1, paddingHorizontal: 10, marginTop: 5, borderRadius: 5, backgroundColor: '#fff', elevation: 3 },
+    legend: { width: '90%', maxWidth: 500, alignSelf: 'center', fontSize: 14, marginBottom: 2, paddingHorizontal: 10 },
+    input: { height: 45, paddingHorizontal: 10, fontSize: 14 },
+    customButton: { marginTop: 25, width: '90%', maxWidth: 500, height: 50, borderRadius: 5, backgroundColor: '#1434A4', justifyContent: 'center', alignItems: 'center', elevation: 5 },
     buttonDisabled: { backgroundColor: '#a9a9a9',   elevation: 0,},
-    buttonText: { color: '#FFFFFF', fontSize: isTablet ? 18 : 16, fontWeight: 'bold' },
-    checkboxesContainer: { width: isTablet ? contentMaxWidth : '90%', maxWidth: 500, alignSelf: 'center', marginTop: 25 },
+    buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
+    checkboxesContainer: { width: '90%', maxWidth: 500, alignSelf: 'center', marginTop: 25 },
     checkboxContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },
     checkboxContainerSecond: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
     checkboxLabel: { fontSize: 14, flexShrink: 1, flexBasis: 'auto', marginRight: 4 },

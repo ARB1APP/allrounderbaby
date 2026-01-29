@@ -18,7 +18,7 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
 import NetInfo from '@react-native-community/netinfo';
@@ -26,7 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
 import { BASE_URL } from './config/api';
 
-const { width, height } = Dimensions.get('window');
+// window size will be read dynamically inside the component using useWindowDimensions
 
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
@@ -101,8 +101,26 @@ const url = BASE_URL;
 const ReferAndEarn = ({ navigation }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
-  const styles = createReferAndEarnStyles(theme);
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const styles = useMemo(() => createReferAndEarnStyles(theme, windowWidth, windowHeight), [theme, windowWidth, windowHeight]);
   const isDarkMode = useColorScheme() === 'dark';
+
+const isLandscape = windowWidth > windowHeight;
+  // Keep portrait sizes from styles; apply larger dimensions in landscape only
+  const landscapeThumbWidth = Math.max(120, Math.round(windowWidth * 0.82));
+  const landscapeThumbHeight = Math.max(420, Math.round(windowHeight * 0.85));
+  const imageLocalStyle = isLandscape
+    ? {
+        width: windowWidth - 40, // match horizontal margin of importantDetailsBox
+        height: Math.max(470, Math.round(windowHeight * 0.55)),
+        borderRadius: 8, // match importantDetailsBox
+        alignSelf: 'center',
+      }
+    : null;
+  const thumbnailWrapperLocal = isLandscape
+    ? { width: landscapeThumbWidth, height: landscapeThumbHeight, alignItems: 'center', justifyContent: 'center' }
+    : null;
+  const importantBoxLocal = isLandscape ? { minHeight: landscapeThumbHeight + 0 } : null;
 
   const [code, setCode] = useState("Loading...");
   const [shareModalVisible, setShareModalVisible] = useState(false);
@@ -620,10 +638,13 @@ console.log("Final Annotation Object:", annotationObject);
           </View>
         </View>
         <View style={styles.sectionDivider} />
-        <View style={styles.importantDetailsBox}>
+            {isLandscape && (
+                  <View style={{ height: 20 }} />
+                )}
+            <View style={[styles.importantDetailsBox, { padding: 0, marginTop: 10 }, ]}> 
           <TouchableOpacity onPress={handleThumbnailClickForReferAndEarn} activeOpacity={0.9} style={{ alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-            <View style={styles.thumbnailWrapper}>
-              <Image source={require('../img/REFERnEARN.png')} style={styles.image} />
+            <View style={[styles.thumbnailWrapper, thumbnailWrapperLocal]}>
+              <Image source={require('../img/REFERnEARN.png')} style={[styles.image, imageLocalStyle]} resizeMode="contain" />
               <Animated.View
                 pointerEvents="none"
                 style={[
@@ -647,6 +668,10 @@ console.log("Final Annotation Object:", annotationObject);
             </View>
           </TouchableOpacity>
         </View>
+
+           {isLandscape && (
+                  <View style={{ height: 30 }} />
+                )}
 
         <View style={[styles.importantDetailsBox, { marginTop: 20 }]}>
           <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>How to Refer & Earn?</Text>
@@ -878,7 +903,7 @@ console.log("Final Annotation Object:", annotationObject);
   );
 };
 
-const createReferAndEarnStyles = (theme) => StyleSheet.create({
+const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.screenBackground,
@@ -1157,8 +1182,8 @@ const createReferAndEarnStyles = (theme) => StyleSheet.create({
     backgroundColor: 'gray',
     opacity: 0.6
   },
-  image: { width: width -70, height: 180, borderRadius: 5, },
-  thumbnailWrapper: { width: width - 70, height: 180, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  image: { width: Math.max(150, windowWidth - 40), height: 200, borderRadius: 5, alignSelf: 'center' },
+  thumbnailWrapper: { width: Math.max(120, windowWidth - 70), height: 180, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   pulseShadow: { position: 'absolute', width: 80, height: 80, borderRadius: 40, left: '50%', top: '50%', zIndex: 2 },
   playButtonContainer: { position: 'absolute', left: '50%', top: '50%', zIndex: 3, transform: [{ translateX: -30 }, { translateY: -30 }] },
   playButtonCircle: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center', elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },

@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, useColorScheme, BackHandler, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, useColorScheme, BackHandler, StatusBar, Alert, useWindowDimensions } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 
@@ -39,6 +39,23 @@ const TermsofServicewithoutLog = () => {
       };
     }, [navigation])
   );
+
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+  const landscapeSection = { width: '100%', marginHorizontal: 0, paddingHorizontal: 8 };
+  const infoBoxLandscape = { width: '100%', maxWidth: undefined, marginHorizontal: 0, paddingHorizontal: 12 };
+  if (isLandscape) {
+    try {
+      if (styles && styles.sectionContainer) {
+        Object.assign(styles.sectionContainer, { width: '100%', marginHorizontal: 0, paddingHorizontal: 8, alignSelf: 'stretch' });
+      }
+      if (styles && styles.infoBox) {
+        Object.assign(styles.infoBox, { width: '100%', maxWidth: undefined, marginHorizontal: 0, paddingHorizontal: 12, alignSelf: 'stretch' });
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
 
   return (
     <View style={[styles.container, backgroundStyle]}>

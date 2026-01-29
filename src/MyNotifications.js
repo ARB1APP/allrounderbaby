@@ -12,6 +12,8 @@ import {
   Linking,
   AppState,
   BackHandler,
+  ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
@@ -39,6 +41,9 @@ const NotificationSettings = ({ navigation, route }) => {
   const mode = useColorScheme();
   const theme = mode === 'dark' ? dark : light;
   const popupTheme = mode === 'dark' ? popupDark : popupLight;
+
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false); 
   const [generalEnabled, setGeneralEnabled] = useState(true);
@@ -141,28 +146,57 @@ const NotificationSettings = ({ navigation, route }) => {
         <Text style={[styles.title, { color: theme.text }]}>Notification Settings</Text>
       </View>
 
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Text style={[styles.cardTitle, { color: theme.text }]}>Enable Notifications</Text>
-        <Switch
-          value={notificationsEnabled}
-          onValueChange={handleToggleNotifications}
-          trackColor={{ false: '#767577', true: '#81b0ff' }}
-          thumbColor={notificationsEnabled ? '#1a73e8' : '#f4f3f4'}
-        />
-      </View>
-
-      <Text style={[styles.subtitle, { color: theme.subText }]}>Customize notification</Text>
-
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Text style={[styles.cardTitle, { color: theme.text }]}>General</Text>
-        <Switch
-          value={generalEnabled}
-          onValueChange={(newValue) => notificationsEnabled && setGeneralEnabled(newValue)}
-          disabled={!notificationsEnabled}
-          trackColor={{ false: '#767577', true: '#81b0ff' }}
-          thumbColor={generalEnabled ? '#1a73e8' : '#f4f3f4'}
-        />
-      </View>
+      {isLandscape ? (
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Enable Notifications</Text>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ false: '#767577', true: '#81b0ff' }}
+              thumbColor={notificationsEnabled ? '#1a73e8' : '#f4f3f4'}
+            />
+          </View>
+          <View style={{ paddingHorizontal: 20 }}>
+            <Text style={[styles.subtitle, { color: theme.subText }]}>Customize notification</Text>
+          </View>
+          <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>General</Text>
+            <Switch
+              value={generalEnabled}
+              onValueChange={(newValue) => notificationsEnabled && setGeneralEnabled(newValue)}
+              disabled={!notificationsEnabled}
+              trackColor={{ false: '#767577', true: '#81b0ff' }}
+              thumbColor={generalEnabled ? '#1a73e8' : '#f4f3f4'}
+            />
+          </View>
+        </ScrollView>
+      ) : (
+        <>
+          <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Enable Notifications</Text>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ false: '#767577', true: '#81b0ff' }}
+              thumbColor={notificationsEnabled ? '#1a73e8' : '#f4f3f4'}
+            />
+          </View>
+          <View style={{ paddingHorizontal: 20 }}>
+            <Text style={[styles.subtitle, { color: theme.subText }]}>Customize notification</Text>
+          </View>
+          <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>General</Text>
+            <Switch
+              value={generalEnabled}
+              onValueChange={(newValue) => notificationsEnabled && setGeneralEnabled(newValue)}
+              disabled={!notificationsEnabled}
+              trackColor={{ false: '#767577', true: '#81b0ff' }}
+              thumbColor={generalEnabled ? '#1a73e8' : '#f4f3f4'}
+            />
+          </View>
+        </>
+      )}
 
       <Modal transparent visible={showPermissionPopup} animationType="fade">
         <View style={[styles.popupOverlay]}>

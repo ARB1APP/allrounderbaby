@@ -379,7 +379,6 @@ const VideoPlayerScreen = (props) => {
         </View>
       ) : (
         <VdoPlayerView
-          key={isLandscape ? 'player-landscape' : 'player-portrait'}
           ref={playerRef}
           style={StyleSheet.flatten(playerStyle)}
           embedInfo={{
