@@ -12,9 +12,9 @@ import {
   Alert,
   Animated,
   Easing,
-  Dimensions,
   ActivityIndicator,
   Pressable,
+  useWindowDimensions,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,7 +23,7 @@ import { Colors } from 'react-native/Libraries/NewAppScreen';
 import LinearGradient from 'react-native-linear-gradient';
 import { BASE_URL } from './config/api';
 
-const { width, height } = Dimensions.get('window');
+// NOTE: width/height are computed inside the component with useWindowDimensions
 
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
@@ -73,7 +73,7 @@ const darkThemeColors = {
 
 const url = BASE_URL;
 
-const createCashbackStyles = (theme) => StyleSheet.create({
+const createCashbackStyles = (theme, windowWidth = 360) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.screenBackground },
   scrollViewContent: { flexGrow: 1, paddingBottom: 20 },
   gradientHeaderText: { fontSize: 17, textAlign: 'center', fontWeight: '600', color: '#1A202C', lineHeight: 24 },
@@ -103,8 +103,8 @@ const createCashbackStyles = (theme) => StyleSheet.create({
   emphasisText: { fontWeight: '600', color: theme.textPrimary },
   emphasisTexts: { fontWeight: '800', color: theme.textPrimary },
   sectionLinkDivider: { marginHorizontal: 0 },
-  image: { width: width -70, height: 180, borderRadius: 5, },
-  thumbnailWrapper: { width: width - 70, height: 180, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  image: { width: Math.max(150, windowWidth - 40), height: 200, borderRadius: 5, alignSelf: 'center' },
+  thumbnailWrapper: { width: Math.max(120, windowWidth - 70), height: 180, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   subListItem: { marginHorizontal: 10, fontSize: 15, lineHeight: 20, color: theme.textSecondary, marginBottom: 6 },
   finalCallToAction: { fontSize: 16, textAlign: 'center', color: theme.textPrimary, fontWeight: '600' },
   linkButton: { alignSelf: 'flex-end', marginHorizontal: 20, marginTop: 15, marginBottom: 20 },
@@ -131,7 +131,25 @@ const CashbackforFeedback = () => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkThemeColors : lightThemeColors;
   const isDarkMode = colorScheme === 'dark';
-  const styles = useMemo(() => createCashbackStyles(theme), [theme]);
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const styles = useMemo(() => createCashbackStyles(theme, windowWidth), [theme, windowWidth]);
+
+  const isLandscape = windowWidth > windowHeight;
+  // Keep portrait sizes from styles; apply larger dimensions in landscape only
+  const landscapeThumbWidth = Math.max(120, Math.round(windowWidth * 0.82));
+  const landscapeThumbHeight = Math.max(420, Math.round(windowHeight * 0.85));
+  const imageLocalStyle = isLandscape
+    ? {
+        width: windowWidth - 40, // match horizontal margin of importantDetailsBox
+        height: Math.max(450, Math.round(windowHeight * 0.55)),
+        borderRadius: 8, // match importantDetailsBox
+        alignSelf: 'center',
+      }
+    : null;
+  const thumbnailWrapperLocal = isLandscape
+    ? { width: landscapeThumbWidth, height: landscapeThumbHeight, alignItems: 'center', justifyContent: 'center' }
+    : null;
+  const importantBoxLocal = isLandscape ? { minHeight: landscapeThumbHeight + 0 } : null;
   const [token, setToken] = useState(null);
   const [userId, setUserID] = useState(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
@@ -479,11 +497,13 @@ console.log("Final Annotation Object:", annotationObject);
           </Text>
         </LinearGradient>
         <View style={styles.sectionDivider} />
-
-        <View style={styles.importantDetailsBox}>
+        {isLandscape && (
+          <View style={{ height: 15 }} />
+        )}
+        <View style={[styles.importantDetailsBox, importantBoxLocal, { padding: 0, marginVertical: 3}]}> 
           <TouchableOpacity onPress={handleThumbnailClick} activeOpacity={0.9} style={{ alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-              <View style={styles.thumbnailWrapper}>
-                <Image source={require('../img/CASHBACK.png')} style={styles.image}  />
+              <View style={[styles.thumbnailWrapper, thumbnailWrapperLocal]}>
+                <Image source={require('../img/CASHBACK.png')} style={[styles.image, imageLocalStyle]}  />
                 <Animated.View
                   pointerEvents="none"
                   style={[
@@ -500,14 +520,17 @@ console.log("Final Annotation Object:", annotationObject);
                   ]}
                 />
                 <View pointerEvents="none" style={styles.playButtonContainer}>
-                  <View style={[styles.playButtonCircle, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}>
+                  <View style={[styles.playButtonCircle, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}> 
                     <Text style={styles.playButtonText}>▶</Text>
                   </View>
                 </View>
               </View>
           </TouchableOpacity>
         </View>
-        <View style={styles.sectionDivider} />
+          {isLandscape && (
+          <View style={{ height: 15 }} />
+        )}
+        <View style={styles.sectionDivider} /> 
         
         <View style={styles.importantDetailsBox}>
           <Text style={[styles.sectionHeader, { color: theme.accentColor }]}>How It Works?</Text>

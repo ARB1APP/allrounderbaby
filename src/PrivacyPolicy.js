@@ -8,6 +8,7 @@ import {
   BackHandler,
   StatusBar,
   useColorScheme,
+  useWindowDimensions,
 
 } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
@@ -83,6 +84,9 @@ const styles = StyleSheet.create({
     marginLeft: -8,
     flex: 1,
   },
+  infoListItemContentLandscape: {
+    flex: 0,
+  },
   section: {
     marginBottom: 20,
   },
@@ -99,6 +103,8 @@ const PrivacyPolicy = ({ navigation, route }) => {
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#2a3144' : Colors.white,
   };
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   
   const policyContent = [
     { type: 'header', text: 'Introduction' },
@@ -301,7 +307,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
               </Text>
     <View style={styles.information}>
       <View style={styles.infoListItem}>
-        <View style={styles.infoListItemContent}>
+        <View style={[styles.infoListItemContent, isLandscape && styles.infoListItemContentLandscape]}>
           <Text 
            style={[
                 styles.sectionTitle,
@@ -320,7 +326,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
       </View>
 
       <View style={styles.infoListItem}>
-        <View style={styles.infoListItemContent}>
+        <View style={[styles.infoListItemContent, isLandscape && styles.infoListItemContentLandscape]}>
            <Text 
            style={[
                 styles.sectionTitle,
@@ -337,7 +343,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
         </View>
       </View>
       <View style={styles.infoListItem}>
-        <View style={styles.infoListItemContent}>
+        <View style={[styles.infoListItemContent, isLandscape && styles.infoListItemContentLandscape]}>
            <Text 
            style={[
                 styles.sectionTitle,
@@ -359,7 +365,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
       </View>
 
       <View style={styles.infoListItem}>
-        <View style={styles.infoListItemContent}>
+        <View style={[styles.infoListItemContent, isLandscape && styles.infoListItemContentLandscape]}>
           <Text 
            style={[
                 styles.sectionTitle,
@@ -380,7 +386,7 @@ const PrivacyPolicy = ({ navigation, route }) => {
       </View>
 
       <View style={styles.infoListItem}>
-        <View style={styles.infoListItemContent}>
+        <View style={[styles.infoListItemContent, isLandscape && styles.infoListItemContentLandscape]}>
            <Text 
            style={[
                 styles.sectionTitle,

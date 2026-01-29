@@ -1,10 +1,27 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, BackHandler, StatusBar, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, BackHandler, StatusBar, useColorScheme, useWindowDimensions } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const TermsofService = ({ navigation, route }) => {
   const isDarkMode = useColorScheme() === 'dark';
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+  const landscapeSection = { width: '100%', marginHorizontal: 0, paddingHorizontal: 8 };
+  const infoBoxLandscape = { width: '100%', maxWidth: undefined, marginHorizontal: 0, paddingHorizontal: 12 };
+  // Apply runtime overrides so all section containers and infoBoxes become full-width in landscape
+  if (isLandscape) {
+    try {
+      if (styles && styles.sectionContainer) {
+        Object.assign(styles.sectionContainer, { width: '100%', marginHorizontal: 0, paddingHorizontal: 8, alignSelf: 'stretch' });
+      }
+      if (styles && styles.infoBox) {
+        Object.assign(styles.infoBox, { width: '100%', maxWidth: undefined, marginHorizontal: 0, paddingHorizontal: 12, alignSelf: 'stretch' });
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#2a3144' : Colors.white,
   };
@@ -39,6 +56,7 @@ const TermsofService = ({ navigation, route }) => {
       <ScreenScroll contentContainerStyle={{ flexGrow: 1 }}>
             <View style={[
                 styles.sectionContainer,
+                isLandscape ? landscapeSection : null,
                 { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
                 { borderColor: isDarkMode ? '#444' : '#e0e0e0' }
               ]}>
@@ -49,6 +67,7 @@ const TermsofService = ({ navigation, route }) => {
                  Terms of Use</Text>
           <View style={[
                styles.sectionContainer,
+               isLandscape ? landscapeSection : null,
                { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, 
                { borderColor: isDarkMode ? '#444' : '#e0e0e0' } 
              ]}>
@@ -70,7 +89,7 @@ const TermsofService = ({ navigation, route }) => {
             <Text style={styles.leadText}>
               By mere use of the Platform, You agree to be subject to the applicable rules, guidelines, policies, terms, and conditions and the same shall be deemed to be incorporated into this Terms of Use and be considered as part and parcel of this Terms of Use. We reserve the right, at Our sole discretion, to change, modify, add or remove portions of these Terms of Use, at any time without any prior written notice to You. It is Your responsibility to review these Terms of Use periodically for updates / changes. We will notify You of any material updates / changes from time to time. Your continued use of the Platform following the posting of changes will mean that You accept and agree to the revisions. As long as You comply with these Terms of Use, We grant You a personal, non-exclusive, non-transferable, limited privilege to enter and use the Platform.
             </Text>
-            <View style={styles.containerss}>
+            <View style={[styles.containerss, isLandscape ? { marginHorizontal: 16, paddingHorizontal: 12 } : null]}>
                <Text style={[
                 styles.platformtext,
                 { color: isDarkMode ? '#000' : '#00796B' }
@@ -90,6 +109,7 @@ const TermsofService = ({ navigation, route }) => {
           </View>
           <View style={[
               styles.sectionContainer,
+              isLandscape ? landscapeSection : null,
               { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
               { borderColor: isDarkMode ? '#444' : '#e0e0e0' } 
             ]}>
@@ -101,7 +121,7 @@ const TermsofService = ({ navigation, route }) => {
               We provide Users of the Platform that provides access to certain content and services, which may include, without limitation:
             </Text>
           </View>
-          <View style={styles.infoBox}>
+          <View style={[styles.infoBox, isLandscape ? infoBoxLandscape : null]}>
             <Text style={styles.bulletPoint}>
               <Text style={styles.bulletText}>
                 1.  activities and exercises that are solely focused on unlocking a baby's abilities including things like athleticism, math, reading, knowledge, memory, language development, logic, creativity, music, drama, personality, and character development.; and
@@ -115,6 +135,7 @@ const TermsofService = ({ navigation, route }) => {
           </View>
           <View style={[
               styles.sectionContainer,
+              isLandscape ? landscapeSection : null,
               { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, 
               { borderColor: isDarkMode ? '#444' : '#e0e0e0' } 
             ]}>
@@ -152,7 +173,7 @@ const TermsofService = ({ navigation, route }) => {
             <Text style={styles.leadText}>
               By submitting User Data to Us, You hereby grant, and represent and warrant that You have all rights necessary to grant, all rights and licenses to the User Data required for Allrounder Baby and its subcontractors and service providers to provide the Services, including without limitation, features of the Services that enable You to share certain User Data with third parties through our Service. You agree that Allrounder Baby will have the right, both during and after the term of these Terms of Use, to use, store, transmit, distribute, modify, copy, display, sublicense, and create derivative works of User Data. By signing up with us, you consent to receive updates related to your account and program (such as, sign up confirmation, updated terms of service, account expiry, program details, webinar details etc) on WhatsApp.
             </Text>
-            <View style={styles.infoBox}>
+            <View style={[styles.infoBox, isLandscape ? infoBoxLandscape : null]}>
                <Text style={[
                 styles.platformtext,
                 { color: isDarkMode ? '#000' : '#00796B' }
@@ -266,6 +287,7 @@ const TermsofService = ({ navigation, route }) => {
           </View>
           <View style={[
               styles.sectionContainer,
+              isLandscape ? landscapeSection : null,
               { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, 
               { borderColor: isDarkMode ? '#444' : '#e0e0e0' } 
             ]}>
@@ -497,7 +519,7 @@ const TermsofService = ({ navigation, route }) => {
               such termination, You must stop forthwith using any Confidential Information to which You may have been exposed in due course
               of Your use of the Platform.
             </Text>
-            <View style={styles.infoBox}>
+            <View style={[styles.infoBox, isLandscape ? infoBoxLandscape : null]}>
               <Text style={[
                 styles.platformtext,
                 { color: isDarkMode ? '#000' : '#00796B',
@@ -566,7 +588,7 @@ const TermsofService = ({ navigation, route }) => {
                             { color: isDarkMode ? '#fff' : '#1434a4' }
                         ]}>15. Security</Text>
            
-            <View style={styles.infoBox}>
+            <View style={[styles.infoBox, isLandscape ? infoBoxLandscape : null]}>
                <Text style={[
                 styles.platformtext,
                  { 
@@ -672,7 +694,7 @@ const TermsofService = ({ navigation, route }) => {
             <Text style={styles.leadText}>
               While our Services have been assessed by professionals and have been designed to expand the potential of children, there is no express guarantee that this will work for every child to the same degree. We hereby expressly disclaim all warranties and representations of any kind with respect to any and all content and features available on the Platform, including but not limited to
             </Text>
-            <View style={styles.infoBox}>
+            <View style={[styles.infoBox, isLandscape ? infoBoxLandscape : null]}>
               <Text style={styles.bulletPoint}>
                 <Text style={styles.bulletText}>
                   1. warranties as to merchantability or use for a particular purpose whether or not Allrounder Baby knows or has reason to know or has been advised of any such purpose or
@@ -713,6 +735,7 @@ const TermsofService = ({ navigation, route }) => {
 
             <View style={[
               styles.sectionContainer,
+              isLandscape ? landscapeSection : null,
               { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' }, 
               { borderColor: isDarkMode ? '#444' : '#e0e0e0' } 
             ]}>

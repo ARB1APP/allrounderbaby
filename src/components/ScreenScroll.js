@@ -1,9 +1,8 @@
 import React from 'react';
-import { ScrollView, Dimensions, Platform } from 'react-native';
+import { ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width } = Dimensions.get('window');
-const footerHeight = Math.round(Math.max(56, width * 0.12));
+// footerHeight can be computed where needed via useWindowDimensions if required
 
 const ScreenScroll = ({ children, contentContainerStyle, ...props }) => {
   const insets = useSafeAreaInsets();

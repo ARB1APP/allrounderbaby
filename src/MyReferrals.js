@@ -152,17 +152,17 @@ const MyReferrals = ({ navigation, route }) => {
         <View style={styles.statsContainer}>
            <View style={styles.statBox}>
                <Text style={styles.statValue}>{referrals.length}</Text>
-               <Text style={styles.statLabel}>Total Referrals</Text>
+               <Text style={[styles.statLabel, { fontWeight: '900' }]}>Total Referrals</Text>
                 <Text style={styles.statLabel}>your referral code used</Text>
            </View>
            <View style={styles.statBox}>
                <Text style={styles.statValue}>{referrals.filter(r => r.status === 'Completed').length}</Text>
-               <Text style={styles.statLabel}>Completed</Text>
+               <Text style={[styles.statLabel, { fontWeight: '900' }]}>Completed</Text>
                 <Text style={styles.statLabel}>Payout initiated</Text>
            </View>
            <View style={styles.statBox}>
                <Text style={styles.statValue}>{referrals.filter(r => r.status === 'Pending').length}</Text>
-               <Text style={styles.statLabel}>Pending</Text>
+               <Text style={[styles.statLabel, { fontWeight: '900' }]}>Pending</Text>
                  <Text style={styles.statLabel}>Payout pending</Text>
            </View>
         </View>

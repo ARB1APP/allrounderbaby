@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
 import { navigationRef } from '../App';
-import { View, Text, ScrollView, TouchableOpacity, ImageBackground, Image, StyleSheet, Dimensions, SafeAreaView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ImageBackground, Image, StyleSheet, SafeAreaView, Platform, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const { width } = Dimensions.get('window');
 const CARD_MARGIN = 10;
-const CARD_WIDTH = width - CARD_MARGIN * 2;
-const CARD_HEIGHT = Math.round((CARD_WIDTH * 9) / 16);
-const footerIconSize = Math.round(Math.max(18, Math.min(32, width * 0.06)));
-const footerHeight = Math.round(Math.max(56, width * 0.12));
-const footerFontSize = Math.round(Math.max(10, Math.min(14, width * 0.03)));
 
 const FooterTab = ({ active, onPressTab }) => {
 	const insets = useSafeAreaInsets();
@@ -43,10 +36,10 @@ const FooterTab = ({ active, onPressTab }) => {
 	);
 };
 
-const Card = ({ title, image, onPress }) => (
+const Card = ({ title, image, onPress, cardWidth, cardHeight }) => (
 	<View style={styles.cardWrap}>
 		<TouchableOpacity activeOpacity={0.85} onPress={onPress}>
-			<ImageBackground source={image} style={styles.cardImage} imageStyle={{ borderRadius: 8 }}>
+			<ImageBackground source={image} style={[styles.cardImage, { width: cardWidth, height: cardHeight }]} imageStyle={{ borderRadius: 8 }}>
 				<View style={styles.cardTitleWrap}>
 					<Text style={styles.cardTitle}>{title}</Text>
 				</View>
@@ -76,6 +69,12 @@ const PreviewHome = ({ navigation }) => {
 	}
 
 	const [activeTab, setActiveTab] = useState('Home');
+	const { width } = useWindowDimensions();
+	const CARD_WIDTH = width - CARD_MARGIN * 2;
+	const CARD_HEIGHT = Math.round((CARD_WIDTH * 9) / 16);
+	const footerIconSize = Math.round(Math.max(18, Math.min(32, width * 0.06)));
+	const footerHeight = Math.round(Math.max(56, width * 0.12));
+	const footerFontSize = Math.round(Math.max(10, Math.min(14, width * 0.03)));
 
 	const cards = [
 		{ key: 'intro1', title: 'Introduction I', image: require('../img/introductionone.jpg') },
@@ -100,7 +99,7 @@ const PreviewHome = ({ navigation }) => {
 			</View>
 			<ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 12 }]}>
 				{cards.map((c) => (
-					<Card key={c.key} title={c.title} image={c.image} onPress={() => navigation.navigate && navigation.navigate('VideoPlayerScreen')} />
+					<Card key={c.key} title={c.title} image={c.image} onPress={() => navigation.navigate && navigation.navigate('VideoPlayerScreen')} cardWidth={CARD_WIDTH} cardHeight={CARD_HEIGHT} />
 				))}
                 
 			</ScrollView>
@@ -116,7 +115,7 @@ const styles = StyleSheet.create({
 	headerTitle: { color: '#fff', fontSize: 20, fontWeight: '700' },
 	scroll: { padding: CARD_MARGIN },
 	cardWrap: { marginBottom: 14, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden', elevation: 2 },
-	cardImage: { width: CARD_WIDTH, height: CARD_HEIGHT, justifyContent: 'flex-end' },
+	cardImage: { justifyContent: 'flex-end' },
 	cardTitleWrap: { backgroundColor: 'rgba(20,52,164,0.95)', paddingVertical: 14, alignItems: 'center' },
 	cardTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
 	footerWrap: {  width: '100%', position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },

@@ -1,29 +1,33 @@
 import { Dimensions, Platform, PixelRatio } from 'react-native';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 const baseWidth = 375;
 const baseHeight = 812;
 
+const getWindow = () => Dimensions.get('window');
+
 export const isTablet = () => {
-  const aspectRatio = SCREEN_HEIGHT / SCREEN_WIDTH;
+  const { width, height } = getWindow();
+  const aspectRatio = height / width;
   return (
     (Platform.OS === 'ios' && aspectRatio < 1.6) ||
-    (Platform.OS === 'android' && (SCREEN_WIDTH >= 600 || SCREEN_HEIGHT >= 600))
+    (Platform.OS === 'android' && (width >= 600 || height >= 600))
   );
 };
 
 export const isSmallDevice = () => {
-  return SCREEN_WIDTH < 375;
+  const { width } = getWindow();
+  return width < 375;
 };
 
 export const scale = (size) => {
-  const ratio = SCREEN_WIDTH / baseWidth;
+  const { width } = getWindow();
+  const ratio = width / baseWidth;
   return Math.round(size * ratio);
 };
 
 export const verticalScale = (size) => {
-  const ratio = SCREEN_HEIGHT / baseHeight;
+  const { height } = getWindow();
+  const ratio = height / baseHeight;
   return Math.round(size * ratio);
 };
 
@@ -49,18 +53,21 @@ export const getSpacing = (size) => {
 };
 
 export const wp = (percentage) => {
-  return (SCREEN_WIDTH * percentage) / 100;
+  const { width } = getWindow();
+  return (width * percentage) / 100;
 };
 
 export const hp = (percentage) => {
-  return (SCREEN_HEIGHT * percentage) / 100;
+  const { height } = getWindow();
+  return (height * percentage) / 100;
 };
 
 export const getMaxContentWidth = () => {
+  const { width } = getWindow();
   if (isTablet()) {
-    return Math.min(SCREEN_WIDTH * 0.85, 800);
+    return Math.min(width * 0.85, 800);
   }
-  return SCREEN_WIDTH * 0.9;
+  return width * 0.9;
 };
 
 export const getButtonHeight = () => {
@@ -81,7 +88,8 @@ export const getIconSize = (size) => {
 };
 
 export const getImageDimensions = (width, height) => {
-  const maxWidth = isTablet() ? SCREEN_WIDTH * 0.8 : SCREEN_WIDTH - 40;
+  const { width: w } = getWindow();
+  const maxWidth = isTablet() ? w * 0.8 : w - 40;
   const aspectRatio = height / width;
   
   if (width > maxWidth) {
@@ -95,7 +103,8 @@ export const getImageDimensions = (width, height) => {
 };
 
 export const isLandscape = () => {
-  return SCREEN_WIDTH > SCREEN_HEIGHT;
+  const { width, height } = getWindow();
+  return width > height;
 };
 
 export const getCardWidth = () => {
@@ -111,6 +120,9 @@ export const getGridColumns = () => {
   }
   return 1;
 };
+
+const getScreenWidth = () => getWindow().width;
+const getScreenHeight = () => getWindow().height;
 
 export default {
   isTablet,
@@ -129,6 +141,6 @@ export default {
   isLandscape,
   getCardWidth,
   getGridColumns,
-  SCREEN_WIDTH,
-  SCREEN_HEIGHT,
+  SCREEN_WIDTH: getScreenWidth,
+  SCREEN_HEIGHT: getScreenHeight,
 };

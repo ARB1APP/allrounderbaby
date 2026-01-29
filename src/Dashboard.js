@@ -1,14 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { StatusBar } from 'react-native';
-import { StyleSheet, ScrollView, View, Image, Animated, Dimensions, Text, TouchableOpacity, Alert, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler, findNodeHandle } from 'react-native';
+import { StatusBar, useWindowDimensions } from 'react-native';
+import { StyleSheet, ScrollView, View, Image, Animated,Text, TouchableOpacity, Alert, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler, findNodeHandle } from 'react-native';
 import { CommonActions, useIsFocused } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from './config/api';
 
-const { width, height } = Dimensions.get('window');
-const screenWidth = Dimensions.get('window').width;
-const screenHeight = Dimensions.get('window').height;
 const url = BASE_URL;
 
 const formatDuration = (totalSeconds) => {
@@ -95,10 +92,24 @@ const VideoStepList = ({ groups, completedSteps, onStepPress, isDarkMode, stepRe
     );
 };
 
-const LevelModal = ({ levelName, children, onClose, isDarkMode, scrollRef }) => (
+const LevelModal = ({ levelName, children, onClose, isDarkMode, scrollRef, isLandscape, contentWidth }) => (
     <View style={styles.modalLikeContainer}>
-        <Pressable style={styles.fullScreenPressable} onPress={onClose}>
-            <Pressable style={styles.modalLikeContentBox} onPress={() => { }}>
+        <Pressable
+            style={[
+                styles.fullScreenPressable,
+                // In landscape open from top instead of center
+                isLandscape ? { justifyContent: 'flex-start', paddingTop: 0 } : null
+            ]}
+            onPress={onClose}
+        >
+            <Pressable
+                style={[
+                    styles.modalLikeContentBox,
+                    // Use provided contentWidth for portrait so modal width == image width
+                    isLandscape ? { width: '70%', marginTop: 8, maxHeight: '96%' } : { width: contentWidth, marginTop: 8, maxHeight: '96%' }
+                ]}
+                onPress={() => { }}
+            >
                 <View style={[styles.modalContents, { backgroundColor: isDarkMode ? '#2a3144' : Colors.white }]}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalHeaderText}>{levelName}</Text>
@@ -117,10 +128,36 @@ const LevelModal = ({ levelName, children, onClose, isDarkMode, scrollRef }) => 
     </View>
 );
 
-const CategoryButton = ({ image, title, onPress, isOpen, isComplete }) => (
+const CategoryButton = ({ image, title, onPress, isOpen, isComplete, imagenestedStyle, modalMode, modalWidth }) => (
     <TouchableOpacity activeOpacity={1} onPress={onPress}>
-        <View style={[styles.buttonNested, { marginBottom: isOpen ? 0 : 10 }]}>
-            <Image source={image} style={styles.imagenested} resizeMode="cover" />
+        <View style={[
+            styles.buttonNested,
+            { marginBottom: isOpen ? 0 : 10 },
+            modalMode ? { width: modalWidth || '100%', alignSelf: 'center', overflow: 'hidden' } : (modalMode && modalWidth ? { width: modalWidth, alignSelf: 'center' } : null)
+        ]}>
+            {(() => {
+                if (modalMode) {
+                    const baseImgHeight = (imagenestedStyle && imagenestedStyle.height) || styles.imagenested.height || 180;
+                    // Slightly increase visible height in modal (user requested a bit taller)
+                    const extraHeightFactor = 1.2; // ~12% taller
+                    const imgHeight = Math.round(baseImgHeight * extraHeightFactor);
+                    const scale = 1.0; // increased upscale so modal images appear larger
+                    const wrapperWidth = modalWidth || (imagenestedStyle && imagenestedStyle.width) || '100%';
+                    if (typeof wrapperWidth === 'number') {
+                        const imgWidth = Math.round(wrapperWidth * scale);
+                        const imgHeightScaled = Math.round(imgHeight * scale);
+                        const marginLeft = -Math.round((imgWidth - wrapperWidth) / 3.5);
+                        return (
+                            <View style={{ width: wrapperWidth, height: imgHeight, overflow: 'hidden' }}>
+                                <Image source={image} style={{ width: imgWidth, height: imgHeightScaled, marginLeft }} resizeMode="cover" />
+                            </View>
+                        );
+                    }
+                    // fallback when wrapperWidth isn't numeric
+                    return <Image source={image} style={[{ width: '100%', height: imgHeight }]} resizeMode="cover" />;
+                }
+                return <Image source={image} style={[imagenestedStyle || styles.imagenested]} resizeMode="cover" />;
+            })()}
             <View style={[styles.textOverlay, isComplete ? styles.completedCategoryOverlay : null]}>
                 <Text style={styles.text}>{title}</Text>
             </View>
@@ -131,6 +168,7 @@ const CategoryButton = ({ image, title, onPress, isOpen, isComplete }) => (
 
 const Dashboard = ({ navigation }) => {
     const isFocused = useIsFocused();
+    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     useEffect(() => {
         if (isFocused) {
             StatusBar.setBarStyle('light-content');
@@ -160,8 +198,8 @@ const Dashboard = ({ navigation }) => {
     const scale2 = useRef(new Animated.Value(0)).current;
     const scale3 = useRef(new Animated.Value(0)).current;
     const handOpacity = useRef(new Animated.Value(0)).current;
-    const handPositionX = useRef(new Animated.Value(screenWidth * 0.6)).current;
-    const handPositionY = useRef(new Animated.Value(screenHeight * 0.4)).current;
+    const handPositionX = useRef(new Animated.Value(windowWidth * 0.6)).current;
+    const handPositionY = useRef(new Animated.Value(windowHeight * 0.4)).current;
     const handScale = useRef(new Animated.Value(1)).current;
     const opacity = useRef(new Animated.Value(1)).current;
     const isDarkMode = useColorScheme() === 'dark';
@@ -424,6 +462,7 @@ const Dashboard = ({ navigation }) => {
 
     const handleLastViewedPress = async () => {
         try {
+            debugger;
             const lastViewedJson = await AsyncStorage.getItem('lastViewed');
             if (lastViewedJson) {
                 const lastViewed = JSON.parse(lastViewedJson);
@@ -521,6 +560,7 @@ const Dashboard = ({ navigation }) => {
     };
 
     const updateTopicCompletionTime = async (categoryKey, completionTime) => {
+        debugger;
         try {
             const newCompletionTimes = { ...topicCompletionTimes, [categoryKey]: completionTime };
             setTopicCompletionTimes(newCompletionTimes);
@@ -532,6 +572,7 @@ const Dashboard = ({ navigation }) => {
 
     const fetchUserProgress = async (userId, token) => {
         try {
+            debugger;
             const deviceKey = await AsyncStorage.getItem('deviceKey');
             const endpoint = `${url}User/User_Deshboard_Data?id=${userId}&DeviceKey=${deviceKey}`;
             const response = await fetch(endpoint, {
@@ -730,15 +771,15 @@ const Dashboard = ({ navigation }) => {
     };
 
     const startHandAnimation = () => {
-        const targetX = screenWidth * 0.4;
-        const targetY = screenHeight * 0.3;
+        const targetX = windowWidth * 0.4;
+        const targetY = windowHeight * 0.3;
         return Animated.loop(
             Animated.sequence([
                 Animated.delay(1500),
                 Animated.parallel([Animated.timing(handOpacity, { toValue: 1, duration: 300, useNativeDriver: true }), Animated.timing(handPositionX, { toValue: targetX, duration: 1000, useNativeDriver: true }), Animated.timing(handPositionY, { toValue: targetY, duration: 1000, useNativeDriver: true }),]),
                 Animated.sequence([Animated.timing(handScale, { toValue: 0.85, duration: 150, useNativeDriver: true }), Animated.timing(handScale, { toValue: 1, duration: 150, useNativeDriver: true }),]),
                 Animated.delay(300),
-                Animated.parallel([Animated.timing(handOpacity, { toValue: 0, duration: 300, delay: 700, useNativeDriver: true }), Animated.timing(handPositionX, { toValue: screenWidth * 0.6, duration: 1000, useNativeDriver: true }), Animated.timing(handPositionY, { toValue: screenHeight * 0.4, duration: 1000, useNativeDriver: true }),]),
+                Animated.parallel([Animated.timing(handOpacity, { toValue: 0, duration: 300, delay: 700, useNativeDriver: true }), Animated.timing(handPositionX, { toValue: windowWidth * 0.6, duration: 1000, useNativeDriver: true }), Animated.timing(handPositionY, { toValue: windowHeight * 0.4, duration: 1000, useNativeDriver: true }),]),
                 Animated.delay(1000),
             ])
         );
@@ -1384,25 +1425,36 @@ const Dashboard = ({ navigation }) => {
 
         const levelName = `${activeLevel.charAt(0).toUpperCase() + activeLevel.slice(1)} Level`;
 
-        return <LevelModal levelName={levelName} onClose={handleCloseModal} isDarkMode={isDarkMode} scrollRef={levelModalScrollRef}>{levelKeys.map(key => {
+        const contentWidth = Math.max(280, Math.round(windowWidth * 0.9));
+        return <LevelModal levelName={levelName} onClose={handleCloseModal} isDarkMode={isDarkMode} scrollRef={levelModalScrollRef} isLandscape={isLandscape} contentWidth={contentWidth}>{levelKeys.map((key, index) => {
             const config = masterConfig[key];
             if (!config) return null;
             const allSteps = config.finalGroupedData?.map(g => `step${g.stepNumber}`) || [];
             const isComplete = allSteps.length > 0 && allSteps.every(stepKey => completedSteps[stepKey]);
+            // Compute modal inner available width (account for ScrollView content padding)
+            const scrollPadding = 5; // modalScrollViewContent.paddingHorizontal
+            const innerPadding = scrollPadding * 2; // left + right
+            const modalImageFullWidth = Math.max(240, contentWidth - innerPadding);
+            console.log('Dashboard.renderLevelModal', { contentWidth, innerPadding, modalImageFullWidth, isLandscape });
+            const modalImagenestedStyle = isLandscape
+                ? imagenestedStyle
+                : { ...(imagenestedStyle || {}), width: modalImageFullWidth, height: Math.max(150, Math.round(modalImageFullWidth * 0.65)), alignSelf: 'center' };
+
+            // For the first item (Trust) use the full inner modal width (same as modalImageFullWidth)
+            const modalWidthForItem = !isLandscape && index === 0 ? modalImageFullWidth : modalImageFullWidth;
+
             return (
                 <React.Fragment key={key}>
-                    <CategoryButton image={config.image} title={config.name} onPress={() => handleCategoryPress(key)} isOpen={openCategory === key} isComplete={isComplete} />
+                    <CategoryButton image={config.image} title={config.name} onPress={() => handleCategoryPress(key)} isOpen={openCategory === key} isComplete={isComplete} imagenestedStyle={modalImagenestedStyle} modalMode={!isLandscape} modalWidth={modalWidthForItem} />
                     {openCategory === key && <VideoStepList groups={config.finalGroupedData} completedSteps={completedSteps} onStepPress={handleDropdownItemClick} isDarkMode={isDarkMode} stepRefs={stepRefs} />}
                 </React.Fragment>
             );
         })}</LevelModal>
     }
-    //scroll to top 
+    // Scroll to top only when level changes, not on tab/category change
     useEffect(() => {
         if (lastViewedRequest) return;
-
         if (!levelModalScrollRef.current) return;
-
         const timeout = setTimeout(() => {
             try {
                 levelModalScrollRef.current.scrollTo({
@@ -1414,7 +1466,7 @@ const Dashboard = ({ navigation }) => {
             }
         }, 300);
         return () => clearTimeout(timeout);
-    }, [activeLevel, openCategory]);
+    }, [activeLevel]);
 
 
     const closeLanguageModal = () => setIsModalVisible(false);
@@ -1431,13 +1483,27 @@ const Dashboard = ({ navigation }) => {
         return <View style={styles.loaderContainer}><ActivityIndicator size="large" /></View>;
     }
 
+    const isLandscape = windowWidth > windowHeight;
+    // Use a single portrait content width so all images match in portrait.
+    const portraitContentWidth = Math.max(280, Math.round(windowWidth * 0.9));
+
+    // Keep portrait sizing unchanged except use portraitContentWidth for consistent widths.
+    const imageStyle = isLandscape
+        ? { width: Math.max(120, Math.round(windowWidth * 0.8)), height: Math.max(480, Math.round(windowHeight * 0.72)), resizeMode: 'center', borderRadius: 5 }
+        : { width: portraitContentWidth, height: 250, resizeMode: 'center', borderRadius: 5, alignSelf: 'center' };
+
+    const portraitNestedHeight = Math.max(150, Math.round(portraitContentWidth * 0.6));
+    const imagenestedStyle = isLandscape
+        ? { width: imageStyle.width, height: imageStyle.height, borderRadius: 5, alignSelf: 'center' }
+        : { width: '100%', height: portraitNestedHeight, borderRadius: 5, alignSelf: 'center' };
+
     return (
         <View style={[styles.container, backgroundStyle]}>
             <View style={styles.imageContainer}>
                 <ScrollView showsVerticalScrollIndicator={false} >
                     <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(1)}>
                         <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 5 }]}>
-                            <Image source={require('../img/Intro1.png')} style={styles.image} resizeMode="cover" />
+                            <Image source={require('../img/Intro1.png')} style={imageStyle} resizeMode="cover" />
                             <View style={[completedSteps['step1001'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
                                 <Text style={styles.text}>Introduction I</Text>
                             </View>
@@ -1445,7 +1511,7 @@ const Dashboard = ({ navigation }) => {
                     </TouchableOpacity>
                     <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(2)}>
                         <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}>
-                            <Image source={require('../img/Intro2.png')} style={styles.image} resizeMode="cover" />
+                            <Image source={require('../img/Intro2.png')} style={imageStyle} resizeMode="cover" />
                             <View style={[completedSteps['step1002'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
                                 <Text style={styles.text}>Introduction II</Text>
                             </View>
@@ -1453,7 +1519,7 @@ const Dashboard = ({ navigation }) => {
                     </TouchableOpacity>
                     <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('foundation')}>
                         <Animated.View style={[styles.button, { transform: [{ scale: scale1 }], marginTop: 10 }]}>
-                            <Image source={require('../img/foundationlevel.png')} style={styles.image} resizeMode="cover" />
+                            <Image source={require('../img/foundationlevel.png')} style={imageStyle} resizeMode="cover" />
                             <View style={[styles.textOverlayTwo, isLevelComplete(foundationKeys) ? styles.completedTextOverlayTwo : null]}>
                                 <Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity: 0 }]} />
                                 <Text style={styles.text}>Foundation Level</Text>
@@ -1464,7 +1530,7 @@ const Dashboard = ({ navigation }) => {
                     <Animated.Image source={require('../img/tap.png')} style={[styles.handImage, { opacity: handOpacity, transform: [{ translateX: handPositionX }, { translateY: handPositionY }, { scale: handScale }] }]} resizeMode="contain" pointerEvents="none" />
                     <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('middle')}>
                         <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}>
-                            <Image source={require('../img/middlelevel2.png')} style={styles.image} resizeMode="cover" />
+                            <Image source={require('../img/middlelevel2.png')} style={imageStyle} resizeMode="cover" />
                             <View style={[styles.textOverlay, isLevelComplete(middleKeys) ? styles.completedCategoryOverlay : null]}>
                                 <Text style={styles.text}>Middle Level</Text>
                             </View>
@@ -1472,7 +1538,7 @@ const Dashboard = ({ navigation }) => {
                     </TouchableOpacity>
                     <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('advanced')}>
                         <Animated.View style={[styles.button, { transform: [{ scale: scale3 }], marginTop: 10 }]}>
-                            <Image source={require('../img/advancelevel.png')} style={styles.image} resizeMode="cover" />
+                            <Image source={require('../img/advancelevel.png')} style={imageStyle} resizeMode="cover" />
                             <View style={[styles.textOverlay, isLevelComplete(advancedKeys) ? styles.completedCategoryOverlay : null]}>
                                 <Text style={styles.text}>Advanced Level</Text>
                             </View>
@@ -1501,7 +1567,7 @@ const Dashboard = ({ navigation }) => {
             {isVideoLoading && (<View style={styles.modalLikeContainer}><ActivityIndicator size="large" color="#FFFFFF" /><Text style={styles.loadingText}>Loading...</Text></View>)}
             {!activeLevel && !openCategory && !isModalVisible ? (
                 <TouchableOpacity
-                    style={styles.customButton}
+                    style={[styles.customButton, isLandscape ? { marginRight: Math.round(windowWidth * 0.08) } : null]}
                     activeOpacity={0.7}
                     accessibilityLabel="Last Viewed"
                     onPress={handleLastViewedPress}
@@ -1524,9 +1590,9 @@ const styles = StyleSheet.create({
     },
 
     button: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
-    buttonNested: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
-    image: { width: width - 20, height: 250, resizeMode: 'center', borderRadius: 5, },
-    imagenested: { width: width - 48, height: height / 2.8, borderRadius: 5, },
+    buttonNested: { width: '100%', marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
+    image: { width: '100%', height: 250, resizeMode: 'center', borderRadius: 5, },
+    imagenested: { width: '100%', height: 180, borderRadius: 5, alignSelf: 'center' },
     textOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, },
     completedCategoryOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#4DB6AC', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, },
     completedTextOverlayTwo: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#4DB6AC', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, flexDirection: 'row', justifyContent: 'space-between', },
@@ -1541,14 +1607,14 @@ const styles = StyleSheet.create({
     timerImage: { width: 16, height: 16, marginRight: 4, },
     durationText: { color: 'white', fontSize: 14, },
     dropdownItem: { fontSize: 16, color: '#fff', fontWeight: '500', flex: 1 },
-    modalContent: { width: width * 0.8, backgroundColor: '#fff', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20, borderRadius: 10, alignItems: 'center' },
+    modalContent: { width: '80%', backgroundColor: '#fff', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20, borderRadius: 10, alignItems: 'center' },
     modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
     modalText: { fontSize: 16, marginBottom: 20, textAlign: 'center' },
     modalButtons: { flexDirection: 'row', gap: 15 },
     modalButton: { backgroundColor: 'rgba(20, 52, 164, 1)', paddingVertical: 10, width: 100, borderRadius: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5 },
     disabledButton: { backgroundColor: '#a0a0a0' },
     modalButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center', },
-    videolist: { paddingHorizontal: 10, width: '100%', },
+    videolist: { paddingHorizontal: 0, width: '100%', },
     tabimage: { width: 25, height: 22 },
     modalContentClose: { color: '#000', fontSize: 16, fontWeight: 'bold', },
     modalContentMainDiv: { flexDirection: "row", justifyContent: "space-between", width: '100%', },

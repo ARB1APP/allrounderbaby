@@ -1,5 +1,5 @@
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions, Platform, StatusBar } from 'react-native';
+import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions, Platform, StatusBar, useWindowDimensions } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
@@ -132,8 +132,10 @@ const isDrawerItemFocused = (item, props) => {
 
 export const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
   const styles = useMemo(() => createAppStyles(theme), [theme]);
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   return (
-    <DrawerContentScrollView {...props} style={styles.drawerContentScrollView} contentContainerStyle={{ flex: 1 }}>
+    <DrawerContentScrollView key={isLandscape ? 'drawer-land' : 'drawer-port'} {...props} style={styles.drawerContentScrollView} contentContainerStyle={isLandscape ? { flexGrow: 1 } : { flex: 1 }}>
       <View style={styles.headerContainer}>
         <Image source={require('./img/loginlogo.png')} style={styles.logo} />
       </View>
@@ -224,10 +226,7 @@ const App = () => {
   const styles = createAppStyles(currentThemeColors);
   const [activeFooter, setActiveFooter] = useState('Home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { width } = Dimensions.get('window');
-  const footerIconSize = Math.round(Math.max(18, Math.min(32, width * 0.06)));
-  const footerHeight = Math.round(Math.max(56, width * 0.12));
-  const footerFontSize = Math.round(Math.max(10, Math.min(14, width * 0.03)));
+  
   const prevDrawerOpenRef = React.useRef(false);
 
   useEffect(() => {
@@ -581,13 +580,20 @@ const App = () => {
     borderRadius: 0, alignItems: 'center',
     justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee' },
     footerItem: { alignItems: 'center', justifyContent: 'center' },
-    footerIcon: { width: footerIconSize, height: footerIconSize, tintColor: '#888' },
-    footerLabel: { fontSize: footerFontSize, color: '#666', marginTop: 6 },
+    footerIcon: { tintColor: '#888' },
+    footerLabel: { color: '#666', marginTop: 6 },
   });
 
   const FooterBar = () => {
     const insets = useSafeAreaInsets();
-    const bottomInset = insets?.bottom || (Platform.OS === 'android' ? 8 : 0);
+    const bottomInset = insets?.bottom || (Platform.OS === 'android' ? 0 : 0);
+    const { width, height } = useWindowDimensions();
+    const baseWidth = Math.min(width, height); // use portrait width so sizes remain consistent across orientations
+    // compute footer sizes dynamically based on portrait width (baseWidth)
+    const iconSize = Math.round(Math.max(18, Math.min(28, baseWidth * 0.06)));
+    const footerHeightLocal = Math.round(Math.max(56, Math.min(80, baseWidth * 0.12)));
+    const footerFontSizeLocal = Math.round(Math.max(10, Math.min(14, baseWidth * 0.03)));
+
     const navigateTo = async (routeName) => {
       try {
         skipNavigationGuards.current = true;
@@ -600,25 +606,25 @@ const App = () => {
 
     return (
       <View style={[stylesGlobal.footerWrap, { paddingBottom: bottomInset, backgroundColor: 'transparent' }]}> 
-        <View style={[stylesGlobal.footerInner, { height: footerHeight }]}> 
+        <View style={[stylesGlobal.footerInner, { height: footerHeightLocal }]}> 
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Home')}>
-            <Image source={require('./img/home.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Home' ? currentThemeColors.primary : '#888' }]} />
-            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Home' ? currentThemeColors.primary : '#666' }]}>Home</Text>
+            <Image source={require('./img/home.png')} style={[stylesGlobal.footerIcon, { width: iconSize, height: iconSize, tintColor: activeFooter === 'Home' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { fontSize: footerFontSizeLocal, color: activeFooter === 'Home' ? currentThemeColors.primary : '#666' }]}>Home</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Cashback for Feedback')}>
-            <Image source={require('./img/feedbacktab.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Cashback for Feedback' ? currentThemeColors.primary : '#888' }]} />
-            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Cashback for Feedback' ? currentThemeColors.primary : '#666' }]}>Cashback</Text>
+            <Image source={require('./img/feedbacktab.png')} style={[stylesGlobal.footerIcon, { width: iconSize, height: iconSize, tintColor: activeFooter === 'Cashback for Feedback' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { fontSize: footerFontSizeLocal, color: activeFooter === 'Cashback for Feedback' ? currentThemeColors.primary : '#666' }]}>Cashback</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Refer and Earn')}>
-            <Image source={require('./img/money.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#888' }]} />
-            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#666' }]}>Refer</Text>
+            <Image source={require('./img/money.png')} style={[stylesGlobal.footerIcon, { width: iconSize, height: iconSize, tintColor: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { fontSize: footerFontSizeLocal, color: activeFooter === 'Refer and Earn' ? currentThemeColors.primary : '#666' }]}>Refer & Earn</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('My Profile')}>
-            <Image source={require('./img/proflie.png')} style={[stylesGlobal.footerIcon, { tintColor: activeFooter === 'My Profile' ? currentThemeColors.primary : '#888' }]} />
-            <Text style={[stylesGlobal.footerLabel, { color: activeFooter === 'My Profile' ? currentThemeColors.primary : '#666' }]}>Profile</Text>
+            <Image source={require('./img/proflie.png')} style={[stylesGlobal.footerIcon, { width: iconSize, height: iconSize, tintColor: activeFooter === 'My Profile' ? currentThemeColors.primary : '#888' }]} />
+            <Text style={[stylesGlobal.footerLabel, { fontSize: footerFontSizeLocal, color: activeFooter === 'My Profile' ? currentThemeColors.primary : '#666' }]}>Profile</Text>
           </TouchableOpacity>
         </View>
       </View>
