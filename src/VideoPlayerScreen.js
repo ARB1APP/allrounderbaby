@@ -22,15 +22,15 @@ const url = BASE_URL;
 import Orientation from 'react-native-orientation-locker';
 
 const VideoPlayerScreen = (props) => {
-      const isFocused = useIsFocused();
-      useEffect(() => {
-        if (isFocused) {
-          StatusBar.setBarStyle('light-content');
-        }
-      }, [isFocused]);
-    useEffect(() => {
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (isFocused) {
       StatusBar.setBarStyle('light-content');
-    }, []);
+    }
+  }, [isFocused]);
+  useEffect(() => {
+    StatusBar.setBarStyle('light-content');
+  }, []);
   const route = useRoute();
   const navigation = useNavigation();
   const [orientation, setOrientation] = useState('PORTRAIT');
@@ -54,10 +54,15 @@ const VideoPlayerScreen = (props) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(route.params?.total_time || 0);
   const progressUpdated = useRef(false);
+  const orientationUnlocked = useRef(false);
+  const lastAppStateUpdate = useRef(0);
 
   useFocusEffect(
     useCallback(() => {
-      Orientation.unlockAllOrientations();
+      if (!orientationUnlocked.current) {
+        Orientation.unlockAllOrientations();
+        orientationUnlocked.current = true;
+      }
 
       const orientationListener = (o) => {
         setOrientation(o);
@@ -98,7 +103,13 @@ const VideoPlayerScreen = (props) => {
     try {
       const savedProgress = await AsyncStorage.getItem('userProgress');
       if (savedProgress) {
-        const progressData = JSON.parse(savedProgress);
+        let progressData = [];
+        try {
+          progressData = JSON.parse(savedProgress);
+        } catch (e) {
+          console.error('Failed to parse savedProgress, resetting to empty array:', e);
+          progressData = [];
+        }
         const videoProgress = progressData.find(p => p.video_id === videoId);
         if (videoProgress) {
           currentViews = videoProgress.total_views || 0;
@@ -142,7 +153,15 @@ const VideoPlayerScreen = (props) => {
       if (response.ok && responseData.code === 200) {
         try {
           const savedProgress = await AsyncStorage.getItem('userProgress');
-          let progressData = savedProgress ? JSON.parse(savedProgress) : [];
+          let progressData = [];
+          if (savedProgress) {
+            try {
+              progressData = JSON.parse(savedProgress);
+            } catch (e) {
+              console.error('Failed to parse savedProgress during update, using empty array:', e);
+              progressData = [];
+            }
+          }
           const videoIndex = progressData.findIndex(p => p.video_id === videoId);
 
           if (videoIndex > -1) {
@@ -199,26 +218,96 @@ const VideoPlayerScreen = (props) => {
     setIsLoading(false);
   }, []);
 
+  // const stopNativePlayer = useCallback(() => {
+  //   try {
+  //     const nm = NativeModules || {};
+  //     const modulesToTry = [nm.VdoPlayer, nm.VdocipherRnBridge, nm.Vdocipher, nm.VdocipherRNBridge, nm.Vdo];
+  //     const methodNames = ['stop', 'pause', 'release', 'releasePlayer', 'destroy', 'stopPlayer'];
+
+  //     modulesToTry.forEach(mod => {
+  //       try {
+  //         if (!mod) {
+  //           if (typeof __DEV__ !== 'undefined' && __DEV__) console.debug('stopNativePlayer: native module reference is null/undefined');
+  //           return;
+  //         }
+  //         const moduleKey = Object.keys(nm).find(k => nm[k] === mod) || 'unknown_native_module';
+  //         methodNames.forEach(m => {
+  //           try {
+  //             if (typeof mod[m] === 'function') {
+  //               if (typeof __DEV__ !== 'undefined' && __DEV__) console.debug(`stopNativePlayer: calling ${m} on ${moduleKey}`);
+  //               mod[m]();
+  //               if (typeof __DEV__ !== 'undefined' && __DEV__) console.debug(`stopNativePlayer: called ${m} on ${moduleKey}`);
+  //             }
+  //           } catch (e) {
+  //             if (typeof __DEV__ !== 'undefined' && __DEV__) console.debug(`stopNativePlayer: error calling ${m} on ${moduleKey}`, e);
+  //           }
+  //         });
+  //       } catch (e) {
+  //         if (typeof __DEV__ !== 'undefined' && __DEV__) console.debug('stopNativePlayer: unexpected error iterating native modules', e);
+  //       }
+  //     });
+  //   } catch (e) {
+  //     console.error('stopNativePlayer: error', e);
+  //   }
+  // }, []);
   const stopNativePlayer = useCallback(() => {
     try {
       const nm = NativeModules || {};
-      const modulesToTry = [nm.VdoPlayer, nm.VdocipherRnBridge, nm.Vdocipher, nm.VdocipherRNBridge, nm.Vdo];
+      const modulesToTry = [
+        nm.VdoPlayer,
+        nm.VdocipherRnBridge,
+        nm.Vdocipher,
+        nm.VdocipherRNBridge,
+        nm.Vdo,
+      ];
       const methodNames = ['stop', 'pause', 'release', 'releasePlayer', 'destroy', 'stopPlayer'];
 
       modulesToTry.forEach(mod => {
-        if (!mod) return;
-        methodNames.forEach(m => {
+        if (!mod) return; // 🔕 no logging for null modules
+
+        methodNames.forEach(method => {
           try {
-            if (typeof mod[m] === 'function') {
-              mod[m]();
+            if (typeof mod[method] === 'function') {
+              if (__DEV__) {
+                console.debug(`stopNativePlayer: calling ${method}`);
+              }
+              mod[method]();
             }
-          } catch (e) {}
+          } catch (e) {
+            if (__DEV__) {
+              console.debug(`stopNativePlayer: error calling ${method}`, e);
+            }
+          }
         });
       });
     } catch (e) {
-      console.error('stopNativePlayer: error', e);
+      console.error('stopNativePlayer: unexpected error', e);
     }
   }, []);
+
+  const forceStopEverything = useCallback(() => {
+    try {
+      // JS side
+      if (playerRef.current) {
+        try {
+          playerRef.current.pause?.();
+          playerRef.current.stop?.();
+          playerRef.current.release?.();
+        } catch (e) { }
+        playerRef.current = null;
+      }
+
+      // Native side
+      stopNativePlayer();
+
+      // Android audio focus kill
+      if (NativeModules?.AudioManager) {
+        NativeModules.AudioManager.abandonAudioFocus?.();
+      }
+    } catch (e) {
+      console.error('forceStopEverything error:', e);
+    }
+  }, [stopNativePlayer]);
 
   const backAction = useCallback(async () => {
     if (orientation && orientation.includes('LANDSCAPE')) {
@@ -243,8 +332,14 @@ const VideoPlayerScreen = (props) => {
       }
     }
     stopNativePlayer();
-    
+
+    // allow progress update to run even if it ran earlier
+    progressUpdated.current = false;
     await updateVideoProgress(false);
+
+    // 🔴 IMPORTANT: ensure everything is force-stopped (JS + native + audio focus)
+    try { forceStopEverything(); } catch (e) { console.error('backAction forceStopEverything error', e); }
+
     Orientation.lockToPortrait();
     if (cameFrom === 'Dashboard') {
       navigation.navigate('Home');
@@ -254,10 +349,10 @@ const VideoPlayerScreen = (props) => {
       navigation.goBack();
     }
     return true;
-  }, [navigation, cameFrom, updateVideoProgress, stopNativePlayer, orientation]);
+  }, [navigation, cameFrom, updateVideoProgress, stopNativePlayer, forceStopEverything, orientation]);
 
   const handleEnded = useCallback(async () => {
-   if (playerRef.current) {
+    if (playerRef.current) {
       try {
         if (typeof playerRef.current.pause === 'function') playerRef.current.pause();
         if (typeof playerRef.current.stop === 'function') playerRef.current.stop();
@@ -266,8 +361,14 @@ const VideoPlayerScreen = (props) => {
       }
     }
     stopNativePlayer();
-    
+
+    // reset guard so progress update will be sent on end
+    progressUpdated.current = false;
     await updateVideoProgress(true);
+
+    // 🔴 IMPORTANT: ensure everything is force-stopped on video end
+    try { forceStopEverything(); } catch (e) { console.error('handleEnded forceStopEverything error', e); }
+
     if (cameFrom === 'Dashboard') {
       navigation.navigate('Home');
     } else if (cameFrom) {
@@ -275,72 +376,85 @@ const VideoPlayerScreen = (props) => {
     } else {
       navigation.goBack();
     }
-  }, [navigation, cameFrom, updateVideoProgress, stopNativePlayer]);
+  }, [navigation, cameFrom, updateVideoProgress, stopNativePlayer, forceStopEverything]);
+
+  const showErrorAndBack = useCallback((message) => {
+    try {
+      Alert.alert('Video Error', message,
+        [{ text: 'OK', onPress: () => { setTimeout(() => { backAction(); }, 50); } }],
+        { cancelable: false }
+      );
+    } catch (e) {
+      console.error('showErrorAndBack error:', e);
+      // fallback to immediate backAction if alert fails
+      try { backAction(); } catch (err) { console.error('fallback backAction failed', err); }
+    }
+  }, [backAction]);
 
   const handleInitFailure = useCallback((err) => {
     setIsLoading(false);
     const errorMessage = err.errorDescription || "Video initialization failed. Please try again.";
     setError(errorMessage);
-    Alert.alert("Video Error", errorMessage,
-      [{ text: "OK", onPress: () => backAction() }],
-      { cancelable: false }
-    );
-  }, [backAction]);
+    showErrorAndBack(errorMessage);
+  }, [showErrorAndBack]);
 
   const handleLoadError = useCallback(({ errorDescription }) => {
     setIsLoading(false);
     const errorMessage = errorDescription || "Video failed to load. Please try again.";
     setError(errorMessage);
-    Alert.alert("Video Error", errorMessage,
-      [{ text: "OK", onPress: () => backAction() }],
-      { cancelable: false }
-    );
-  }, [backAction]);
+    showErrorAndBack(errorMessage);
+  }, [showErrorAndBack]);
 
   const handleError = useCallback(({ errorDescription }) => {
     setIsLoading(false);
     const errorMessage = errorDescription || "An unknown playback error occurred. Please try again.";
     setError(errorMessage);
-    Alert.alert("Video Error", errorMessage,
-      [{ text: "OK", onPress: () => backAction() }],
-      { cancelable: false }
-    );
-  }, [backAction]);
+    showErrorAndBack(errorMessage);
+  }, [showErrorAndBack]);
 
-  const handleInitializationSuccess = useCallback(() => {}, []);
+  const handleInitializationSuccess = useCallback(() => { }, []);
 
   const handleProgress = useCallback((progress) => {
     setCurrentTime(progress.currentTime);
   }, []);
 
   const handlePlayerStateChange = useCallback((state) => {
-    if (state.duration && state.duration > 0 && state.duration !== totalDuration) {
-      setTotalDuration(state.duration);
+    const newDuration = state && state.duration;
+    if (typeof newDuration === 'number' && newDuration > 0) {
+      const diff = Math.abs(newDuration - totalDuration);
+      if (diff > 0.5) { // update only when change is significant (>0.5s)
+        setTotalDuration(newDuration);
+      }
     }
   }, [totalDuration]);
 
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-    return () => backHandler.remove();
-  }, [backAction]);
+  useFocusEffect(
+    useCallback(() => {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+      return () => backHandler.remove();
+    }, [backAction])
+  );
 
   useEffect(() => {
     const handleAppStateChange = (nextState) => {
-      if (nextState === 'background' || nextState === 'inactive') {
-        (async () => {
-          if (playerRef.current) {
+      try {
+        // debounce frequent app state changes (avoid duplicate rapid updates)
+        const now = Date.now();
+        if (now - lastAppStateUpdate.current < 1000) return;
+        lastAppStateUpdate.current = now;
+
+        if (nextState === 'background' || nextState === 'inactive') {
+          (async () => {
             try {
-              if (typeof playerRef.current.pause === 'function') playerRef.current.pause();
+              try { forceStopEverything(); } catch (e) { console.error('AppState forceStopEverything error', e); }
+              await updateVideoProgress(false);
             } catch (e) {
-              console.error('AppState pause error:', e);
+              console.error('AppState: Error saving progress:', e);
             }
-          }
-          try {
-            await updateVideoProgress(false);
-          } catch (e) {
-            console.error('AppState: Error saving progress:', e);
-          }
-        })();
+          })();
+        }
+      } catch (e) {
+        console.error('AppState handler unexpected error:', e);
       }
     };
 
@@ -348,8 +462,8 @@ const VideoPlayerScreen = (props) => {
     return () => {
       subscription.remove();
     };
-  }, [updateVideoProgress, stopNativePlayer]);
-  
+  }, [updateVideoProgress, stopNativePlayer, forceStopEverything]);
+
 
   if (!otp || !playbackInfo) {
     return (
@@ -369,11 +483,11 @@ const VideoPlayerScreen = (props) => {
   const playerStyle = isLandscape ? styles.playerLandscape : [styles.player, { height: portraitHeight }];
 
   return (
-    <View style={styles.container}> 
+    <View style={styles.container}>
       <StatusBar hidden={isLandscape} barStyle='light-content' backgroundColor='black' />
       {error && !isLoading ? (
-        <View style={[styles.errorContainer, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter }]}> 
-          <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}> 
+        <View style={[styles.errorContainer, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
+          <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
             Error: {error}
           </Text>
         </View>
@@ -413,7 +527,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   playerLandscape: {
-    width: '88%', 
+    width: '100%',
     height: '100%',
     backgroundColor: '#000',
     alignSelf: 'center',

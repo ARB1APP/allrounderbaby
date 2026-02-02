@@ -12,7 +12,7 @@ import Dashboard from './src/Dashboard';
 import ChasCashbackforFeedback from './src/CashbackforFeedback';
 import ReferAndEarn from './src/ReferAndEarn';
 import Profile from './src/Profile';
-import VideoPlayerScreen from './src/VideoPlayerScreen'; 
+import VideoPlayerScreen from './src/VideoPlayerScreen';
 import ReferAndEarnConditions from './src/ReferAndEarnConditions';
 import ReferralHistory from './src/ReferralHistory';
 import MyOrders from './src/MyOrders';
@@ -169,7 +169,7 @@ export const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
                   return;
                 }
 
-               let origin = null;
+                let origin = null;
                 try {
                   if (navigationRef && typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
                     const current = navigationRef.getCurrentRoute && navigationRef.getCurrentRoute();
@@ -226,13 +226,13 @@ const App = () => {
   const styles = createAppStyles(currentThemeColors);
   const [activeFooter, setActiveFooter] = useState('Home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  
+
   const prevDrawerOpenRef = React.useRef(false);
 
   useEffect(() => {
     let isMounted = true;
     const checkAuthStatus = async () => {
-      try {    
+      try {
         const firstTime = await AsyncStorage.getItem('first_time_opened');
         const token = await AsyncStorage.getItem('token');
         const userId = await AsyncStorage.getItem('userId');
@@ -348,7 +348,7 @@ const App = () => {
     }
 
     try {
-        if (typeof navigationRef.resetRoot === 'function') {
+      if (typeof navigationRef.resetRoot === 'function') {
         const origResetRoot = navigationRef.resetRoot.bind(navigationRef);
         navigationRef.resetRoot = async (state) => {
           if (skipNavigationGuards.current) return origResetRoot(state);
@@ -390,11 +390,11 @@ const App = () => {
     }
   };
 
-  const clearLocalSessionAndNavigate = useCallback( () => {
+  const clearLocalSessionAndNavigate = useCallback(() => {
     try {
-       AsyncStorage.removeItem('token');
-       AsyncStorage.removeItem('userId');
-       AsyncStorage.removeItem('username');
+      AsyncStorage.removeItem('token');
+      AsyncStorage.removeItem('userId');
+      AsyncStorage.removeItem('username');
       isLoggedInRef.current = false;
 
       try {
@@ -402,14 +402,14 @@ const App = () => {
         if (navigationRef.isReady()) {
           if (typeof navigationRef.resetRoot === 'function') {
             try {
-               navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login' }] });
+              navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login' }] });
             } catch (e) {
-               navigationRef.dispatch(
+              navigationRef.dispatch(
                 CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] })
               );
             }
           } else {
-             navigationRef.dispatch(
+            navigationRef.dispatch(
               CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] })
             );
           }
@@ -424,7 +424,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-        const onBackPress = () => {
+    const onBackPress = () => {
       try {
         if (!navigationRef.isReady()) return false;
         const rootState = navigationRef.getRootState && navigationRef.getRootState();
@@ -471,16 +471,15 @@ const App = () => {
             text: "OK",
             onPress: async () => {
               try {
-                debugger;
                 const token = await AsyncStorage.getItem('token');
                 const userId = await AsyncStorage.getItem('userId');
                 const deviceKey = await AsyncStorage.getItem('deviceKey');
                 if (!userId) {
-                   clearLocalSessionAndNavigate();
+                  clearLocalSessionAndNavigate();
                   return;
                 }
                 if (!deviceKey) {
-                   clearLocalSessionAndNavigate();
+                  clearLocalSessionAndNavigate();
                   return;
                 }
                 const endpoint = `${url}Login/LogoutMobileUser?userid=${encodeURIComponent(userId)}&deviceKey=${encodeURIComponent(deviceKey)}`;
@@ -491,11 +490,11 @@ const App = () => {
                   const errorText = await response.text();
                   Alert.alert("Logout Warning", "Failed to log out from the server. Your local session has been cleared.");
                 }
-                 clearLocalSessionAndNavigate();
+                clearLocalSessionAndNavigate();
               } catch (error) {
                 console.error('Error during logout process:', error);
                 Alert.alert("Logout Error", "Failed to log out. Please check your network connection and try again.");
-                 clearLocalSessionAndNavigate();
+                clearLocalSessionAndNavigate();
               }
             }
           }
@@ -536,7 +535,7 @@ const App = () => {
               try {
                 if (isLoggedInRef.current && e && e.data && e.data.action && e.data.action.type) {
                   const t = e.data.action.type;
-                    if (t === 'GO_BACK' || t === 'POP') {
+                  if (t === 'GO_BACK' || t === 'POP') {
                     e.preventDefault();
                     try { exitApp(); } catch (err2) { BackHandler.exitApp(); }
                   }
@@ -575,10 +574,12 @@ const App = () => {
 
   const stylesGlobal = StyleSheet.create({
     footerWrap: { width: '100%', alignItems: 'center' },
-    footerInner: { width: '100%', flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 0, alignItems: 'center',
-    justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee' },
+    footerInner: {
+      width: '100%', flexDirection: 'row',
+      backgroundColor: '#fff',
+      borderRadius: 0, alignItems: 'center',
+      justifyContent: 'space-around', paddingHorizontal: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 4, borderTopWidth: 1, borderTopColor: '#eee'
+    },
     footerItem: { alignItems: 'center', justifyContent: 'center' },
     footerIcon: { tintColor: '#888' },
     footerLabel: { color: '#666', marginTop: 6 },
@@ -605,8 +606,8 @@ const App = () => {
     };
 
     return (
-      <View style={[stylesGlobal.footerWrap, { paddingBottom: bottomInset, backgroundColor: 'transparent' }]}> 
-        <View style={[stylesGlobal.footerInner, { height: footerHeightLocal }]}> 
+      <View style={[stylesGlobal.footerWrap, { paddingBottom: bottomInset, backgroundColor: 'transparent' }]}>
+        <View style={[stylesGlobal.footerInner, { height: footerHeightLocal }]}>
           <TouchableOpacity style={stylesGlobal.footerItem} onPress={() => navigateTo('Home')}>
             <Image source={require('./img/home.png')} style={[stylesGlobal.footerIcon, { width: iconSize, height: iconSize, tintColor: activeFooter === 'Home' ? currentThemeColors.primary : '#888' }]} />
             <Text style={[stylesGlobal.footerLabel, { fontSize: footerFontSizeLocal, color: activeFooter === 'Home' ? currentThemeColors.primary : '#666' }]}>Home</Text>
@@ -716,13 +717,13 @@ const App = () => {
                   const idx = typeof state.index === 'number' ? state.index : 0;
                   const route = state.routes && state.routes[idx];
                   if (!route) break;
-                    activeNames.push(route.name);
-                    if (route.params && route.params.hideFooter) hideFooterParam = true;
-                    state = route.state;
+                  activeNames.push(route.name);
+                  if (route.params && route.params.hideFooter) hideFooterParam = true;
+                  state = route.state;
                 }
-                  const isGuest = activeNames.some(n => guestFooterPages.includes(n));
-                  if (isGuest || hideFooterParam) return null;
-                  if (isDrawerOpen) return null;
+                const isGuest = activeNames.some(n => guestFooterPages.includes(n));
+                if (isGuest || hideFooterParam) return null;
+                if (isDrawerOpen) return null;
               }
             }
           } catch (e) {
