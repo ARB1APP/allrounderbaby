@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { StatusBar, useWindowDimensions } from 'react-native';
-import { StyleSheet, ScrollView, View, Image, Animated,Text, TouchableOpacity, Alert, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler, findNodeHandle } from 'react-native';
+import { StyleSheet, ScrollView, View, Image, Animated, Text, TouchableOpacity, Alert, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler, findNodeHandle } from 'react-native';
 import { CommonActions, useIsFocused } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -97,7 +97,6 @@ const LevelModal = ({ levelName, children, onClose, isDarkMode, scrollRef, isLan
         <Pressable
             style={[
                 styles.fullScreenPressable,
-                // In landscape open from top instead of center
                 isLandscape ? { justifyContent: 'flex-start', paddingTop: 0 } : null
             ]}
             onPress={onClose}
@@ -105,7 +104,6 @@ const LevelModal = ({ levelName, children, onClose, isDarkMode, scrollRef, isLan
             <Pressable
                 style={[
                     styles.modalLikeContentBox,
-                    // Use provided contentWidth for portrait so modal width == image width
                     isLandscape ? { width: '70%', marginTop: 8, maxHeight: '96%' } : { width: contentWidth, marginTop: 8, maxHeight: '96%' }
                 ]}
                 onPress={() => { }}
@@ -138,10 +136,9 @@ const CategoryButton = ({ image, title, onPress, isOpen, isComplete, imagenested
             {(() => {
                 if (modalMode) {
                     const baseImgHeight = (imagenestedStyle && imagenestedStyle.height) || styles.imagenested.height || 180;
-                    // Slightly increase visible height in modal (user requested a bit taller)
-                    const extraHeightFactor = 1.2; // ~12% taller
+                    const extraHeightFactor = 1.2;
                     const imgHeight = Math.round(baseImgHeight * extraHeightFactor);
-                    const scale = 1.0; // increased upscale so modal images appear larger
+                    const scale = 1.0;
                     const wrapperWidth = modalWidth || (imagenestedStyle && imagenestedStyle.width) || '100%';
                     if (typeof wrapperWidth === 'number') {
                         const imgWidth = Math.round(wrapperWidth * scale);
@@ -153,7 +150,6 @@ const CategoryButton = ({ image, title, onPress, isOpen, isComplete, imagenested
                             </View>
                         );
                     }
-                    // fallback when wrapperWidth isn't numeric
                     return <Image source={image} style={[{ width: '100%', height: imgHeight }]} resizeMode="cover" />;
                 }
                 return <Image source={image} style={[imagenestedStyle || styles.imagenested]} resizeMode="cover" />;
@@ -253,7 +249,6 @@ const Dashboard = ({ navigation }) => {
         return () => sub.remove();
     }, [isFocused, isModalVisible, openCategory, activeLevel]);
 
-    //redirect to Login if token missing
     useEffect(() => {
         const verifyAuth = async () => {
             try {
@@ -427,7 +422,6 @@ const Dashboard = ({ navigation }) => {
                         },
                         (err) => {
                             console.log('measureLayout error', err);
-                            // fallback: try scrolling to top if measurement fails
                             if (scrollRef && typeof scrollRef.scrollTo === 'function') {
                                 scrollRef.scrollTo({ y: 0, animated: true });
                             }
@@ -462,28 +456,51 @@ const Dashboard = ({ navigation }) => {
 
     const handleLastViewedPress = async () => {
         try {
-            debugger;
             const lastViewedJson = await AsyncStorage.getItem('lastViewed');
-            if (lastViewedJson) {
-                const lastViewed = JSON.parse(lastViewedJson);
-                const { category, step } = lastViewed;
+            if (!lastViewedJson) {
+                showToast("No last viewed topic found to continue from.");
+                return;
+            }
 
-                if (category && masterConfig[category]) {
-                    const level = getLevelForCategory(category);
-                    if (level) {
-                        setLastViewedRequest({ level, category, step });
-                    } else {
-                        showToast("Could not find the level for your last viewed topic.");
+            const lastViewed = JSON.parse(lastViewedJson);
+            let { category, step } = lastViewed || {};
+            console.log("Last viewed data:", lastViewed);
+            console.log("category:", category, "step:", step, "unlockedStepsThreshold:", unlockedStepsThreshold);
+            const stepNum = typeof step === 'number' ? step : (step ? Number(step) : NaN);
+
+            if (!Number.isNaN(stepNum) && (stepNum === 1001 || stepNum === 1002)) {
+                if (unlockedStepsThreshold && Number.isFinite(unlockedStepsThreshold) && unlockedStepsThreshold > 0) {
+                    const resolvedFromThreshold = getCategoryFromStep(unlockedStepsThreshold);
+                    if (resolvedFromThreshold && masterConfig[resolvedFromThreshold]) {
+                        const level = getLevelForCategory(resolvedFromThreshold);
+                        if (level) {
+                            setLastViewedRequest({ level, category: resolvedFromThreshold, step: unlockedStepsThreshold });
+                            return;
+                        }
                     }
+                }
+                handleIntroductionPress(stepNum === 1001 ? 1 : 2);
+                return;
+            }
+
+            let resolvedCategory = category;
+            if ((!resolvedCategory || !masterConfig[resolvedCategory]) && !Number.isNaN(stepNum)) {
+                resolvedCategory = getCategoryFromStep(stepNum);
+            }
+
+            if (resolvedCategory && masterConfig[resolvedCategory]) {
+                const level = getLevelForCategory(resolvedCategory);
+                if (level) {
+                    setLastViewedRequest({ level, category: resolvedCategory, step: stepNum });
                 } else {
-                    showToast("No last viewed topic found to continue from.");
+                    showToast("Could not find the level for your last viewed topic.");
                 }
             } else {
                 showToast("No last viewed topic found to continue from.");
             }
         } catch (error) {
             console.error("Failed to handle last viewed press:", error);
-            Alert.alert("Error", "Could not retrieve your last viewed topic.");
+            //  Alert.alert("Error", "Could not retrieve your last viewed topic.");
         }
     };
 
@@ -512,7 +529,11 @@ const Dashboard = ({ navigation }) => {
                 }
             } catch (error) {
                 console.error("Failed to load initial data:", error);
-                Alert.alert("Error", "Failed to load user data. Please try restarting the app.");
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show('Failed to load user data. Please try restarting the app.', ToastAndroid.LONG);
+                } else {
+                    Alert.alert('Failed to load user data. Please try restarting the app.');
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -520,7 +541,6 @@ const Dashboard = ({ navigation }) => {
 
         loadInitialData();
 
-        //already loaded data.
         const unsubscribe = navigation.addListener('focus', () => {
             if (!dataLoadedRef.current) {
                 loadInitialData();
@@ -560,7 +580,6 @@ const Dashboard = ({ navigation }) => {
     };
 
     const updateTopicCompletionTime = async (categoryKey, completionTime) => {
-        debugger;
         try {
             const newCompletionTimes = { ...topicCompletionTimes, [categoryKey]: completionTime };
             setTopicCompletionTimes(newCompletionTimes);
@@ -572,7 +591,6 @@ const Dashboard = ({ navigation }) => {
 
     const fetchUserProgress = async (userId, token) => {
         try {
-            debugger;
             const deviceKey = await AsyncStorage.getItem('deviceKey');
             const endpoint = `${url}User/User_Deshboard_Data?id=${userId}&DeviceKey=${deviceKey}`;
             const response = await fetch(endpoint, {
@@ -817,7 +835,11 @@ const Dashboard = ({ navigation }) => {
                 if (data && data.rows) { allVideos.rows.push(...data.rows); }
             } catch (error) {
                 console.error(`Error fetching videos from folder ${folderId}:`, error);
-                Alert.alert("API Error", `Could not load some videos. Please check your connection and try again. Details: ${error.message}`);
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show('Could not load some videos. Please check your connection and try again.', ToastAndroid.LONG);
+                } else {
+                    Alert.alert('Could not load some videos. Please check your connection and try again.');
+                }
             }
         }
         return allVideos;
@@ -884,7 +906,11 @@ const Dashboard = ({ navigation }) => {
             if (prereqConfig) {
                 const isPrereqDataLoaded = await ensureCategoryDataIsLoaded(config.prerequisiteCategory);
                 if (!isPrereqDataLoaded) {
-                    Alert.alert("Error", "Could not load prerequisite data. Please try again.");
+                    if (Platform.OS === 'android') {
+                        ToastAndroid.show('Could not load prerequisite data. Please try again.', ToastAndroid.LONG);
+                    } else {
+                        Alert.alert('Could not load prerequisite data. Please try again.');
+                    }
                     return false;
                 }
                 const allPrereqSteps = prereqConfig.finalGroupedData.map(g => `step${g.stepNumber}`);
@@ -933,7 +959,11 @@ const Dashboard = ({ navigation }) => {
                     }
                 } catch (error) {
                     console.error("Error checking time lock:", error);
-                    Alert.alert("Network Error", "Could not verify topic lock status. Please try again.");
+                    if (Platform.OS === 'android') {
+                        ToastAndroid.show('Could not verify topic lock status. Please try again.', ToastAndroid.LONG);
+                    } else {
+                        Alert.alert('Network Error', 'Could not verify topic lock status. Please try again.');
+                    }
                     return false;
                 }
             }
@@ -943,7 +973,7 @@ const Dashboard = ({ navigation }) => {
 
     const handleCategoryPress = async (categoryKey) => {
         if (!dataLoaded) {
-            Alert.alert("Please wait", "Loading progress data...");
+            showToast("Loading progress data...");
             return;
         }
 
@@ -979,7 +1009,7 @@ const Dashboard = ({ navigation }) => {
             setSelectedStepGroup({ ...group, category: openCategory });
             setIsModalVisible(true);
         } else {
-            Alert.alert('Error', `Video group for step ${stepNumber} not found.`);
+            // Alert.alert('Error', `Video group for step ${stepNumber} not found.`);
         }
     };
 
@@ -987,7 +1017,7 @@ const Dashboard = ({ navigation }) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
 
         if (!selectedStepGroup) {
-            Alert.alert('Error', 'No video selected. Please select a video first.');
+            //  Alert.alert('Error', 'No video selected. Please select a video first.');
             return;
         }
 
@@ -1029,7 +1059,7 @@ const Dashboard = ({ navigation }) => {
                             return;
                         }
                     } else if (!specificResult.isSuccess) {
-                        Alert.alert("Error", `Could not verify video watch count: ${specificResult.message}. Please try again.`);
+                        showToast('Please try again.');
                         return;
                     }
                 } else {
@@ -1054,94 +1084,71 @@ const Dashboard = ({ navigation }) => {
                 console.warn(`Could not fetch video duration for videoId: ${videoId}. Defaulting to 0.`);
             }
 
-            // const name = await AsyncStorage.getItem('Name') || 'N/A';
-            // const email = await AsyncStorage.getItem('userEmail') || 'N/A';
-            // const phone = await AsyncStorage.getItem('phoneNumber') || 'N/A';
-            // const sessionId = await AsyncStorage.getItem('sessionId');
-            // const watermarkText = `Name: ${name}, Email: ${email}, Phone: ${phone}, Session: ${sessionId}`;
-            // const annotationObject = [{
-            //     type: 'rtext',
-            //     text: watermarkText,
-            //     alpha: '0.60',
-            //     color: '0xFFFFFF',
-            //     size: '16',
-            //     interval: '5000',
-            // }];
-            // const requestBody = {
-            //     UserId: parseInt(userId, 10),
-            //     VideoId: videoId,
-            //     annotate: JSON.stringify(annotationObject)
-            // };
+            const nameRaw = await AsyncStorage.getItem('Name');
+            const emailRaw = await AsyncStorage.getItem('userEmail');
+            const phoneRaw = await AsyncStorage.getItem('phoneNumber');
+            const sessionIdRaw = await AsyncStorage.getItem('sessionId');
 
-             const nameRaw = await AsyncStorage.getItem('Name');
-              const emailRaw = await AsyncStorage.getItem('userEmail');
-              const phoneRaw = await AsyncStorage.getItem('phoneNumber');
-              const sessionIdRaw = await AsyncStorage.getItem('sessionId');
-            
-            // Ensure all values are string
             const name = typeof nameRaw === 'string' ? nameRaw : JSON.stringify(nameRaw);
             const email = typeof emailRaw === 'string' ? emailRaw : JSON.stringify(emailRaw);
             const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
             const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
-            
-            console.log("Watermark Details:", { name, email, phone, sessionId });
-            
-            // Define safe positions
-            const startX = 20;   // all watermarks start 5 units from left
-            const startY = 5;  // top padding
-            const spacing = 10; // vertical spacing between watermarks
-            const maxY = 50;    // maximum y to avoid cutting at bottom
-            
-                        const annotationObject = [
-                            {
-                                type: 'rtext',
-                                text: name,
-                                alpha: 0.5,
-                                color: '0xFFFFFF',
-                                size: 14,
-                                interval: 5000,
-                                skip: 2000,
-                                x: startX,
-                                y: startY
-                            },
-                            {
-                                type: 'rtext',
-                                text: email,
-                                alpha: 0.4,
-                                color: '0x00FFFF',
-                                interval: 10000,
-                                skip: 1000,
-                                size: 14,
-                                x: startX,
-                                y: Math.min(startY + spacing, maxY)
-                            },
-                            {
-                                type: 'rtext',
-                                text: phone,
-                                alpha: 0.4,
-                                color: '0x00FF00',
-                                interval: 10000,
-                                skip: 1000,
-                                size: 14,
-                                x: startX,
-                                y: Math.min(startY + 1 * spacing, maxY)
-                            },
-                            {
-                                type: 'rtext',
-                                text: sessionId,
-                                alpha: 0.4,
-                                color: '0xFF00FF',
-                                interval: 10000,
-                                skip: 500,
-                                size: 14,
-                                x: startX,
-                                y: Math.min(startY + 2 * spacing, maxY)
-                            }
-                        ];
-            
-            console.log("Final Annotation Object:", annotationObject);
 
-            // Build the request body expected by the VdoCipher endpoint
+            console.log("Watermark Details:", { name, email, phone, sessionId });
+
+            const startX = 20;
+            const startY = 5;
+            const spacing = 10;
+            const maxY = 50;
+
+            const annotationObject = [
+                {
+                    type: 'rtext',
+                    text: name,
+                    alpha: 0.5,
+                    color: '0xFFFFFF',
+                    size: 14,
+                    interval: 5000,
+                    skip: 2000,
+                    x: startX,
+                    y: startY
+                },
+                {
+                    type: 'rtext',
+                    text: email,
+                    alpha: 0.4,
+                    color: '0x00FFFF',
+                    interval: 10000,
+                    skip: 1000,
+                    size: 14,
+                    x: startX,
+                    y: Math.min(startY + spacing, maxY)
+                },
+                {
+                    type: 'rtext',
+                    text: phone,
+                    alpha: 0.4,
+                    color: '0x00FF00',
+                    interval: 10000,
+                    skip: 1000,
+                    size: 14,
+                    x: startX,
+                    y: Math.min(startY + 1 * spacing, maxY)
+                },
+                {
+                    type: 'rtext',
+                    text: sessionId,
+                    alpha: 0.4,
+                    color: '0xFF00FF',
+                    interval: 10000,
+                    skip: 500,
+                    size: 14,
+                    x: startX,
+                    y: Math.min(startY + 2 * spacing, maxY)
+                }
+            ];
+
+
             const requestBody = {
                 UserId: userId ? parseInt(userId, 10) : null,
                 VideoId: videoId,
@@ -1249,7 +1256,7 @@ const Dashboard = ({ navigation }) => {
             }
             return await response.json();
         } catch (error) {
-            Alert.alert("API Error", `An unexpected error occurred: ${error.message}`);
+            //Alert.alert("API Error", `An unexpected error occurred: ${error.message}`);
             return null;
         } finally {
             setIsVideoLoading(false);
@@ -1431,16 +1438,12 @@ const Dashboard = ({ navigation }) => {
             if (!config) return null;
             const allSteps = config.finalGroupedData?.map(g => `step${g.stepNumber}`) || [];
             const isComplete = allSteps.length > 0 && allSteps.every(stepKey => completedSteps[stepKey]);
-            // Compute modal inner available width (account for ScrollView content padding)
-            const scrollPadding = 5; // modalScrollViewContent.paddingHorizontal
-            const innerPadding = scrollPadding * 2; // left + right
+            const scrollPadding = 5;
+            const innerPadding = scrollPadding * 2;
             const modalImageFullWidth = Math.max(240, contentWidth - innerPadding);
-            console.log('Dashboard.renderLevelModal', { contentWidth, innerPadding, modalImageFullWidth, isLandscape });
             const modalImagenestedStyle = isLandscape
                 ? imagenestedStyle
                 : { ...(imagenestedStyle || {}), width: modalImageFullWidth, height: Math.max(150, Math.round(modalImageFullWidth * 0.65)), alignSelf: 'center' };
-
-            // For the first item (Trust) use the full inner modal width (same as modalImageFullWidth)
             const modalWidthForItem = !isLandscape && index === 0 ? modalImageFullWidth : modalImageFullWidth;
 
             return (
@@ -1451,7 +1454,6 @@ const Dashboard = ({ navigation }) => {
             );
         })}</LevelModal>
     }
-    // Scroll to top only when level changes, not on tab/category change
     useEffect(() => {
         if (lastViewedRequest) return;
         if (!levelModalScrollRef.current) return;
@@ -1471,7 +1473,6 @@ const Dashboard = ({ navigation }) => {
 
     const closeLanguageModal = () => setIsModalVisible(false);
 
-    //categories (keys) in a level are fully completed
     const isLevelComplete = (keys) => {
         if (!keys || !keys.length) return false;
         const allSteps = keys.flatMap(key => masterConfig[key]?.finalGroupedData.map(g => `step${g.stepNumber}`) || []);
@@ -1484,10 +1485,8 @@ const Dashboard = ({ navigation }) => {
     }
 
     const isLandscape = windowWidth > windowHeight;
-    // Use a single portrait content width so all images match in portrait.
     const portraitContentWidth = Math.max(280, Math.round(windowWidth * 0.9));
 
-    // Keep portrait sizing unchanged except use portraitContentWidth for consistent widths.
     const imageStyle = isLandscape
         ? { width: Math.max(120, Math.round(windowWidth * 0.8)), height: Math.max(480, Math.round(windowHeight * 0.72)), resizeMode: 'center', borderRadius: 5 }
         : { width: portraitContentWidth, height: 250, resizeMode: 'center', borderRadius: 5, alignSelf: 'center' };
