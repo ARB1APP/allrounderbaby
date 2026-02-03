@@ -171,6 +171,7 @@ const Dashboard = ({ navigation }) => {
         }
     }, [isFocused]);
     const stepRefs = useRef({});
+    const categoryRefs = useRef({});
     const [token, setToken] = useState(null);
     const [userId, setUserID] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -999,6 +1000,41 @@ const Dashboard = ({ navigation }) => {
             setIsVideoLoading(false);
             setOpenCategory(categoryKey);
         }
+
+        // AUTO SCROLL: wait for UI to render expanded content then measure and scroll
+        setTimeout(() => {
+            try {
+                const categoryRef = categoryRefs.current[categoryKey];
+                const scrollRef = levelModalScrollRef.current;
+
+                if (categoryRef && scrollRef) {
+                    const scrollNode = findNodeHandle(scrollRef);
+                    if (typeof categoryRef.measureLayout === 'function') {
+                        categoryRef.measureLayout(
+                            scrollNode,
+                            (x, y) => {
+                                try {
+                                    scrollRef.scrollTo({ y: Math.max(y - 10, 0), animated: true });
+                                } catch (e) {
+                                    console.warn('Failed to scroll to category:', e);
+                                }
+                            },
+                            (err) => console.log('Scroll measurement failed', err)
+                        );
+                    } else if (categoryRef.measure) {
+                        categoryRef.measure((x, y, width, height, pageX, pageY) => {
+                            try {
+                                scrollRef.scrollTo({ y: Math.max(pageY - 10, 0), animated: true });
+                            } catch (e) {
+                                console.warn('Failed to scroll to category (measure):', e);
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Auto-scroll error:', e);
+            }
+        }, 300);
     };
 
     const handleDropdownItemClick = (stepNumber) => {
@@ -1447,10 +1483,10 @@ const Dashboard = ({ navigation }) => {
             const modalWidthForItem = !isLandscape && index === 0 ? modalImageFullWidth : modalImageFullWidth;
 
             return (
-                <React.Fragment key={key}>
+                <View key={key} ref={(el) => (categoryRefs.current[key] = el)} collapsable={false}>
                     <CategoryButton image={config.image} title={config.name} onPress={() => handleCategoryPress(key)} isOpen={openCategory === key} isComplete={isComplete} imagenestedStyle={modalImagenestedStyle} modalMode={!isLandscape} modalWidth={modalWidthForItem} />
                     {openCategory === key && <VideoStepList groups={config.finalGroupedData} completedSteps={completedSteps} onStepPress={handleDropdownItemClick} isDarkMode={isDarkMode} stepRefs={stepRefs} />}
-                </React.Fragment>
+                </View>
             );
         })}</LevelModal>
     }
