@@ -530,11 +530,7 @@ const Dashboard = ({ navigation }) => {
                 }
             } catch (error) {
                 console.error("Failed to load initial data:", error);
-                if (Platform.OS === 'android') {
-                    ToastAndroid.show('Failed to load user data. Please try restarting the app.', ToastAndroid.LONG);
-                } else {
-                    Alert.alert('Failed to load user data. Please try restarting the app.');
-                }
+                Alert.alert("Error", "Failed to load user data. Please try restarting the app.");
             } finally {
                 setIsLoading(false);
             }
@@ -836,11 +832,8 @@ const Dashboard = ({ navigation }) => {
                 if (data && data.rows) { allVideos.rows.push(...data.rows); }
             } catch (error) {
                 console.error(`Error fetching videos from folder ${folderId}:`, error);
-                if (Platform.OS === 'android') {
-                    ToastAndroid.show('Could not load some videos. Please check your connection and try again.', ToastAndroid.LONG);
-                } else {
-                    Alert.alert('Could not load some videos. Please check your connection and try again.');
-                }
+                Alert.alert("API Error", `Could not load some videos. Please check your connection and try again. Details: ${error.message}`);
+
             }
         }
         return allVideos;
@@ -907,11 +900,7 @@ const Dashboard = ({ navigation }) => {
             if (prereqConfig) {
                 const isPrereqDataLoaded = await ensureCategoryDataIsLoaded(config.prerequisiteCategory);
                 if (!isPrereqDataLoaded) {
-                    if (Platform.OS === 'android') {
-                        ToastAndroid.show('Could not load prerequisite data. Please try again.', ToastAndroid.LONG);
-                    } else {
-                        Alert.alert('Could not load prerequisite data. Please try again.');
-                    }
+                    Alert.alert("Error", "Could not load prerequisite data. Please try again.");
                     return false;
                 }
                 const allPrereqSteps = prereqConfig.finalGroupedData.map(g => `step${g.stepNumber}`);
@@ -924,6 +913,7 @@ const Dashboard = ({ navigation }) => {
                 const lastStepNumber = lastStepOfPrereq.stepNumber;
                 const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}&DeviceKey=${deviceKey}`;
                 try {
+                    debugger;
                     const response = await fetch(DETAILS_ENDPOINT, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
 
                     if (response.ok) {
@@ -960,11 +950,7 @@ const Dashboard = ({ navigation }) => {
                     }
                 } catch (error) {
                     console.error("Error checking time lock:", error);
-                    if (Platform.OS === 'android') {
-                        ToastAndroid.show('Could not verify topic lock status. Please try again.', ToastAndroid.LONG);
-                    } else {
-                        Alert.alert('Network Error', 'Could not verify topic lock status. Please try again.');
-                    }
+                    Alert.alert("Network Error", "Could not verify topic lock status. Please try again.");
                     return false;
                 }
             }
@@ -973,6 +959,7 @@ const Dashboard = ({ navigation }) => {
     };
 
     const handleCategoryPress = async (categoryKey) => {
+        debugger;
         if (!dataLoaded) {
             showToast("Loading progress data...");
             return;
@@ -1001,7 +988,6 @@ const Dashboard = ({ navigation }) => {
             setOpenCategory(categoryKey);
         }
 
-        // AUTO SCROLL: wait for UI to render expanded content then measure and scroll
         setTimeout(() => {
             try {
                 const categoryRef = categoryRefs.current[categoryKey];
