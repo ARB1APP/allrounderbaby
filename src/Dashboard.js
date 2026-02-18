@@ -1065,7 +1065,7 @@ const Dashboard = ({ navigation }) => {
                 }
 
                 if (totalWatchCount >= 4) {
-                    Alert.alert("Limit Reached", ' You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.');
+                    Alert.alert(' You’ve reached the maximum limit for now. If any new update comes, we’ll notify you instantly.');
                     return;
                 }
                 const specificVideoEndpoint = `${url}User/User_Watch_Data?id=${userId}&video_id=${videoId}&DeviceKey=${deviceKey}`;
@@ -1538,13 +1538,19 @@ const Dashboard = ({ navigation }) => {
                             </View>
                         </Animated.View>
                     </TouchableOpacity>
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('foundation')}>
+                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('foundation')} >
                         <Animated.View style={[styles.button, { transform: [{ scale: scale1 }], marginTop: 10 }]}>
                             <Image source={require('../img/foundationlevel.png')} style={imageStyle} resizeMode="cover" />
-                            <View style={[styles.textOverlayTwo, isLevelComplete(foundationKeys) ? styles.completedTextOverlayTwo : null]}>
-                                <Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity: 0 }]} />
-                                <Text style={styles.text}>Foundation Level</Text>
-                                <Animated.Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity }]} resizeMode="cover" />
+                            <View
+                                style={[
+                                    styles.textOverlayTwo,
+                                    isLevelComplete(foundationKeys) ? styles.completedTextOverlayTwo : null,
+                                    { justifyContent: 'center' }
+                                ]}
+                            >
+                                {/* <Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity: 0 }]} /> */}
+                                <Text style={[styles.text, { textAlign: 'center' }]}>Foundation Level</Text>
+                                {/* <Animated.Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity }]} resizeMode="cover" /> */}
                             </View>
                         </Animated.View>
                     </TouchableOpacity>

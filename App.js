@@ -113,7 +113,7 @@ export const drawerItems = [
   { key: "privacy", label: "Privacy Policy", navigateTo: "Privacy Policy", icon: require('./img/tm.png'), iconSize: { width: 23, height: 23 } },
   { key: "rate", label: "Update App / Rate us", navigateTo: "Rate us / Update App", icon: require('./img/upadate.png'), iconSize: { width: 20, height: 20 } },
   { key: "version", label: "Version info", navigateTo: "App Version", icon: require('./img/info.png'), iconSize: { width: 24, height: 24 } },
-  { key: "feedback", label: "Feedback", navigateTo: "Get Help", icon: require('./img/feedback.png'), iconSize: { width: 26, height: 26 } },
+  /* { key: "feedback", label: "Feedback", navigateTo: "Get Help", icon: require('./img/feedback.png'), iconSize: { width: 26, height: 26 } }, */
   { key: "contact", label: "Contact us", navigateTo: "Get Help", icon: require('./img/call.png'), iconSize: { width: 22, height: 22 } },
   { key: "logout", label: "Logout", navigateTo: "Login", icon: require('./img/logout.png'), iconSize: { width: 22, height: 22 } },
 ];
@@ -687,7 +687,6 @@ const App = () => {
 
                 const drawerOpen = detectDrawerOpen(rootState);
                 if (prevDrawerOpenRef.current !== !!drawerOpen) {
-                  console.log('[App] drawerOpen changed ->', !!drawerOpen);
                   prevDrawerOpenRef.current = !!drawerOpen;
                 }
                 setIsDrawerOpen(!!drawerOpen);

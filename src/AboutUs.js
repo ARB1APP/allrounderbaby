@@ -1,9 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
   View,
-
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+  Linking,
   BackHandler,
   Image,
   Animated,
@@ -14,6 +19,9 @@ import {
 } from 'react-native';
 import ScreenScroll from './components/ScreenScroll';
 import LinearGradient from 'react-native-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import { BASE_URL } from './config/api';
 
 const lightThemeColors = {
   screenBackground: '#F4F6F8',
@@ -67,7 +75,7 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
     lineHeight: 22,
     color: theme.textSecondary,
     marginBottom: 20,
-    textAlign: 'left',
+    textAlign: 'justify',
   },
   sectionHeader: {
     marginHorizontal: 20,
@@ -75,6 +83,7 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
     marginBottom: 10,
     fontSize: 24,
     fontWeight: '700',
+    textAlign: 'justify',
   },
   listItem: {
     marginHorizontal: 20,
@@ -113,8 +122,8 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
   logo: {
     marginVertical: 10,
     width: '100%',
-    height: 200,
-    resizeMode: 'cover',
+    height: 180,
+    resizeMode: 'contain',
     borderRadius: 14,
   },
   sectionlogo: {
@@ -148,7 +157,7 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
   },
   sectionHeaderFlex: {
     marginHorizontal: 20,
-    flexDirection: 'row'
+    flexDirection: 'row',
   },
   sectionBg1: {
     marginTop: 10,
@@ -254,6 +263,73 @@ const createCashbackConditionsStyles = (theme) => StyleSheet.create({
     marginTop: 6,
     marginBottom: 6,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  modalContainer: { width: '80%', backgroundColor: '#fff', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20, borderRadius: 10, alignItems: 'center' },
+  modalHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 0,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'rgba(20, 52, 164, 1)',
+    alignSelf: 'flex-start',
+    paddingBottom: 6,
+    // borderBottomWidth: 3,
+    // borderBottomColor: '#0b4bd6',
+    marginBottom: 6,
+  },
+  modalClose: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#777',
+    position: 'relative',
+    bottom: 5,
+  },
+  modalBodyText: {
+    color: '#333',
+    fontSize: 16,
+    marginBottom: 20, textAlign: 'center'
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 0,
+    width: 100,
+    marginHorizontal: 8,
+    backgroundColor: '#1434a4',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  borderLine: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    width: "100%",
+    marginBottom: 15,
+  },
 });
 
 const AboutUs = ({ navigation, route }) => {
@@ -262,6 +338,12 @@ const AboutUs = ({ navigation, route }) => {
   const styles = createCashbackConditionsStyles(theme);
   const isDarkMode = useColorScheme() === 'dark';
   const pulseAnim = useRef(new Animated.Value(0)).current;
+  const REFER_EARN_FOLDER_ID = '9ebe21e5639c440c930ba642a07d0a0b';
+
+  const [isAboutModalVisible, setIsAboutModalVisible] = useState(false);
+  const [referEarnVideos, setReferEarnVideos] = useState({});
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const [selectedVideoGroup, setSelectedVideoGroup] = useState(null);
   useEffect(() => {
     const backAction = () => {
       if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
@@ -297,6 +379,158 @@ const AboutUs = ({ navigation, route }) => {
     return () => anim.stop();
   }, [pulseAnim]);
 
+  const fetchReferEarnVideos = async () => {
+    const netInfoState = await NetInfo.fetch();
+    if (!netInfoState.isInternetReachable) {
+      Alert.alert('No Internet', 'Please check your internet connection.');
+      return null;
+    }
+    const storedToken = await AsyncStorage.getItem('token');
+    if (!storedToken) {
+      Alert.alert('Login Required', 'Please log in to play this video.');
+      return null;
+    }
+    setIsVideoLoading(true);
+    try {
+      const DETAILS_ENDPOINT = `${BASE_URL}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${REFER_EARN_FOLDER_ID}`;
+      const response = await fetch(DETAILS_ENDPOINT, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${storedToken}`, Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        Alert.alert('Error', 'Failed to load videos.');
+        return null;
+      }
+      const json = await response.json();
+      setReferEarnVideos(json);
+      return json;
+    } catch (err) {
+      Alert.alert('Error', 'Unable to fetch videos.');
+      return null;
+    } finally {
+      setIsVideoLoading(false);
+    }
+  };
+
+  const playableReferEarnVideos = useMemo(() => {
+    const videos = [];
+    let englishItem = null;
+    let hindiItem = null;
+    referEarnVideos?.rows?.forEach(item => {
+      if (item.title && item.title.toLowerCase().includes('refer and earn')) {
+        if (item.title.toLowerCase().includes('english')) {
+          englishItem = item;
+        } else if (item.title.toLowerCase().includes('hindi')) {
+          hindiItem = item;
+        }
+      }
+    });
+    if (englishItem) {
+      videos.push({ id: englishItem.id, title: 'English', language: 'english', poster: englishItem.poster, length: englishItem.length });
+    }
+    if (hindiItem) {
+      videos.push({ id: hindiItem.id, title: 'Hindi', language: 'hindi', poster: hindiItem.poster, length: hindiItem.length });
+    }
+    return videos;
+  }, [referEarnVideos]);
+
+  const loadAndOpenModal = async () => {
+    const data = await fetchReferEarnVideos();
+    if (data) {
+      if (playableReferEarnVideos.length > 0) {
+        const hindiVideo = playableReferEarnVideos.find(v => v.language === 'hindi');
+        const englishVideo = playableReferEarnVideos.find(v => v.language === 'english');
+        const videoGroup = { hindiVideo: hindiVideo ? { id: hindiVideo.id, poster: hindiVideo.poster } : null, englishVideo: englishVideo ? { id: englishVideo.id, poster: englishVideo.poster } : null, stepNumber: 'refer-and-earn' };
+        setSelectedVideoGroup(videoGroup);
+        setIsAboutModalVisible(true);
+      } else {
+        Alert.alert('Videos Not Available', 'Refer & Earn videos could not be loaded.');
+      }
+    }
+  };
+
+  const vdoCipher_api = async (videoId, tokenToUse) => {
+    const netInfoState = await NetInfo.fetch();
+    if (!netInfoState.isInternetReachable) {
+      return { error: true, message: 'No internet' };
+    }
+    setIsVideoLoading(true);
+    if (!videoId) return { error: true, message: 'Missing videoId' };
+    try {
+      const DETAILS_ENDPOINT = `${BASE_URL}Vdocipher/GetVDOCipher_VideosDetails?videoId=${videoId}`;
+      const response = await fetch(DETAILS_ENDPOINT, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${tokenToUse}`, Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        let errorData = {};
+        try { errorData = await response.json(); } catch (e) { }
+        return { error: true, message: errorData.message || 'Failed to get video details' };
+      }
+      const videoDetails = await response.json();
+      return videoDetails;
+    } catch (err) {
+      return { error: true, message: err.message };
+    }
+  };
+
+  const handleVideoPlayback = async (videoId, language, title, poster) => {
+    const netInfoState = await NetInfo.fetch();
+    if (!netInfoState.isInternetReachable) {
+      Alert.alert('No Internet Connection', 'Please check your internet connection and try again.');
+      return;
+    }
+    setIsVideoLoading(true);
+    const token = await AsyncStorage.getItem('token');
+    const userId = await AsyncStorage.getItem('userId');
+    if (!userId) {
+      Alert.alert('Authentication Error', 'User ID not available for watermark. Please log in again.');
+      setIsVideoLoading(false);
+      return;
+    }
+    const nameRaw = await AsyncStorage.getItem('Name');
+    const emailRaw = await AsyncStorage.getItem('userEmail');
+    const phoneRaw = await AsyncStorage.getItem('phoneNumber');
+    const sessionIdRaw = await AsyncStorage.getItem('sessionId');
+    const name = typeof nameRaw === 'string' ? nameRaw : JSON.stringify(nameRaw);
+    const email = typeof emailRaw === 'string' ? emailRaw : JSON.stringify(emailRaw);
+    const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
+    const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
+    const annotationObject = [
+      { type: 'rtext', text: name, alpha: 0.5, color: '0xFFFFFF', size: 14, interval: 5000, skip: 2000, x: 20, y: 5 },
+      { type: 'rtext', text: email, alpha: 0.4, color: '0x00FFFF', interval: 10000, skip: 1000, size: 14, x: 20, y: 15 },
+      { type: 'rtext', text: phone, alpha: 0.4, color: '0x00FF00', interval: 10000, skip: 1000, size: 14, x: 20, y: 25 },
+      { type: 'rtext', text: sessionId, alpha: 0.4, color: '0xFF00FF', interval: 10000, skip: 500, size: 14, x: 20, y: 35 },
+    ];
+    const requestBody = { UserId: parseInt(userId, 10), VideoId: videoId, annotate: JSON.stringify(annotationObject) };
+    try {
+      const detailsData = await vdoCipher_api(videoId, token);
+      if (detailsData && !detailsData.error) {
+        const response = await fetch(`${BASE_URL}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
+          method: 'POST',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(requestBody),
+        });
+        const text = await response.text();
+        const parsed = text ? JSON.parse(text) : null;
+        if (!response.ok) {
+          Alert.alert('Error', (parsed && (parsed.message || parsed.error)) || text || `HTTP ${response.status}`);
+          setIsVideoLoading(false);
+        } else {
+          const data = parsed || JSON.parse(text);
+          navigation.navigate('VideoPlayerScreen', { id: videoId, otp: data.otp, playbackInfo: data.playbackInfo, language, title, poster, cameFrom: 'About Us' });
+          setIsVideoLoading(false);
+        }
+      } else {
+        Alert.alert('Error', detailsData?.message || 'Failed to fetch video details');
+        setIsVideoLoading(false);
+      }
+    } catch (err) {
+      Alert.alert('Network Error', `An unexpected error occurred: ${err?.message || err}`);
+      setIsVideoLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
@@ -310,7 +544,7 @@ const AboutUs = ({ navigation, route }) => {
           <Text style={styles.abouts}>About <Text style={styles.aboutsSpan}>Us</Text> </Text>
         </LinearGradient>
 
-        <View style={styles.sectionlogo}>
+        <TouchableOpacity onPress={loadAndOpenModal} activeOpacity={0.9} style={styles.sectionlogo}>
           <Image
             source={require('../img/aboutusimg.png')}
             style={styles.logo}
@@ -336,7 +570,54 @@ const AboutUs = ({ navigation, route }) => {
               <Text style={styles.playButtonText}>▶</Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
+
+        {/* Inline modal that matches the Refer & Earn language selector design */}
+        <Modal visible={isAboutModalVisible} transparent animationType="fade" onRequestClose={() => setIsAboutModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Language</Text>
+                <Pressable onPress={() => setIsAboutModalVisible(false)}>
+                  <Text style={styles.modalClose}>✕</Text>
+                </Pressable>
+              </View>
+              <View style={styles.borderLine} />
+              <Text style={styles.modalBodyText}>In which language would you like to watch this video?</Text>
+              {isVideoLoading && <ActivityIndicator size="small" color="#0b4bd6" style={{ marginBottom: 10 }} />}
+              <View style={styles.modalButtonsRow}>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={async () => {
+                    setIsAboutModalVisible(false);
+                    const youtubeHindi = 'https://www.youtube.com/watch?v=2puDfTtzl00';
+                    try {
+                      await Linking.openURL(youtubeHindi);
+                    } catch (err) {
+                      Alert.alert('Unable to open', 'Could not open YouTube link.');
+                    }
+                  }}
+                >
+                  <Text style={styles.modalButtonText}>Hindi</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={async () => {
+                    setIsAboutModalVisible(false);
+                    const youtubeEnglish = 'https://www.youtube.com/watch?v=TLJ5kiQJTGU';
+                    try {
+                      await Linking.openURL(youtubeEnglish);
+                    } catch (err) {
+                      Alert.alert('Unable to open', 'Could not open YouTube link.');
+                    }
+                  }}
+                >
+                  <Text style={styles.modalButtonText}>English</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
         <View style={[
           styles.sectionContainer,
           { backgroundColor: isDarkMode ? '#282c34' : '#ffffff' },
@@ -568,15 +849,27 @@ const AboutUs = ({ navigation, route }) => {
           <Text style={[
             styles.sectionHeader,
             { color: isDarkMode ? '#fff' : '#1434a4' }
-          ]}>Contact Us</Text>
-          <Text style={[styles.introParagraph, { marginBottom: 0 }]}>At <Text style={{ fontWeight: 'bold' }}>AllrounderBaby.com, </Text>we are committed to providing <Text style={{ fontWeight: 'bold' }}>reliable support for parents. </Text>  For any questions, inquiries, or assistance, our team is available to help.</Text>
-          <Text style={[styles.introParagraph, { marginTop: 5, marginBottom: 0, }]}>
-            <Text style={{ fontWeight: 'bold' }}>📩 Email:  </Text><Text style={styles.emailLink}>support@allrounderbaby.com</Text>
+          ]}>About the Creator</Text>
+          <View style={styles.footerContainer}>
+            <View style={styles.footerImageWrapper}>
+              <Image
+                source={require('../img/newimg.jpeg')}
+                style={styles.footerImage}
+                accessibilityLabel="Founder and CEO"
+              />
+            </View>
+          </View>
+          <Text style={[styles.introParagraph, { textAlign: 'center', fontSize: 12, lineHeight: 15, marginBottom: 5, fontStyle: 'italic' }]}>Courtesy: Shubha Nayak with the late Dr. A.P.J. Abdul Kalam</Text>
+          <Text style={[styles.introParagraph, { textAlign: 'center', fontSize: 12, lineHeight: 15, fontStyle: 'italic' }]}>(President of India, 2002–2007), Chennai (2013) (Personal Archive)</Text>
+          <Text style={[styles.introParagraph, { marginBottom: 0 }]}><Text style={{ fontWeight: 'bold' }}>Shubha Nayak </Text>is the Founder and CEO of <Text style={{ fontWeight: 'bold' }}>Sarvashine Allrounder Baby Solution Pvt. Ltd., </Text>the company behind AllrounderBaby.com. An alumna of <Text style={{ fontWeight: 'bold' }}>NIT </Text>
+            (National Institute of Technology -Raipur, India) and <Text style={{ fontWeight: 'bold' }}>BITS Pilani </Text>(Birla Institute of Technolohy & Sciences, India) with a background in <Text style={{ fontWeight: 'bold' }}>Biotechnology, </Text> Shubha began her career at Sankara Nethralaya’s Vision Research Foundation, where she had the honor of meeting
+            <Text style={{ fontWeight: 'bold' }}>Dr. A.P.J. Abdul Kalam — </Text>a moment that inspired her lifelong commitment to <Text style={{ fontWeight: 'bold' }}>research and impact. </Text>After working in the healthcare domain at <Text style={{ fontWeight: 'bold' }}>IBM India Pvt. Ltd., </Text>Shubha’s journey into
+            <Text style={{ fontWeight: 'bold' }}> parenthood </Text>led her to deep research on<Text style={{ fontWeight: 'bold' }}>  early childhood development </Text>
+            and the <Text style={{ fontWeight: 'bold' }}>9 types of intelligence </Text>in children. Her scientific approach to parenting laid the foundation for <Text style={{ fontWeight: 'bold' }}>AllrounderBaby.com — </Text>
+            a practical, research-backed program designed to help parents unlock their child’s <Text style={{ fontWeight: 'bold' }}>a practical, research-backed program designed to help parents unlock their child’s </Text>
           </Text>
-          <Text style={[styles.introParagraph, { marginVertical: 5, }]}>We will respond <Text style={{ fontWeight: 'bold' }}>as promptly as possible.</Text></Text>
-
         </LinearGradient>
-        <LinearGradient
+        {/* <LinearGradient
           colors={['#FFFDE5', '#FFFFFF']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
@@ -618,7 +911,7 @@ const AboutUs = ({ navigation, route }) => {
             <Text style={styles.footerCopyright}>© 2025 Sarvashine Allrounder Baby Solutions Pvt. Ltd. All rights reserved.</Text>
           </View>
 
-        </LinearGradient>
+        </LinearGradient> */}
       </ScreenScroll>
     </View>
   );

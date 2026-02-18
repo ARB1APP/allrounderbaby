@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Text,
   View,
-  
+
   TouchableOpacity,
   Image,
   Clipboard,
@@ -105,17 +105,17 @@ const ReferAndEarn = ({ navigation }) => {
   const styles = useMemo(() => createReferAndEarnStyles(theme, windowWidth, windowHeight), [theme, windowWidth, windowHeight]);
   const isDarkMode = useColorScheme() === 'dark';
 
-const isLandscape = windowWidth > windowHeight;
+  const isLandscape = windowWidth > windowHeight;
   // Keep portrait sizes from styles; apply larger dimensions in landscape only
   const landscapeThumbWidth = Math.max(120, Math.round(windowWidth * 0.82));
   const landscapeThumbHeight = Math.max(420, Math.round(windowHeight * 0.85));
   const imageLocalStyle = isLandscape
     ? {
-        width: windowWidth - 40, // match horizontal margin of importantDetailsBox
-        height: Math.max(470, Math.round(windowHeight * 0.55)),
-        borderRadius: 8, // match importantDetailsBox
-        alignSelf: 'center',
-      }
+      width: windowWidth - 40, // match horizontal margin of importantDetailsBox
+      height: Math.max(470, Math.round(windowHeight * 0.55)),
+      borderRadius: 8, // match importantDetailsBox
+      alignSelf: 'center',
+    }
     : null;
   const thumbnailWrapperLocal = isLandscape
     ? { width: landscapeThumbWidth, height: landscapeThumbHeight, alignItems: 'center', justifyContent: 'center' }
@@ -140,9 +140,9 @@ const isLandscape = windowWidth > windowHeight;
 
   const isFocused = useIsFocused();
   useEffect(() => {
-      if (isFocused) {
-          StatusBar.setBarStyle('light-content');
-      }
+    if (isFocused) {
+      StatusBar.setBarStyle('light-content');
+    }
   }, [isFocused]);
   useEffect(() => {
     const loadUserData = async () => {
@@ -415,73 +415,73 @@ const isLandscape = windowWidth > windowHeight;
     }
     setIsVideoLoading(true);
 
-  const nameRaw = await AsyncStorage.getItem('Name');
-  const emailRaw = await AsyncStorage.getItem('userEmail');
-  const phoneRaw = await AsyncStorage.getItem('phoneNumber');
-  const sessionIdRaw = await AsyncStorage.getItem('sessionId');
+    const nameRaw = await AsyncStorage.getItem('Name');
+    const emailRaw = await AsyncStorage.getItem('userEmail');
+    const phoneRaw = await AsyncStorage.getItem('phoneNumber');
+    const sessionIdRaw = await AsyncStorage.getItem('sessionId');
 
-// Ensure all values are string
-const name = typeof nameRaw === 'string' ? nameRaw : JSON.stringify(nameRaw);
-const email = typeof emailRaw === 'string' ? emailRaw : JSON.stringify(emailRaw);
-const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
-const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
+    // Ensure all values are string
+    const name = typeof nameRaw === 'string' ? nameRaw : JSON.stringify(nameRaw);
+    const email = typeof emailRaw === 'string' ? emailRaw : JSON.stringify(emailRaw);
+    const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
+    const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
 
-console.log("Watermark Details:", { name, email, phone, sessionId });
+    console.log("Watermark Details:", { name, email, phone, sessionId });
 
-// Define safe positions
-const startX = 20;   // all watermarks start 5 units from left
-const startY = 5;  // top padding
-const spacing = 10; // vertical spacing between watermarks
-const maxY = 50;    // maximum y to avoid cutting at bottom
+    // Define safe positions
+    const startX = 20;   // all watermarks start 5 units from left
+    const startY = 5;  // top padding
+    const spacing = 10; // vertical spacing between watermarks
+    const maxY = 50;    // maximum y to avoid cutting at bottom
 
-const annotationObject = [
-  {
-    type: 'rtext',
-    text: name,
-    alpha: 0.5,
-    color: '0xFFFFFF',
-    size: 14,
-    interval: 5000,
-    skip: 2000,
-    x: startX,
-    y: startY
-  },
-  {
-    type: 'rtext',
-    text: email,
-    alpha: 0.4,
-    color: '0x00FFFF',
-    interval: 10000,
-    skip: 1000,
-    size: 14,
-    x: startX,
-    y: Math.min(startY + spacing, maxY)
-  },
-  {
-    type: 'rtext',
-    text: phone,
-    alpha: 0.4,
-    color: '0x00FF00',
-    interval: 10000,
-    skip: 1000,
-    size: 14,
-    x: startX,
-    y: Math.min(startY + 1 * spacing, maxY)
-  },
-  {
-    type: 'rtext',
-    text: sessionId,
-    alpha: 0.4,
-    color: '0xFF00FF',
-    interval: 10000,
-    skip: 500,
-    size: 14,
-    x: startX,
-    y: Math.min(startY + 2 * spacing, maxY)
-  }
-];
+    const annotationObject = [
+      {
+        type: 'rtext',
+        text: name,
+        alpha: 0.5,
+        color: '0xFFFFFF',
+        size: 14,
+        interval: 5000,
+        skip: 2000,
+        x: startX,
+        y: startY
+      },
+      {
+        type: 'rtext',
+        text: email,
+        alpha: 0.4,
+        color: '0x00FFFF',
+        interval: 10000,
+        skip: 1000,
+        size: 14,
+        x: startX,
+        y: Math.min(startY + spacing, maxY)
+      },
+      {
+        type: 'rtext',
+        text: phone,
+        alpha: 0.4,
+        color: '0x00FF00',
+        interval: 10000,
+        skip: 1000,
+        size: 14,
+        x: startX,
+        y: Math.min(startY + 1 * spacing, maxY)
+      },
+      {
+        type: 'rtext',
+        text: sessionId,
+        alpha: 0.4,
+        color: '0xFF00FF',
+        interval: 10000,
+        skip: 500,
+        size: 14,
+        x: startX,
+        y: Math.min(startY + 2 * spacing, maxY)
+      }
+    ];
 
-console.log("Final Annotation Object:", annotationObject);
+    console.log("Final Annotation Object:", annotationObject);
 
 
     console.log("Annotation Object:", JSON.stringify(annotationObject));
@@ -505,7 +505,7 @@ console.log("Final Annotation Object:", annotationObject);
             },
             body: JSON.stringify(requestBody),
           });
-            console.log('Request Body for VdoCipher Video Fetch:', JSON.stringify(requestBody));  
+          console.log('Request Body for VdoCipher Video Fetch:', JSON.stringify(requestBody));
           const status = response.status;
           const text = await response.text();
           let parsed = null;
@@ -531,7 +531,7 @@ console.log("Final Annotation Object:", annotationObject);
             setIsVideoLoading(false);
           }
         }
-         else {
+        else {
           let errMsg = "Failed to fetch video details from Vdocipher API.";
           if (detailsData && typeof detailsData.message === 'string') {
             errMsg = detailsData.message;
@@ -545,7 +545,7 @@ console.log("Final Annotation Object:", annotationObject);
         Alert.alert("Error", "Video not found.");
         setIsVideoLoading(false);
       }
-    } 
+    }
     catch (err) {
       const errMsg = typeof err?.message === 'string' ? err.message : 'Unknown error';
       Alert.alert("Network Error", `An unexpected error occurred: ${errMsg}`);
@@ -587,6 +587,21 @@ console.log("Final Annotation Object:", annotationObject);
     return videos;
   }, [referEarnVideos]);
 
+  // Compute responsive image size so it never gets cropped on different screens
+  const referImageSource = require('../img/REFERnEARN.png');
+  const resolved = Image.resolveAssetSource(referImageSource) || {};
+  const imgAspect = (resolved.width && resolved.height) ? (resolved.width / resolved.height) : (16 / 9);
+  const maxWidth = Math.min(windowWidth - 40, windowWidth);
+  let responsiveWidth = maxWidth;
+  let responsiveHeight = Math.round(responsiveWidth / imgAspect);
+  // limit height so it doesn't push too far on small screens
+  const maxHeight = Math.round(windowHeight * 0.75);
+  if (responsiveHeight > maxHeight) {
+    responsiveHeight = maxHeight;
+    responsiveWidth = Math.round(responsiveHeight * imgAspect);
+  }
+  const responsiveImageStyle = { width: responsiveWidth, height: responsiveHeight, borderRadius: 8 };
+
   const handleThumbnailClickForReferAndEarn = () => {
     if (playableReferEarnVideos.length > 0) {
       const hindiVideo = playableReferEarnVideos.find(v => v.language === 'hindi');
@@ -611,7 +626,7 @@ console.log("Final Annotation Object:", annotationObject);
       <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <LinearGradient
           colors={['#FFF8E5', '#FFFDEB']}
-          style={[styles.importantDetailsBox, { marginTop: 10, color: isDarkMode ? '#fff' : '#003366'}]}>
+          style={[styles.importantDetailsBox, { marginTop: 10, color: isDarkMode ? '#fff' : '#003366' }]}>
           <Text style={styles.gradientTitleText}>You earn ₹3,000 / $30 every time</Text>
           <Text style={styles.gradientTitleText}>Refer a friend & they get 10% OFF</Text>
         </LinearGradient>
@@ -638,13 +653,13 @@ console.log("Final Annotation Object:", annotationObject);
           </View>
         </View>
         <View style={styles.sectionDivider} />
-            {isLandscape && (
-                  <View style={{ height: 20 }} />
-                )}
-            <View style={[styles.importantDetailsBox, { padding: 0, marginTop: 10 }, ]}> 
+        {isLandscape && (
+          <View style={{ height: 20 }} />
+        )}
+        <View style={[styles.importantDetailsBox, { padding: 0, marginTop: 10 },]}>
           <TouchableOpacity onPress={handleThumbnailClickForReferAndEarn} activeOpacity={0.9} style={{ alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
             <View style={[styles.thumbnailWrapper, thumbnailWrapperLocal]}>
-              <Image source={require('../img/REFERnEARN.png')} style={[styles.image, imageLocalStyle]} resizeMode="contain" />
+              <Image source={referImageSource} style={[ /* keep existing styles for landscape, but prefer responsive */ responsiveImageStyle, imageLocalStyle]} resizeMode="contain" />
               <Animated.View
                 pointerEvents="none"
                 style={[
@@ -669,19 +684,21 @@ console.log("Final Annotation Object:", annotationObject);
           </TouchableOpacity>
         </View>
 
-           {isLandscape && (
-                  <View style={{ height: 30 }} />
-                )}
+        {isLandscape && (
+          <View style={{ height: 30 }} />
+        )}
 
         <View style={[styles.importantDetailsBox, { marginTop: 20 }]}>
           <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>How to Refer & Earn?</Text>
           <Text style={styles.listItem}>
             <Text style={styles.boldText}>1.</Text>
             <Text> Invite friends using your referral code—share via WhatsApp, Email, or Social Media!</Text>
+            {'\n'}
           </Text>
           <Text style={styles.listItem}>
             <Text style={styles.boldText}>2.</Text>
             <Text>Your friend joins using your referral code and gets 10% OFF on successful payment!</Text>
+            {'\n'}
           </Text>
           <Text style={styles.listItem}>
             <Text style={styles.boldText}>3.</Text>
@@ -694,120 +711,117 @@ console.log("Final Annotation Object:", annotationObject);
           <Text style={[styles.sectionHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>Important Details</Text>
           <Text style={styles.detailPoint}>
             <Text style={styles.emphasisText}>✔️ You earn every time your referral is successful.</Text>
+            {'\n'}
           </Text>
           <Text style={styles.detailPoint}>
             <Text style={styles.emphasisText}>✔️ No limit to how much you can earn.</Text>
           </Text>
         </View>
 
-      
+
         {showDetails && (
           <View style={styles.sectionLinkDivider}>
             <View style={styles.sectionDivider} />
-            
-                    <View style={styles.importantDetailsBox}>
-            
-                       <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Processing & Bank Details</Text>
-            
-                     <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️ Update your bank details after logging in to our website—this account will be used for your earning payout.
-                        </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️  Cashback is processed within 1 to 60 days depending on transaction volume and verification time.
-                        </Text>
-                    </View>
-            
-                     <View style={styles.sectionDivider} />
-                        <View style={styles.importantDetailsBox}>
-            
-                              <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
-                                International Payments & Charges
-                               </Text>
-            
-                            <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️ For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
-                        </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️   The final amount credited depends on your bank’s deductions and exchange rates.
-                        </Text>
-                      </View>
-            
-                  <View style={styles.sectionDivider} />
-                   
-                     <View style={styles.sectionDivider} />
-                    <View style={styles.importantDetailsBox}>
-            
-                          <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>
-                               Tax & Compliance
-                            </Text>
-            
-                       <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️ Referral income is considered commission income and is subject to Indian tax laws.
-                        </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️   Payouts may be withheld until PAN details are submitted to ensure tax compliance.
-                        </Text>
-            
-                      <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️</Text>  
-                           ️   A TDS (Tax Deducted at Source) of 5% has been deducted under Section 194H of the Income Tax Act, 
-                              1961. Payouts are made after tax deduction. 
-                              You may claim credit for this TDS when filing your income tax return
-                                {'\n'}{'\n'}
-                        </Text>
-            
-                       
-            
-                    <Text  style={styles.boldText}>For International Users:   {'\n'}</Text>
-            
-                      <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️ </Text>  
-                              You are responsible for reporting your referral income according to your local tax laws.
-                        </Text>
-            
-                   <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️ </Text>  
-                             We do not deduct or file international taxes on your behalf.
-                        </Text>
-                        
-                  </View>
-            
-                  <View style={styles.sectionDivider} />
-                    <View style={styles.importantDetailsBox}>
-            
-                          <Text style={[ styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' } ]}>Important Notes
-                       </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️ </Text>  
-                             AllrounderBaby does not offer tax advice. Please consult your tax advisor.
-                        </Text>
-            
-                        <Text style={styles.listItem}>
-                           <Text style={styles.boldText}>✔️ </Text>  
-                              By receiving referral earnings, you agree to our Terms of Use and Privacy Policy.
-                        </Text>
-            
-                        
-                  </View>
-                   <View style={styles.sectionDivider} />
-                    <View style={styles.importantDetailsBox}>
-                      <Text style={[styles.listItem, { textAlign: 'center' }]}>
-                            <Text style={styles.boldText}>
-                              Science says – “Your child grows better with good friends”
-                              REFER your child’s friends’ parents ! 
-                              </Text>
-                        </Text>
-                    </View>
+
+            <View style={styles.importantDetailsBox}>
+
+              <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>Processing & Bank Details</Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text> Update your bank details after logging in to our website—this account will be used for your earning payout.
+                {'\n'}
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text> Cashback is processed within 1 to 60 days depending on transaction volume and verification time.
+              </Text>
+            </View>
+
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+
+              <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>
+                International Payments & Charges
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text>
+                ️ For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
+                {'\n'}
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text> The final amount credited depends on your bank’s deductions and exchange rates.
+              </Text>
+            </View>
+
+            <View style={styles.sectionDivider} />
+
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+
+              <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>
+                Tax & Compliance
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text> Referral income is considered commission income and is subject to Indian tax laws.
+                {'\n'}
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text> Payouts may be withheld until PAN details are submitted to ensure tax compliance.
+                {'\n'}
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text> A TDS (Tax Deducted at Source) of 5% has been deducted under Section 194H of the Income Tax Act,
+                1961. Payouts are made after tax deduction.
+                You may claim credit for this TDS when filing your income tax return
+                {'\n'}{'\n'}
+              </Text>
+
+
+
+              <Text style={styles.boldText}>For International Users:   {'\n'}</Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️ </Text>You are responsible for reporting your referral income according to your local tax laws.
+                {'\n'}
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️ </Text>We do not deduct or file international taxes on your behalf.
+              </Text>
+
+            </View>
+
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+
+              <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>Important Notes
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️ </Text>AllrounderBaby does not offer tax advice. Please consult your tax advisor.
+                {'\n'}
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️ </Text>By receiving referral earnings, you agree to our Terms of Use and Privacy Policy.
+              </Text>
+
+
+            </View>
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+              <Text style={[styles.listItem, { textAlign: 'center' }]}>
+                <Text style={styles.boldText}>
+                  Science says – “Your child grows better with good friends”
+                  REFER your child’s friends’ parents !
+                </Text>
+              </Text>
+            </View>
           </View>
         )}
 
@@ -915,7 +929,7 @@ const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) 
     marginHorizontal: 0,
     marginTop: 0,
     marginBottom: 12,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '600',
   },
   importantDetailsBox: {
@@ -935,12 +949,13 @@ const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) 
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  borderLine: { 
-    borderBottomWidth: 1, 
-    borderBottomColor: 
-    theme.borderColorD, 
+  borderLine: {
+    borderBottomWidth: 1,
+    borderBottomColor:
+      theme.borderColorD,
     width: "100%",
-    marginBottom: 15, },
+    marginBottom: 15,
+  },
   detailPoint: {
     fontSize: 15,
     lineHeight: 22,
@@ -1012,7 +1027,7 @@ const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) 
     marginHorizontal: 5,
     elevation: theme.elevation / 2,
     shadowColor: theme.bottomNavShadowColor,
-   
+
     shadowOffset: {
       width: 0,
       height: 2
@@ -1042,17 +1057,18 @@ const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) 
     marginHorizontal: 0,
     marginTop: 0,
     marginBottom: 12,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '600',
   },
   listItem: {
     marginHorizontal: 20,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 22,
     color: theme.textSecondary,
-    marginBottom: 8,
+    // marginBottom: 8,
   },
   boldText: {
+    fontSize: 16,
     fontWeight: '600',
     color: theme.textPrimary,
   },
@@ -1072,7 +1088,7 @@ const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) 
     fontSize: 15,
     fontWeight: '500',
   },
-  
+
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: theme.overlayBackground,
