@@ -6,7 +6,7 @@ import { StatusBar } from 'react-native';
 const SplashScreen = ({ onVideoEnd, onSkip }) => {
   return (
     <View style={styles.container}>
-       <StatusBar backgroundColor="#111" barStyle="light-content" />
+      <StatusBar backgroundColor="#1434A4" barStyle="light-content" />
       <Video
         source={require('./assets/splash_video.mp4')}
         style={styles.video}

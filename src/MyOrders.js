@@ -303,7 +303,7 @@ const MyOrders = ({ navigation, route }) => {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoidingContainer}>
-      <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
+      <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
      <View style={[{ paddingLeft: 8, paddingRight: 7}]}>

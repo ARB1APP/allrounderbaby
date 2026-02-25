@@ -50,6 +50,7 @@ const VideoPlayerScreen = (props) => {
   const isDarkMode = useColorScheme() === 'dark';
   const playerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
+  // normalized error: { message: string, raw: any }
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(route.params?.total_time || 0);
@@ -380,7 +381,59 @@ const VideoPlayerScreen = (props) => {
 
   const showErrorAndBack = useCallback((message) => {
     try {
-      Alert.alert('Video Error', message,
+      const extract = (msg) => {
+        if (msg === null || typeof msg === 'undefined') return null;
+        if (typeof msg === 'string') return msg;
+        if (typeof msg === 'object') {
+          // Prefer explicit fields
+          const prefer = msg.errorMsg || msg.errorMessage || msg.message || msg.error_description || msg.errorDescription || msg.error || null;
+          if (prefer) return prefer;
+
+          // Sometimes errorDescription is a JSON string containing inner details
+          const candidate = msg.errorDescription || msg.error_description || msg;
+          if (typeof candidate === 'string') {
+            try {
+              const parsed = JSON.parse(candidate);
+              return parsed.errorMsg || parsed.errorMessage || parsed.message || JSON.stringify(parsed);
+            } catch (e) {
+              // not JSON, return truncated string to avoid huge embedInfo
+              const trimmed = candidate.length > 200 ? candidate.slice(0, 200) + '...' : candidate;
+              return trimmed;
+            }
+          }
+
+          // Avoid showing large embedInfo objects; try to find an inner error
+          if (msg.embedInfo && typeof msg.embedInfo === 'object') {
+            const ei = msg.embedInfo;
+            if (ei.errorDescription) {
+              try {
+                const parsed = typeof ei.errorDescription === 'string' ? JSON.parse(ei.errorDescription) : ei.errorDescription;
+                return parsed.errorMsg || parsed.message || JSON.stringify(parsed);
+              } catch (e) {
+                // fallthrough
+              }
+            }
+          }
+
+          // fallback: try to serialize only relevant keys
+          try {
+            const small = {};
+            ['errorMsg', 'errorMessage', 'message', 'errorCode', 'httpStatusCode'].forEach(k => { if (msg[k]) small[k] = msg[k]; });
+            const keys = Object.keys(small);
+            if (keys.length) return JSON.stringify(small);
+          } catch (e) { }
+
+          return null;
+        }
+        try { return String(msg); } catch (e) { return null; }
+      };
+
+      let msgText = extract(message) || extract(message && message.raw) || 'Video playback error. Please try again.';
+
+      // update normalized error state so UI shows friendly text
+      try { setError({ message: msgText, raw: message }); } catch (e) { }
+
+      Alert.alert('Video Error', msgText,
         [{ text: 'OK', onPress: () => { setTimeout(() => { backAction(); }, 50); } }],
         { cancelable: false }
       );
@@ -393,23 +446,25 @@ const VideoPlayerScreen = (props) => {
 
   const handleInitFailure = useCallback((err) => {
     setIsLoading(false);
-    const errorMessage = err.errorDescription || "Video initialization failed. Please try again.";
-    setError(errorMessage);
-    showErrorAndBack(errorMessage);
+    const errorMessage = (err && (err.errorDescription || err.message || err.errorMsg)) || "Video initialization failed. Please try again.";
+    setError({ message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage), raw: err });
+    showErrorAndBack(err || errorMessage);
   }, [showErrorAndBack]);
 
-  const handleLoadError = useCallback(({ errorDescription }) => {
+  const handleLoadError = useCallback((err) => {
     setIsLoading(false);
+    const errorDescription = err?.errorDescription || err?.errorMsg || err?.message || null;
     const errorMessage = errorDescription || "Video failed to load. Please try again.";
-    setError(errorMessage);
-    showErrorAndBack(errorMessage);
+    setError({ message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage), raw: err });
+    showErrorAndBack(err || errorMessage);
   }, [showErrorAndBack]);
 
-  const handleError = useCallback(({ errorDescription }) => {
+  const handleError = useCallback((err) => {
     setIsLoading(false);
+    const errorDescription = err?.errorDescription || err?.errorMsg || err?.message || null;
     const errorMessage = errorDescription || "An unknown playback error occurred. Please try again.";
-    setError(errorMessage);
-    showErrorAndBack(errorMessage);
+    setError({ message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage), raw: err });
+    showErrorAndBack(err || errorMessage);
   }, [showErrorAndBack]);
 
   const handleInitializationSuccess = useCallback(() => { }, []);
@@ -468,7 +523,7 @@ const VideoPlayerScreen = (props) => {
   if (!otp || !playbackInfo) {
     return (
       <View style={[styles.container, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter, justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={isDarkMode ? Colors.darker : Colors.lighter} />
+        <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
         <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
           The video details (OTP or playback information) are missing.
         </Text>
@@ -484,11 +539,11 @@ const VideoPlayerScreen = (props) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar hidden={isLandscape} barStyle='light-content' backgroundColor='black' />
+      <StatusBar hidden={isLandscape} barStyle="light-content" backgroundColor="#1434A4" />
       {error && !isLoading ? (
         <View style={[styles.errorContainer, { backgroundColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
           <Text style={[styles.errorText, { color: isDarkMode ? Colors.light : Colors.dark }]}>
-            Error: {error}
+            Error: {error.message || (error.raw && (error.raw.errorMsg || error.raw.message)) || JSON.stringify(error.raw || error)}
           </Text>
         </View>
       ) : (

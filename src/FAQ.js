@@ -113,10 +113,7 @@ const FAQ = ({ navigation }) => {
 
   return (
     <SafeAreaView style={[styles.container, backgroundStyle]}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
+      <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={[styles.title, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>Frequently Asked Questions</Text>
 
