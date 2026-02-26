@@ -622,7 +622,7 @@ const ReferAndEarn = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
+      <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
       <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <LinearGradient
           colors={['#FFF8E5', '#FFFDEB']}

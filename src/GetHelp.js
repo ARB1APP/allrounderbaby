@@ -111,10 +111,7 @@ const GetHelp = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle={theme.statusBarContent}
-        backgroundColor={theme.screenBackground}
-      />
+      <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
       <Text style={styles.title}>Customer Support 💕</Text>
       <View style={styles.sectionDivider} />
       <ScrollView contentContainerStyle={styles.scrollContainer}>

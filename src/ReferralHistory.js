@@ -160,7 +160,7 @@ const ReferralHistory = ({ navigation, route }) => {
 
   return (
     <View style={[styles.container, backgroundStyle]}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={theme.screenBackground} />
+      <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
       <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.header}>
             <TouchableOpacity onPress={handlereferAndearnBackpress} style={styles.backButton}>

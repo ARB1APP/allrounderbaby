@@ -258,7 +258,7 @@ const LoginPage = ({ navigation }) => {
 
     return (
         <View style={[styles.outermostContainer, backgroundStyle]}>
-            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={backgroundStyle.backgroundColor} />
+            <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
 
             {!showLoginForm ? (
                 <Animated.View style={[styles.container, { opacity: welcomeOpacity }]}>

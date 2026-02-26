@@ -533,7 +533,7 @@ const AboutUs = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
+      <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
       <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <LinearGradient
           colors={['#A0F0D1', '#B0E5FF']}
