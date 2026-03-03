@@ -1,12 +1,55 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /usr/local/Cellar/android-sdk/24.3.3/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+############################################################
+# Project specific ProGuard rules
+############################################################
 
-# Add any project specific keep options here:
-# VdoCipher / Media3 Rule (Prevents removal of MediaLibraryInfo needed by the library)
+############################################################
+# VdoCipher / Media3 Rule (Prevents removal of MediaLibraryInfo)
+############################################################
 -keep class androidx.media3.common.MediaLibraryInfo { *; }
+
+############################################################
+# VdoCipher (VERY IMPORTANT)
+############################################################
+-keep class com.vdocipher.** { *; }
+-dontwarn com.vdocipher.**
+
+############################################################
+# ExoPlayer (Used internally by VdoCipher)
+############################################################
+-keep class com.google.android.exoplayer2.** { *; }
+-dontwarn com.google.android.exoplayer2.**
+
+############################################################
+# AndroidX Media3 (New ExoPlayer namespace)
+############################################################
+-keep class androidx.media3.** { *; }
+-dontwarn androidx.media3.**
+
+############################################################
+# React Native Bridge
+############################################################
+-keep class com.facebook.react.** { *; }
+-dontwarn com.facebook.react.**
+
+############################################################
+# OkHttp (Networking layer)
+############################################################
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
+
+############################################################
+# Kotlin Metadata
+############################################################
+-keep class kotlin.Metadata { *; }
+
+############################################################
+# Prevent removal of annotations
+############################################################
+-keepattributes *Annotation*
+
+############################################################
+# Keep native methods
+############################################################
+-keepclasseswithmembernames class * {
+    native <methods>;
+}

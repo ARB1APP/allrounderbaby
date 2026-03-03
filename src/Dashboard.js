@@ -913,7 +913,7 @@ const Dashboard = ({ navigation }) => {
                 const lastStepNumber = lastStepOfPrereq.stepNumber;
                 const DETAILS_ENDPOINT = `${url}User/User_Watch_Data_StepId?id=${userId}&level_step=${lastStepNumber}&DeviceKey=${deviceKey}`;
                 try {
-                    debugger;
+
                     const response = await fetch(DETAILS_ENDPOINT, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
 
                     if (response.ok) {
@@ -959,7 +959,6 @@ const Dashboard = ({ navigation }) => {
     };
 
     const handleCategoryPress = async (categoryKey) => {
-        debugger;
         if (!dataLoaded) {
             showToast("Loading progress data...");
             return;
@@ -1239,9 +1238,9 @@ const Dashboard = ({ navigation }) => {
                 }
             }
             navigation.navigate('VideoPlayerScreen', {
-                id: videoId,
-                otp: data.otp,
-                playbackInfo: data.playbackInfo,
+                VideoId: videoId,
+                annotate: JSON.stringify(annotationObject),
+                total_time: total_time,
                 language: language,
                 cameFrom: 'Dashboard',
                 step: step,
