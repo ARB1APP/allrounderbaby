@@ -408,7 +408,12 @@ const ReferAndEarn = ({ navigation }) => {
       Alert.alert("No Internet Connection", "Please check your internet connection and try again.");
       return;
     }
-    if (!userId) {
+    // read fresh token and userId to avoid race/stale state causing auth errors
+    const storedToken = await AsyncStorage.getItem('token');
+    const storedUserId = await AsyncStorage.getItem('userId');
+    const tokenToUse = storedToken || token;
+    const userIdToUse = storedUserId || userId;
+    if (!userIdToUse) {
       Alert.alert("Authentication Error", "User ID not available for watermark. Please log in again.");
       setIsVideoLoading(false);
       return;
@@ -486,7 +491,7 @@ const ReferAndEarn = ({ navigation }) => {
 
     console.log("Annotation Object:", JSON.stringify(annotationObject));
     const requestBody = {
-      UserId: parseInt(userId, 10),
+      UserId: userIdToUse ? parseInt(userIdToUse, 10) : null,
       VideoId: videoId,
       annotate: JSON.stringify(annotationObject)
     };
@@ -496,13 +501,15 @@ const ReferAndEarn = ({ navigation }) => {
         const detailsData = await vdoCipher_api(videoId);
         if (detailsData && !detailsData.error) {
           const total_time = detailsData.length || 0;
+          const postHeaders = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          };
+          if (tokenToUse) postHeaders.Authorization = `Bearer ${tokenToUse}`;
+
           const response = await fetch(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
             method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
+            headers: postHeaders,
             body: JSON.stringify(requestBody),
           });
           console.log('Request Body for VdoCipher Video Fetch:', JSON.stringify(requestBody));
@@ -519,6 +526,7 @@ const ReferAndEarn = ({ navigation }) => {
             const data = parsed || JSON.parse(text);
             navigation.navigate('VideoPlayerScreen', {
               id: videoId,
+              VideoId: videoId,
               otp: data.otp,
               playbackInfo: data.playbackInfo,
               language: language,
