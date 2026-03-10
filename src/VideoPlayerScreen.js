@@ -59,7 +59,7 @@ const VideoPlayerScreen = () => {
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
+  const [videoCompleted, setVideoCompleted] = useState(false);
   /* ================= FETCH OTP ================= */
 
   const fetchVideoCredentials = useCallback(async () => {
@@ -228,7 +228,7 @@ const VideoPlayerScreen = () => {
           stage_name: `${stage_name || ""} ${displayStep ?? step}`.trim(),
           DeviceKey: deviceKey,
         };
-
+        //  console.log("Updating progress with:", payload);
         const headers = {
           Accept: "application/json",
           "Content-Type": "application/json",
@@ -275,7 +275,7 @@ const VideoPlayerScreen = () => {
         // mark that we've updated progress so we don't send duplicate requests
         progressUpdated.current = true;
       } catch (error) {
-        console.log("Progress update failed:", error);
+        // console.log("Progress update failed:", error);
       }
     },
     [
@@ -292,10 +292,10 @@ const VideoPlayerScreen = () => {
   /* ================= BACK HANDLER ================= */
 
   const handleBack = useCallback(async () => {
-    if (isFullscreen) {
-      playerRef.current?.exitFullscreenV2?.();
-      return true;
-    }
+    // if (isFullscreen) {
+    //   playerRef.current?.exitFullscreenV2?.();
+    //   return true;
+    // }
 
     await updateProgress();
 
@@ -353,7 +353,12 @@ const VideoPlayerScreen = () => {
         }}
         onMediaEnded={async () => {
           await updateProgress(true);
-          handleBack();
+
+          setVideoCompleted(true);
+
+          if (isFullscreen) {
+            playerRef.current?.exitFullscreenV2?.();
+          }
         }}
         onFullscreenChange={(isFull) => {
           setIsFullscreen(isFull);

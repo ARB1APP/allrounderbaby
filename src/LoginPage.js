@@ -149,7 +149,7 @@ const LoginPage = ({ navigation }) => {
             if (!devicekey) {
                 devicekey = Date.now().toString(36) + Math.random().toString(36).substring(2);
                 await AsyncStorage.setItem('devicekey', devicekey);
-                console.log('Generated new devicekey:', devicekey);
+                // console.log('Generated new devicekey:', devicekey);
             } else {
                 console.log('Using existing devicekey:', devicekey);
             }
@@ -228,8 +228,8 @@ const LoginPage = ({ navigation }) => {
 
                 await AsyncStorage.multiSet(items);
 
-                console.log('Session created:', sessionId);
-                console.log('Login API call completed successfully');
+                //   console.log('Session created:', sessionId);
+                //  console.log('Login API call completed successfully');
 
                 if (rememberMe) {
                     if (keychainAvailable) await Keychain.setGenericPassword(trimmedU, trimmedP, { service: 'loginCredentials' });
