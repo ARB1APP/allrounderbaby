@@ -1,4 +1,6 @@
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
+// silence console in production to reduce JS-thread overhead
+import './src/utils/disableConsole';
 import { View, Image, StyleSheet, SafeAreaView, Text, useColorScheme, Alert, ActivityIndicator, BackHandler, TouchableOpacity, Dimensions, Platform, StatusBar, useWindowDimensions } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +24,8 @@ import PrivacyPolicy from './src/PrivacyPolicy';
 import PrivacyPolicywithoutLog from './src/PrivacyPolicywithoutLog';
 import TermsofService from './src/TermsofService';
 import TermsofServicewithoutLog from './src/TermsofServicewithoutLog';
+import ForgotPassword from './src/ForgotPassword';
+import LoginOTP from './src/LoginOTP';
 import RateStarsStore from './src/RateStarsStore';
 import Community from './src/Community';
 import FAQ from './src/FAQ';
@@ -512,6 +516,8 @@ const App = () => {
   const LoginStack = () => (
     <Stack.Navigator screenOptions={getHeaderOptions(currentThemeColors)}>
       <Stack.Screen name="LoginPage" component={LoginPage} options={{ headerShown: false }} />
+      <Stack.Screen name="LoginOTP" component={LoginOTP} options={{ headerShown: true, title: 'Login via OTP' }} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: true, title: 'Forgot Password' }} />
       <Stack.Screen name="TermsofServicewithoutLog" component={TermsofServicewithoutLog} options={{ headerShown: true, title: 'Terms of Service' }} />
       <Stack.Screen name="PrivacyPolicywithoutLog" component={PrivacyPolicywithoutLog} options={{ headerShown: true, title: 'Privacy Policy' }} />
     </Stack.Navigator>

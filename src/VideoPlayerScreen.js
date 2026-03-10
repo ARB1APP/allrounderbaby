@@ -13,7 +13,9 @@ import {
   Alert,
   StatusBar,
   Platform,
+  useWindowDimensions,
 } from "react-native";
+import Orientation from 'react-native-orientation-locker';
 import { VdoPlayerView } from "vdocipher-rn-bridge";
 import {
   useRoute,
@@ -46,8 +48,9 @@ const VideoPlayerScreen = () => {
   } = route.params || {};
 
   const videoId = VideoId;
-  const screenWidth = Dimensions.get("window").width;
-  const playerHeight = Math.round((screenWidth * 9) / 16);
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const isLandscape = screenWidth > screenHeight;
+  const playerHeight = isLandscape ? screenHeight : Math.round((screenWidth * 9) / 16);
   // const { width, height } = useWindowDimensions();
   // const isLandscape = width > height;
 
@@ -143,6 +146,34 @@ const VideoPlayerScreen = () => {
       } catch (e) { }
     };
   }, []);
+
+  // allow rotation on this screen, restore to portrait when leaving
+  useEffect(() => {
+    try {
+      Orientation.unlockAllOrientations();
+    } catch (e) {
+      // fail silently if orientation locker isn't available
+    }
+
+    return () => {
+      try {
+        Orientation.lockToPortrait();
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, []);
+
+  // hide header and status bar when device rotated to landscape or when player enters fullscreen
+  useEffect(() => {
+    try {
+      navigation.setOptions({ headerShown: !isLandscape });
+    } catch (e) { }
+
+    try {
+      StatusBar.setHidden(isLandscape);
+    } catch (e) { }
+  }, [isLandscape, navigation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -334,7 +365,7 @@ const VideoPlayerScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="light-content" backgroundColor="#000" hidden={isLandscape} />
 
       <VdoPlayerView
         key={`${videoId}-${playerKey}`}
