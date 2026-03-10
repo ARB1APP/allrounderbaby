@@ -300,7 +300,7 @@ const CashbackforFeedback = () => {
     }
   };
 
-  const handleVideoPlayback = async (videoId, language, title, poster) => {
+  const handleVideoPlayback = async (videoId, language, title, poster, stepParam = null) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
       Alert.alert("No Internet Connection", "Please check your internet connection and try again.");
@@ -319,7 +319,7 @@ const CashbackforFeedback = () => {
     const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
     const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
 
-    console.log("Watermark Details:", { name, email, phone, sessionId });
+    // console.log("Watermark Details:", { name, email, phone, sessionId });
 
     const startX = 20;
     const startY = 5;
@@ -373,10 +373,10 @@ const CashbackforFeedback = () => {
       }
     ];
 
-    console.log("Final Annotation Object:", annotationObject);
+    // console.log("Final Annotation Object:", annotationObject);
 
 
-    console.log("Annotation Object:", JSON.stringify(annotationObject));
+    // console.log("Annotation Object:", JSON.stringify(annotationObject));
     const requestBody = {
       UserId: parseInt(userId, 10),
       VideoId: videoId,
@@ -398,39 +398,20 @@ const CashbackforFeedback = () => {
       const detailsData = await vdoCipherApi(videoId);
       if (detailsData) {
         const total_time = detailsData.length || 0;
-        const response = await fetch(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
+        const stepToSend = stepParam ?? (selectedVideoGroup?.stepNumber ?? 1);
+        navigation.navigate('VideoPlayerScreen', {
+          VideoId: videoId,
+          annotate: JSON.stringify(annotationObject),
+          total_time: total_time,
+          language: language,
+          title: title,
+          poster: poster,
+          cameFrom: 'Cashback for Feedback',
+          step: stepToSend,
+          displayStep: 1,
+          stage_name: `Cashback for Feedback`,
+          sessionId: sessionId,
         });
-
-        const status = response.status;
-        const text = await response.text();
-        let parsed = null;
-        try { parsed = JSON.parse(text); } catch (e) { /* not json */ }
-
-        if (!response.ok) {
-          const serverMsg = (parsed && (parsed.message || parsed.error)) || text || `HTTP ${status}`;
-          console.error('VdoCipher POST failed', { status, body: text, parsed });
-          Alert.alert("Error", serverMsg || "Video not found or failed to get OTP.");
-        } else {
-          const data = parsed || JSON.parse(text);
-          navigation.navigate('VideoPlayerScreen', {
-            id: videoId,
-            otp: data.otp,
-            playbackInfo: data.playbackInfo,
-            language: language,
-            title: title,
-            poster: poster,
-            total_time: total_time,
-            cameFrom: 'Cashback for Feedback',
-            sessionId: sessionId,
-          });
-        }
       }
     } catch (err) {
       console.error('VdoCipher request error', err);
@@ -488,7 +469,7 @@ const CashbackforFeedback = () => {
       const videoGroup = {
         hindiVideo: hindiVideo ? { id: hindiVideo.id } : null,
         englishVideo: englishVideo ? { id: englishVideo.id } : null,
-        stepNumber: 'cashback',
+        stepNumber: 1,
       };
 
       setSelectedVideoGroup(videoGroup);

@@ -402,7 +402,7 @@ const ReferAndEarn = ({ navigation }) => {
     }
   };
 
-  const handleVideoPlayback = async (videoId, language, title, poster) => {
+  const handleVideoPlayback = async (videoId, language, title, poster, stepParam = null) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
       Alert.alert("No Internet Connection", "Please check your internet connection and try again.");
@@ -431,7 +431,7 @@ const ReferAndEarn = ({ navigation }) => {
     const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
     const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
 
-    console.log("Watermark Details:", { name, email, phone, sessionId });
+    // console.log("Watermark Details:", { name, email, phone, sessionId });
 
     // Define safe positions
     const startX = 20;   // all watermarks start 5 units from left
@@ -486,60 +486,38 @@ const ReferAndEarn = ({ navigation }) => {
       }
     ];
 
-    console.log("Final Annotation Object:", annotationObject);
+    //  console.log("Final Annotation Object:", annotationObject);
 
 
-    console.log("Annotation Object:", JSON.stringify(annotationObject));
+    // console.log("Annotation Object:", JSON.stringify(annotationObject));
     const requestBody = {
       UserId: userIdToUse ? parseInt(userIdToUse, 10) : null,
       VideoId: videoId,
       annotate: JSON.stringify(annotationObject)
     };
-    console.log("Request Body:", JSON.stringify(requestBody));
+    //console.log("Request Body:", JSON.stringify(requestBody));
     try {
       if (videoId) {
         const detailsData = await vdoCipher_api(videoId);
         if (detailsData && !detailsData.error) {
           const total_time = detailsData.length || 0;
-          const postHeaders = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          };
-          if (tokenToUse) postHeaders.Authorization = `Bearer ${tokenToUse}`;
-
-          const response = await fetch(`${url}Vdocipher/GetVideosFromVDOCipher_VideoId`, {
-            method: 'POST',
-            headers: postHeaders,
-            body: JSON.stringify(requestBody),
+          const stepToSend = stepParam ?? step ?? 1;
+          // Instead of calling the backend POST endpoint, directly navigate
+          // to the video player passing the VideoId and prepared details.
+          navigation.navigate('VideoPlayerScreen', {
+            VideoId: videoId,
+            annotate: JSON.stringify(annotationObject),
+            total_time: total_time,
+            language: language,
+            title: title,
+            poster: poster,
+            cameFrom: 'Refer and Earn',
+            step: stepToSend,
+            displayStep: 1,
+            stage_name: `Refer and Earn`,
           });
-          console.log('Request Body for VdoCipher Video Fetch:', JSON.stringify(requestBody));
-          const status = response.status;
-          const text = await response.text();
-          let parsed = null;
-          try { parsed = JSON.parse(text); } catch (e) { }
-          if (!response.ok) {
-            const errorMsg = (parsed && (parsed.message || parsed.error)) || text || `HTTP ${status}`;
-            console.error('VdoCipher POST failed', { status, body: text, parsed });
-            Alert.alert("Error", errorMsg);
-            setIsVideoLoading(false);
-          } else {
-            const data = parsed || JSON.parse(text);
-            navigation.navigate('VideoPlayerScreen', {
-              id: videoId,
-              VideoId: videoId,
-              otp: data.otp,
-              playbackInfo: data.playbackInfo,
-              language: language,
-              title: title,
-              poster: poster,
-              total_time: total_time,
-              cameFrom: 'Refer and Earn',
-              sessionId: sessionId,
-            });
-            setIsVideoLoading(false);
-          }
-        }
-        else {
+          setIsVideoLoading(false);
+        } else {
           let errMsg = "Failed to fetch video details from Vdocipher API.";
           if (detailsData && typeof detailsData.message === 'string') {
             errMsg = detailsData.message;
@@ -553,8 +531,7 @@ const ReferAndEarn = ({ navigation }) => {
         Alert.alert("Error", "Video not found.");
         setIsVideoLoading(false);
       }
-    }
-    catch (err) {
+    } catch (err) {
       const errMsg = typeof err?.message === 'string' ? err.message : 'Unknown error';
       Alert.alert("Network Error", `An unexpected error occurred: ${errMsg}`);
       setIsVideoLoading(false);
@@ -618,7 +595,7 @@ const ReferAndEarn = ({ navigation }) => {
       const videoGroup = {
         hindiVideo: hindiVideo ? { id: hindiVideo.id } : null,
         englishVideo: englishVideo ? { id: englishVideo.id } : null,
-        stepNumber: 'refer-and-earn',
+        stepNumber: 1,
       };
 
       setSelectedVideoGroup(videoGroup);
@@ -854,7 +831,7 @@ const ReferAndEarn = ({ navigation }) => {
                 onPress={() => {
                   if (selectedVideoGroup?.hindiVideo) {
                     setIsLanguageModalVisible(false);
-                    handleVideoPlayback(selectedVideoGroup.hindiVideo.id, 'hindi', 'Refer & Earn Video (Hindi)', null);
+                    handleVideoPlayback(selectedVideoGroup.hindiVideo.id, 'hindi', 'Refer & Earn Video (Hindi)', null, selectedVideoGroup.stepNumber || 1);
                   }
                 }}
                 disabled={!selectedVideoGroup?.hindiVideo}
@@ -866,7 +843,7 @@ const ReferAndEarn = ({ navigation }) => {
                 onPress={() => {
                   if (selectedVideoGroup?.englishVideo) {
                     setIsLanguageModalVisible(false);
-                    handleVideoPlayback(selectedVideoGroup.englishVideo.id, 'english', 'Refer & Earn Video (English)', null);
+                    handleVideoPlayback(selectedVideoGroup.englishVideo.id, 'english', 'Refer & Earn Video (English)', null, selectedVideoGroup.stepNumber || 1);
                   }
                 }}
                 disabled={!selectedVideoGroup?.englishVideo}

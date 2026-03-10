@@ -422,7 +422,7 @@ const Dashboard = ({ navigation }) => {
                             setLastViewedRequest(null);
                         },
                         (err) => {
-                            console.log('measureLayout error', err);
+                            //'measureLayout error', err);
                             if (scrollRef && typeof scrollRef.scrollTo === 'function') {
                                 scrollRef.scrollTo({ y: 0, animated: true });
                             }
@@ -465,8 +465,8 @@ const Dashboard = ({ navigation }) => {
 
             const lastViewed = JSON.parse(lastViewedJson);
             let { category, step } = lastViewed || {};
-            console.log("Last viewed data:", lastViewed);
-            console.log("category:", category, "step:", step, "unlockedStepsThreshold:", unlockedStepsThreshold);
+            //"Last viewed data:", lastViewed);
+            //"category:", category, "step:", step, "unlockedStepsThreshold:", unlockedStepsThreshold);
             const stepNum = typeof step === 'number' ? step : (step ? Number(step) : NaN);
 
             if (!Number.isNaN(stepNum) && (stepNum === 1001 || stepNum === 1002)) {
@@ -636,7 +636,7 @@ const Dashboard = ({ navigation }) => {
 
 
                             if (item.stage_name) {
-                                console.log("Processing stage name:", item.stage_name);
+                                //"Processing stage name:", item.stage_name);
                                 const name = item.stage_name.toString().trim();
 
                                 const match = name.match(/^\s*([^\d]+?)\s*(\d+)?\s*$/);
@@ -672,7 +672,7 @@ const Dashboard = ({ navigation }) => {
                     }
 
                 });
-                console.log("Mapped Category:", mappedCategory, "Mapped Local Step:", mappedLocalCategoryStep, "Highest Completed Step:", highestCompletedStep);
+                //"Mapped Category:", mappedCategory, "Mapped Local Step:", mappedLocalCategoryStep, "Highest Completed Step:", highestCompletedStep);
 
                 if (mappedCategory) {
                     try {
@@ -682,7 +682,7 @@ const Dashboard = ({ navigation }) => {
                             timestamp: new Date().toISOString()
                         };
                         await AsyncStorage.setItem('lastViewed', JSON.stringify(lastViewedObj));
-                        console.log('Primed lastViewed from server progress:', lastViewedObj);
+                        //'Primed lastViewed from server progress:', lastViewedObj);
                     } catch (err) {
                         console.error('Failed to save last viewed info from server progress:', err);
                     }
@@ -693,7 +693,7 @@ const Dashboard = ({ navigation }) => {
                     const matched = groups.find(g => Number(g.displayStepNumber) === Number(mappedLocalCategoryStep) || Number(g.apiStepNumber) === Number(mappedLocalCategoryStep));
                     if (matched) {
                         const globalStep = matched.stepNumber;
-                        console.log('Resolved global step for', mappedCategory, mappedLocalCategoryStep, '->', globalStep);
+                        //'Resolved global step for', mappedCategory, mappedLocalCategoryStep, '->', globalStep);
                         if (globalStep > highestCompletedStep) {
                             highestCompletedStep = globalStep;
                         }
@@ -1004,7 +1004,7 @@ const Dashboard = ({ navigation }) => {
                                     console.warn('Failed to scroll to category:', e);
                                 }
                             },
-                            (err) => console.log('Scroll measurement failed', err)
+                            // (err) => //'Scroll measurement failed', err)
                         );
                     } else if (categoryRef.measure) {
                         categoryRef.measure((x, y, width, height, pageX, pageY) => {
@@ -1115,7 +1115,7 @@ const Dashboard = ({ navigation }) => {
             const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
             const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
 
-            console.log("Watermark Details:", { name, email, phone, sessionId });
+            //"Watermark Details:", { name, email, phone, sessionId });
 
             const startX = 20;
             const startY = 5;
