@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { StatusBar, useWindowDimensions } from 'react-native';
-import { StyleSheet, ScrollView, View, Image, Animated, Text, TouchableOpacity, Alert, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler, findNodeHandle } from 'react-native';
+import { StyleSheet, ScrollView, View, Image, Animated, Text, TouchableOpacity, Alert, ActivityIndicator, Pressable, useColorScheme, Platform, ToastAndroid, BackHandler, findNodeHandle, FlatList } from 'react-native';
 import { CommonActions, useIsFocused } from '@react-navigation/native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,7 +15,7 @@ const formatDuration = (totalSeconds) => {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
-const StepListItem = React.forwardRef(
+const StepListItemInner = React.forwardRef(
     ({ group, onPress, isCompleted, isLocked, isDarkMode, previousDisplay }, ref) => {
 
         const { stepNumber, displayStepNumber, hindiVideo, englishVideo } = group;
@@ -64,75 +64,110 @@ const StepListItem = React.forwardRef(
     }
 );
 
+const StepListItem = React.memo(StepListItemInner);
+
 const VideoStepList = ({ groups, completedSteps, onStepPress, isDarkMode, stepRefs }) => {
+    const ITEM_HEIGHT = 56;
+    const renderItem = ({ item, index }) => {
+        const isFirstStep = index === 0;
+        const previousStep = isFirstStep ? null : groups[index - 1];
+        const isPreviousStepCompleted = isFirstStep || (previousStep && completedSteps[`step${previousStep.stepNumber}`]);
+        const isLocked = !isPreviousStepCompleted;
+
+        return (
+            <StepListItem
+                ref={(el) => {
+                    if (el) stepRefs.current[item.stepNumber] = el;
+                }}
+                group={item}
+                onPress={onStepPress}
+                isCompleted={completedSteps[`step${item.stepNumber}`] ?? false}
+                isLocked={isLocked}
+                isDarkMode={isDarkMode}
+                previousDisplay={previousStep?.displayStepNumber ?? previousStep?.apiStepNumber ?? previousStep?.stepNumber}
+            />
+        );
+    };
+
     return (
         <View style={styles.dropdownContent}>
-            {groups.map((group, index) => {
-                const isFirstStep = index === 0;
-                const previousStep = isFirstStep ? null : groups[index - 1];
-                const isPreviousStepCompleted = isFirstStep || (previousStep && completedSteps[`step${previousStep.stepNumber}`]);
-                const isLocked = !isPreviousStepCompleted;
-
-                return (
-                    <StepListItem
-                        key={`step-group-${group.stepNumber}`}
-                        ref={(el) => {
-                            if (el) stepRefs.current[group.stepNumber] = el;
-                        }}
-                        group={group}
-                        onPress={onStepPress}
-                        isCompleted={completedSteps[`step${group.stepNumber}`] ?? false}
-                        isLocked={isLocked}
-                        isDarkMode={isDarkMode}
-                        previousDisplay={previousStep?.displayStepNumber ?? previousStep?.apiStepNumber ?? previousStep?.stepNumber}
-                    />
-                );
-            })}
+            <FlatList
+                data={groups}
+                renderItem={renderItem}
+                keyExtractor={(g) => `step-group-${g.stepNumber}`}
+                removeClippedSubviews={true}
+                initialNumToRender={6}
+                maxToRenderPerBatch={10}
+                windowSize={5}
+                nestedScrollEnabled={true}
+                scrollEventThrottle={16}
+                decelerationRate={Platform.OS === 'ios' ? 'fast' : 0.99}
+                updateCellsBatchingPeriod={50}
+                getItemLayout={(_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index })}
+            />
         </View>
     );
 };
 
-const LevelModal = ({ levelName, children, onClose, isDarkMode, scrollRef, isLandscape, contentWidth }) => (
-    <View style={styles.modalLikeContainer}>
-        <Pressable
-            style={[
-                styles.fullScreenPressable,
-                isLandscape ? { justifyContent: 'flex-start', paddingTop: 0 } : null
-            ]}
-            onPress={onClose}
-        >
+const LevelModal = ({ levelName, children, onClose, isDarkMode, scrollRef, isLandscape, contentWidth }) => {
+    const ITEM_HEIGHT_MODAL = 260; // approximate fixed height for each category item to help virtualization
+    return (
+        <View style={styles.modalLikeContainer}>
             <Pressable
                 style={[
-                    styles.modalLikeContentBox,
-                    isLandscape ? { width: '70%', marginTop: 8, maxHeight: '96%' } : { width: contentWidth, marginTop: 8, maxHeight: '96%' }
+                    styles.fullScreenPressable,
+                    isLandscape ? { justifyContent: 'flex-start', paddingTop: 0 } : null
                 ]}
-                onPress={() => { }}
+                onPress={onClose}
             >
-                <View style={[styles.modalContents, { backgroundColor: isDarkMode ? '#2a3144' : Colors.white }]}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalHeaderText}>{levelName}</Text>
-                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                            <Text style={styles.closeButtonText}>✕</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <ScrollView ref={scrollRef} style={styles.modalScrollView} contentContainerStyle={styles.modalScrollViewContent} nestedScrollEnabled={true}>
-                        <View style={styles.videolist}>
-                            {children}
+                <Pressable
+                    style={[
+                        styles.modalLikeContentBox,
+                        isLandscape ? { width: '70%', marginTop: 8, maxHeight: '96%' } : { width: contentWidth, marginTop: 8, maxHeight: '96%' }
+                    ]}
+                    onPress={() => { }}
+                >
+                    <View style={[styles.modalContents, { backgroundColor: isDarkMode ? '#2a3144' : Colors.white }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalHeaderText}>{levelName}</Text>
+                            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                                <Text style={styles.closeButtonText}>✕</Text>
+                            </TouchableOpacity>
                         </View>
-                    </ScrollView>
-                </View>
+                        {/* Use FlatList here to avoid nesting a VirtualizedList inside a plain ScrollView */}
+                        <FlatList
+                            ref={scrollRef}
+                            data={React.Children.toArray(children)}
+                            renderItem={({ item }) => <View style={styles.videolist}>{item}</View>}
+                            keyExtractor={(_, idx) => `level-item-${idx}`}
+                            style={styles.modalScrollView}
+                            contentContainerStyle={styles.modalScrollViewContent}
+                            nestedScrollEnabled={true}
+                            scrollEventThrottle={16}
+                            decelerationRate={Platform.OS === 'ios' ? 'fast' : 0.99}
+                            removeClippedSubviews={true}
+                            overScrollMode={'never'}
+                            initialNumToRender={4}
+                            maxToRenderPerBatch={6}
+                            windowSize={3}
+                            getItemLayout={(_, index) => ({ length: ITEM_HEIGHT_MODAL, offset: ITEM_HEIGHT_MODAL * index, index })}
+                        />
+                    </View>
+                </Pressable>
             </Pressable>
-        </Pressable>
-    </View>
-);
+        </View>
+    );
+}
 
 const CategoryButton = ({ image, title, onPress, isOpen, isComplete, imagenestedStyle, modalMode, modalWidth }) => (
     <TouchableOpacity activeOpacity={1} onPress={onPress}>
-        <View style={[
-            styles.buttonNested,
-            { marginBottom: isOpen ? 0 : 10 },
-            modalMode ? { width: modalWidth || '100%', alignSelf: 'center', overflow: 'hidden' } : (modalMode && modalWidth ? { width: modalWidth, alignSelf: 'center' } : null)
-        ]}>
+        <View
+            style={[
+                styles.buttonNested,
+                { marginBottom: isOpen ? 0 : 10 },
+                modalMode ? { width: modalWidth || '100%', alignSelf: 'center', overflow: 'hidden' } : (modalMode && modalWidth ? { width: modalWidth, alignSelf: 'center' } : null)
+            ]}
+        >
             {(() => {
                 if (modalMode) {
                     const baseImgHeight = (imagenestedStyle && imagenestedStyle.height) || styles.imagenested.height || 180;
@@ -160,6 +195,8 @@ const CategoryButton = ({ image, title, onPress, isOpen, isComplete, imagenested
         </View>
     </TouchableOpacity>
 );
+
+// simple CategoryButton component
 
 
 const Dashboard = ({ navigation }) => {
@@ -413,27 +450,18 @@ const Dashboard = ({ navigation }) => {
                     stepRef.measureLayout(
                         scrollNode,
                         (x, y) => {
-                            if (scrollRef && typeof scrollRef.scrollTo === 'function') {
-                                scrollRef.scrollTo({
-                                    y: Math.max(y - 20, 0),
-                                    animated: true,
-                                });
-                            }
+                            scrollToY(scrollRef, Math.max(y - 20, 0));
                             setLastViewedRequest(null);
                         },
                         (err) => {
                             //'measureLayout error', err);
-                            if (scrollRef && typeof scrollRef.scrollTo === 'function') {
-                                scrollRef.scrollTo({ y: 0, animated: true });
-                            }
+                            scrollToY(scrollRef, 0);
                             setLastViewedRequest(null);
                         }
                     );
                 } catch (e) {
                     console.warn('measureLayout threw', e);
-                    if (scrollRef && typeof scrollRef.scrollTo === 'function') {
-                        scrollRef.scrollTo({ y: 0, animated: true });
-                    }
+                    scrollToY(scrollRef, 0);
                     setLastViewedRequest(null);
                 }
             }
@@ -456,53 +484,60 @@ const Dashboard = ({ navigation }) => {
     };
 
     const handleLastViewedPress = async () => {
-        try {
-            const lastViewedJson = await AsyncStorage.getItem('lastViewed');
-            if (!lastViewedJson) {
-                showToast("No last viewed topic found to continue from.");
-                return;
-            }
+        // Show loader immediately, then perform lookup; ensure loader visible for at least 2s
+        setIsVideoLoading(true);
+        setTimeout(async () => {
+            const start = Date.now();
+            try {
+                const lastViewedJson = await AsyncStorage.getItem('lastViewed');
+                if (!lastViewedJson) {
+                    showToast("No last viewed topic found to continue from.");
+                    return;
+                }
 
-            const lastViewed = JSON.parse(lastViewedJson);
-            let { category, step } = lastViewed || {};
-            //"Last viewed data:", lastViewed);
-            //"category:", category, "step:", step, "unlockedStepsThreshold:", unlockedStepsThreshold);
-            const stepNum = typeof step === 'number' ? step : (step ? Number(step) : NaN);
+                const lastViewed = JSON.parse(lastViewedJson);
+                let { category, step } = lastViewed || {};
+                const stepNum = typeof step === 'number' ? step : (step ? Number(step) : NaN);
 
-            if (!Number.isNaN(stepNum) && (stepNum === 1001 || stepNum === 1002)) {
-                if (unlockedStepsThreshold && Number.isFinite(unlockedStepsThreshold) && unlockedStepsThreshold > 0) {
-                    const resolvedFromThreshold = getCategoryFromStep(unlockedStepsThreshold);
-                    if (resolvedFromThreshold && masterConfig[resolvedFromThreshold]) {
-                        const level = getLevelForCategory(resolvedFromThreshold);
-                        if (level) {
-                            setLastViewedRequest({ level, category: resolvedFromThreshold, step: unlockedStepsThreshold });
-                            return;
+                if (!Number.isNaN(stepNum) && (stepNum === 1001 || stepNum === 1002)) {
+                    if (unlockedStepsThreshold && Number.isFinite(unlockedStepsThreshold) && unlockedStepsThreshold > 0) {
+                        const resolvedFromThreshold = getCategoryFromStep(unlockedStepsThreshold);
+                        if (resolvedFromThreshold && masterConfig[resolvedFromThreshold]) {
+                            const level = getLevelForCategory(resolvedFromThreshold);
+                            if (level) {
+                                setLastViewedRequest({ level, category: resolvedFromThreshold, step: unlockedStepsThreshold });
+                                return;
+                            }
                         }
                     }
+                    await handleIntroductionPress(stepNum === 1001 ? 1 : 2);
+                    return;
                 }
-                handleIntroductionPress(stepNum === 1001 ? 1 : 2);
-                return;
-            }
 
-            let resolvedCategory = category;
-            if ((!resolvedCategory || !masterConfig[resolvedCategory]) && !Number.isNaN(stepNum)) {
-                resolvedCategory = getCategoryFromStep(stepNum);
-            }
+                let resolvedCategory = category;
+                if ((!resolvedCategory || !masterConfig[resolvedCategory]) && !Number.isNaN(stepNum)) {
+                    resolvedCategory = getCategoryFromStep(stepNum);
+                }
 
-            if (resolvedCategory && masterConfig[resolvedCategory]) {
-                const level = getLevelForCategory(resolvedCategory);
-                if (level) {
-                    setLastViewedRequest({ level, category: resolvedCategory, step: stepNum });
+                if (resolvedCategory && masterConfig[resolvedCategory]) {
+                    const level = getLevelForCategory(resolvedCategory);
+                    if (level) {
+                        setLastViewedRequest({ level, category: resolvedCategory, step: stepNum });
+                    } else {
+                        showToast("Could not find the level for your last viewed topic.");
+                    }
                 } else {
-                    showToast("Could not find the level for your last viewed topic.");
+                    showToast("No last viewed topic found to continue from.");
                 }
-            } else {
-                showToast("No last viewed topic found to continue from.");
+            } catch (error) {
+                console.error("Failed to handle last viewed press:", error);
+            } finally {
+                const elapsed = Date.now() - start;
+                const remaining = 1000 - elapsed;
+                if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
+                setIsVideoLoading(false);
             }
-        } catch (error) {
-            console.error("Failed to handle last viewed press:", error);
-            //  Alert.alert("Error", "Could not retrieve your last viewed topic.");
-        }
+        }, 50);
     };
 
     useEffect(() => {
@@ -891,6 +926,23 @@ const Dashboard = ({ navigation }) => {
         }
     };
 
+    const scrollToY = (scrollRef, y) => {
+        try {
+            if (!scrollRef) return;
+            if (typeof scrollRef.scrollTo === 'function') {
+                scrollRef.scrollTo({ y, animated: true });
+            } else if (typeof scrollRef.scrollToOffset === 'function') {
+                scrollRef.scrollToOffset({ offset: y, animated: true });
+            } else if (scrollRef.current) {
+                const cur = scrollRef.current;
+                if (typeof cur.scrollTo === 'function') cur.scrollTo({ y, animated: true });
+                else if (typeof cur.scrollToOffset === 'function') cur.scrollToOffset({ offset: y, animated: true });
+            }
+        } catch (e) {
+            console.warn('scrollToY failed', e);
+        }
+    };
+
     const arePrerequisitesMet = async (categoryKey) => {
         const deviceKey = await AsyncStorage.getItem('deviceKey');
         const config = masterConfig[categoryKey];
@@ -999,7 +1051,7 @@ const Dashboard = ({ navigation }) => {
                             scrollNode,
                             (x, y) => {
                                 try {
-                                    scrollRef.scrollTo({ y: Math.max(y - 10, 0), animated: true });
+                                    scrollToY(scrollRef, Math.max(y - 10, 0));
                                 } catch (e) {
                                     console.warn('Failed to scroll to category:', e);
                                 }
@@ -1009,7 +1061,7 @@ const Dashboard = ({ navigation }) => {
                     } else if (categoryRef.measure) {
                         categoryRef.measure((x, y, width, height, pageX, pageY) => {
                             try {
-                                scrollRef.scrollTo({ y: Math.max(pageY - 10, 0), animated: true });
+                                scrollToY(scrollRef, Math.max(pageY - 10, 0));
                             } catch (e) {
                                 console.warn('Failed to scroll to category (measure):', e);
                             }
@@ -1480,10 +1532,7 @@ const Dashboard = ({ navigation }) => {
         if (!levelModalScrollRef.current) return;
         const timeout = setTimeout(() => {
             try {
-                levelModalScrollRef.current.scrollTo({
-                    y: 0,
-                    animated: true,
-                });
+                scrollToY(levelModalScrollRef.current, 0);
             } catch (e) {
                 console.warn('Failed to scroll level modal to top:', e);
             }
@@ -1520,57 +1569,78 @@ const Dashboard = ({ navigation }) => {
     return (
         <View style={[styles.container, backgroundStyle]}>
             <View style={styles.imageContainer}>
-                <ScrollView showsVerticalScrollIndicator={false} >
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(1)}>
-                        <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 5 }]}>
-                            <Image source={require('../img/Intro1.png')} style={imageStyle} resizeMode="cover" />
-                            <View style={[completedSteps['step1001'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
-                                <Text style={styles.text}>Introduction I</Text>
-                            </View>
-                        </Animated.View>
-                    </TouchableOpacity>
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(2)}>
-                        <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}>
-                            <Image source={require('../img/Intro2.png')} style={imageStyle} resizeMode="cover" />
-                            <View style={[completedSteps['step1002'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
-                                <Text style={styles.text}>Introduction II</Text>
-                            </View>
-                        </Animated.View>
-                    </TouchableOpacity>
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('foundation')} >
-                        <Animated.View style={[styles.button, { transform: [{ scale: scale1 }], marginTop: 10 }]}>
-                            <Image source={require('../img/foundationlevel.png')} style={imageStyle} resizeMode="cover" />
-                            <View
-                                style={[
-                                    styles.textOverlayTwo,
-                                    isLevelComplete(foundationKeys) ? styles.completedTextOverlayTwo : null,
-                                    { justifyContent: 'center' }
-                                ]}
-                            >
-                                {/* <Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity: 0 }]} /> */}
-                                <Text style={[styles.text, { textAlign: 'center' }]}>Foundation Level</Text>
-                                {/* <Animated.Image source={require('../img/tap.png')} style={[styles.tabimage, { opacity }]} resizeMode="cover" /> */}
-                            </View>
-                        </Animated.View>
-                    </TouchableOpacity>
-                    <Animated.Image source={require('../img/tap.png')} style={[styles.handImage, { opacity: handOpacity, transform: [{ translateX: handPositionX }, { translateY: handPositionY }, { scale: handScale }] }]} resizeMode="contain" pointerEvents="none" />
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('middle')}>
-                        <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], marginTop: 10 }]}>
-                            <Image source={require('../img/middlelevel2.png')} style={imageStyle} resizeMode="cover" />
-                            <View style={[styles.textOverlay, isLevelComplete(middleKeys) ? styles.completedCategoryOverlay : null]}>
-                                <Text style={styles.text}>Middle Level</Text>
-                            </View>
-                        </Animated.View>
-                    </TouchableOpacity>
-                    <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('advanced')}>
-                        <Animated.View style={[styles.button, { transform: [{ scale: scale3 }], marginTop: 10 }]}>
-                            <Image source={require('../img/advancelevel.png')} style={imageStyle} resizeMode="cover" />
-                            <View style={[styles.textOverlay, isLevelComplete(advancedKeys) ? styles.completedCategoryOverlay : null]}>
-                                <Text style={styles.text}>Advanced Level</Text>
-                            </View>
-                        </Animated.View>
-                    </TouchableOpacity>
-                </ScrollView>
+                {/* Replace ScrollView with FlatList to virtualize big image cards */}
+                <FlatList
+                    data={[{ key: 'intro1' }, { key: 'intro2' }, { key: 'foundation' }, { key: 'middle' }, { key: 'advanced' }]}
+                    keyExtractor={(item) => item.key}
+                    renderItem={({ item, index }) => {
+                        const commonStyle = { marginTop: index === 0 ? 5 : 10 };
+                        if (item.key === 'intro1') return (
+                            <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(1)}>
+                                <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], ...commonStyle }]}>
+                                    <Image source={require('../img/Intro1.png')} style={imageStyle} resizeMode="cover" />
+                                    <View style={[completedSteps['step1001'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
+                                        <Text style={styles.text}>Introduction I</Text>
+                                    </View>
+                                </Animated.View>
+                            </TouchableOpacity>
+                        );
+                        if (item.key === 'intro2') return (
+                            <TouchableOpacity activeOpacity={1} onPress={() => handleIntroductionPress(2)}>
+                                <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], ...commonStyle }]}>
+                                    <Image source={require('../img/Intro2.png')} style={imageStyle} resizeMode="cover" />
+                                    <View style={[completedSteps['step1002'] ? styles.completedCategoryOverlay : styles.textOverlay]}>
+                                        <Text style={styles.text}>Introduction II</Text>
+                                    </View>
+                                </Animated.View>
+                            </TouchableOpacity>
+                        );
+                        if (item.key === 'foundation') return (
+                            <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('foundation')}>
+                                <Animated.View style={[styles.button, { transform: [{ scale: scale1 }], ...commonStyle }]}>
+                                    <Image source={require('../img/foundationlevel.png')} style={imageStyle} resizeMode="cover" />
+                                    <View
+                                        style={[
+                                            styles.textOverlayTwo,
+                                            isLevelComplete(foundationKeys) ? styles.completedTextOverlayTwo : null,
+                                            { justifyContent: 'center' }
+                                        ]}
+                                    >
+                                        <Text style={[styles.text, { textAlign: 'center' }]}>Foundation Level</Text>
+                                    </View>
+                                </Animated.View>
+                            </TouchableOpacity>
+                        );
+                        if (item.key === 'middle') return (
+                            <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('middle')}>
+                                <Animated.View style={[styles.button, { transform: [{ scale: scale2 }], ...commonStyle }]}>
+                                    <Image source={require('../img/middlelevel2.png')} style={imageStyle} resizeMode="cover" />
+                                    <View style={[styles.textOverlay, isLevelComplete(middleKeys) ? styles.completedCategoryOverlay : null]}>
+                                        <Text style={styles.text}>Middle Level</Text>
+                                    </View>
+                                </Animated.View>
+                            </TouchableOpacity>
+                        );
+                        return (
+                            <TouchableOpacity activeOpacity={1} onPress={() => handleLevelPress('advanced')}>
+                                <Animated.View style={[styles.button, { transform: [{ scale: scale3 }], ...commonStyle }]}>
+                                    <Image source={require('../img/advancelevel.png')} style={imageStyle} resizeMode="cover" />
+                                    <View style={[styles.textOverlay, isLevelComplete(advancedKeys) ? styles.completedCategoryOverlay : null]}>
+                                        <Text style={styles.text}>Advanced Level</Text>
+                                    </View>
+                                </Animated.View>
+                            </TouchableOpacity>
+                        );
+                    }}
+                    contentContainerStyle={{ paddingBottom: 30 }}
+                    initialNumToRender={4}
+                    windowSize={3}
+                    removeClippedSubviews={true}
+                    scrollEventThrottle={16}
+                    decelerationRate={Platform.OS === 'ios' ? 'fast' : 0.99}
+                    getItemLayout={(_, index) => ({ length: (imageStyle.height + 20), offset: (imageStyle.height + 20) * index, index })}
+                />
+                <Animated.Image source={require('../img/tap.png')} style={[styles.handImage, { opacity: handOpacity, transform: [{ translateX: handPositionX }, { translateY: handPositionY }, { scale: handScale }] }]} resizeMode="contain" pointerEvents="none" />
                 {renderLevelModal()}
             </View>
 
@@ -1615,8 +1685,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
 
-    button: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
-    buttonNested: { width: '100%', marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, },
+    button: { marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', elevation: 2 },
+    buttonNested: { width: '100%', marginBottom: 0, position: 'relative', borderRadius: 5, overflow: 'hidden', elevation: 2 },
     image: { width: '100%', height: 250, resizeMode: 'center', borderRadius: 5, },
     imagenested: { width: '100%', height: 180, borderRadius: 5, alignSelf: 'center' },
     textOverlay: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: 'rgba(20, 52, 164, 0.9)', padding: 10, alignItems: 'center', borderBottomLeftRadius: 5, borderBottomRightRadius: 5, },

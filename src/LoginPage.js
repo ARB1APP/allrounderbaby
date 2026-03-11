@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Animated, ScrollView,
+    View, Text, StyleSheet, TouchableOpacity, TextInput, Animated, ScrollView,
     StatusBar, Platform, KeyboardAvoidingView, useColorScheme, Alert, ActivityIndicator, useWindowDimensions, BackHandler, ToastAndroid, Linking
 } from 'react-native';
+import SmartImage from './components/SmartImage';
 import { exitApp } from './utils/exitApp';
 import CheckBox from 'react-native-check-box';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
@@ -262,7 +263,7 @@ const LoginPage = ({ navigation }) => {
 
             {!showLoginForm ? (
                 <Animated.View style={[styles.container, { opacity: welcomeOpacity }]}>
-                    <Image style={[styles.welcomeImage, dynamicStyles.welcomeImage]} source={require('../img/babyone.jpg')} />
+                    <SmartImage style={[styles.welcomeImage, dynamicStyles.welcomeImage]} source={require('../img/babyone.jpg')} />
                     <View style={styles.fullDiv}>
                         <Text style={[styles.startAppText, dynamicStyles.startAppText, { color: isDarkMode ? Colors.white : Colors.black }]}>
                             Start Early, <Text style={styles.highlightText}>Shine Always!</Text>
@@ -360,8 +361,15 @@ const LoginPage = ({ navigation }) => {
                                 {isLoggingIn ? <ActivityIndicator color="#FFFFFF" /> : <Text style={[styles.buttonText, dynamicStyles.buttonText]}>Login</Text>}
                             </TouchableOpacity>
                         </Animated.View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
+                            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                                <Text style={[styles.otpLink, { color: isDarkMode ? '#2754f7ff' : '#1434A4', marginRight: 15 }]}>Forgot Password</Text>
+                            </TouchableOpacity>
 
-                        <Text style={[styles.otpLink, { color: isDarkMode ? '#2754f7ff' : '#1434A4' }]}>Login through OTP</Text>
+                            <TouchableOpacity onPress={() => navigation.navigate('LoginOTP')}>
+                                <Text style={[styles.otpLink, { color: isDarkMode ? '#2754f7ff' : '#1434A4' }]}>Login Through OTP</Text>
+                            </TouchableOpacity>
+                        </View>
                     </ScrollView>
                 </KeyboardAvoidingView>
             )}

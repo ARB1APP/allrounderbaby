@@ -1107,7 +1107,7 @@ const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) 
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.textPrimaryModal,
+    color: theme.primaryAction,
     flex: 1,
   },
   modalCloseButton: {
