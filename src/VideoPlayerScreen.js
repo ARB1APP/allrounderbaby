@@ -1,39 +1,20 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  BackHandler,
-  Alert,
-  StatusBar,
-  Platform,
-  useWindowDimensions,
-} from "react-native";
+import React, { useEffect, useState, useRef, useCallback, useMemo, } from "react";
+import { StyleSheet, Text, View, BackHandler, Alert, StatusBar, Platform, useWindowDimensions, } from "react-native";
 import Orientation from 'react-native-orientation-locker';
 import { VdoPlayerView } from "vdocipher-rn-bridge";
-import {
-  useRoute,
-  useNavigation,
-  useFocusEffect,
-} from "@react-navigation/native";
+import { useRoute, useNavigation, useFocusEffect, } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "./config/api";
-import { Dimensions } from "react-native";
-
 
 const VideoPlayerScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const playerRef = useRef(null);
-  const progressUpdated = useRef(false);
-  const [playerKey, setPlayerKey] = useState(0);
-
+  const skipImmediateCleanupRef = useRef(false);
+  const delayedCleanupTimerRef = useRef(null);
+  const progressSentRef = useRef(false);
+  const finishedSentRef = useRef(false);
+  const maxWatchedTimeRef = useRef(0);
   /* ================= GET PARAMS ================= */
 
   const {
@@ -51,8 +32,6 @@ const VideoPlayerScreen = () => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const isLandscape = screenWidth > screenHeight;
   const playerHeight = isLandscape ? screenHeight : Math.round((screenWidth * 9) / 16);
-  // const { width, height } = useWindowDimensions();
-  // const isLandscape = width > height;
 
   const [credentials, setCredentials] = useState({
     otp: null,
@@ -63,15 +42,16 @@ const VideoPlayerScreen = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [videoCompleted, setVideoCompleted] = useState(false);
+  const currentTimeRef = useRef(0);
+
+
   /* ================= FETCH OTP ================= */
 
   const fetchVideoCredentials = useCallback(async () => {
     if (!videoId) return;
-
     try {
       setIsLoading(true);
       setError(null);
-
       const [userId, token] = await Promise.all([
         AsyncStorage.getItem("userId"),
         AsyncStorage.getItem("token"),
@@ -117,76 +97,83 @@ const VideoPlayerScreen = () => {
     }
   }, [videoId]);
 
+
+  const toSeconds = useCallback((val) => {
+    if (val == null) return 0;
+    const n = Number(val);
+    if (Number.isNaN(n)) return 0;
+    return n < 0 ? 0 : Math.floor(n);
+  }, []);
+
   /* ================= REFRESH WHEN VIDEO CHANGES ================= */
 
   useEffect(() => {
     if (videoId) {
-      progressUpdated.current = false;
-      setCredentials({ otp: null, playbackInfo: null });
+      progressSentRef.current = false;
+      finishedSentRef.current = false;
+      maxWatchedTimeRef.current = 0;
+      setCurrentTime(0);
       fetchVideoCredentials();
     }
-  }, [videoId]);
+  }, [videoId, fetchVideoCredentials]);
 
   /* ================= CLEANUP ================= */
 
   useEffect(() => {
-    // return () => {
-    //   try {
-    //     playerRef.current?.stop?.();
-    //     playerRef.current?.release?.();
-    //   } catch (e) { }
-    // };
     return () => {
       try {
+        // Simply stop and release the player immediately on unmount
         if (playerRef.current) {
           playerRef.current.stop?.();
           playerRef.current.release?.();
           playerRef.current = null;
         }
-      } catch (e) { }
+      } catch (e) {
+        // silently ignore errors
+      }
     };
   }, []);
 
-  // allow rotation on this screen, restore to portrait when leaving
   useEffect(() => {
     try {
       Orientation.unlockAllOrientations();
     } catch (e) {
-      // fail silently if orientation locker isn't available
     }
 
     return () => {
       try {
         Orientation.lockToPortrait();
       } catch (e) {
-        // ignore
       }
     };
   }, []);
 
   // hide header and status bar when device rotated to landscape or when player enters fullscreen
-  useEffect(() => {
-    try {
-      navigation.setOptions({ headerShown: !isLandscape });
-    } catch (e) { }
+  // useEffect(() => {
+  //   try {
+  //     navigation.setOptions({ headerShown: !isLandscape });
+  //   } catch (e) { }
 
-    try {
-      StatusBar.setHidden(isLandscape);
-    } catch (e) { }
-  }, [isLandscape, navigation]);
+  //   try {
+  //     StatusBar.setHidden(isLandscape || isFullscreen);
+  //   } catch (e) { }
+  // }, [isLandscape, navigation]);
+  useEffect(() => {
+    navigation.setOptions({ headerShown: !isLandscape });
+    StatusBar.setHidden(isLandscape || isFullscreen);
+  }, [isLandscape, isFullscreen, navigation]);
 
   useFocusEffect(
     useCallback(() => {
-      setCurrentTime(0);
       setIsFullscreen(false);
       setError(null);
       setCredentials({ otp: null, playbackInfo: null });
-      progressUpdated.current = false;
+      progressSentRef.current = false;
+      finishedSentRef.current = false;
 
       if (videoId) {
         fetchVideoCredentials();
       }
-
       const sub = BackHandler.addEventListener(
         "hardwareBackPress",
         handleBack
@@ -194,72 +181,54 @@ const VideoPlayerScreen = () => {
 
       return () => {
         sub.remove();
-        setCurrentTime(0);
         setIsFullscreen(false);
         setError(null);
         setCredentials({ otp: null, playbackInfo: null });
-        progressUpdated.current = false;
+        progressSentRef.current = false;
+        finishedSentRef.current = false;
       };
-    }, [videoId, handleBack, fetchVideoCredentials])
+    }, [videoId, fetchVideoCredentials, handleBack])
   );
   /* ================= UPDATE PROGRESS ================= */
 
   const updateProgress = useCallback(
-    async (isFinished = false) => {
+    async (isFinished = false, overrideSeconds = null) => {
       if (!videoId) return;
-      // avoid duplicate calls when progress already updated (unless marking finished)
-      if (progressUpdated.current && !isFinished) return;
 
       try {
-        const [userId, token, deviceKey, savedProgress] =
-          await Promise.all([
-            AsyncStorage.getItem("userId"),
-            AsyncStorage.getItem("token"),
-            AsyncStorage.getItem("deviceKey"),
-            AsyncStorage.getItem("userProgress"),
-          ]);
+        const [userId, token, deviceKey] = await Promise.all([
+          AsyncStorage.getItem("userId"),
+          AsyncStorage.getItem("token"),
+          AsyncStorage.getItem("deviceKey"),
+        ]);
 
         const userIdInt = userId ? parseInt(userId, 10) : null;
-        const seconds = Math.floor(currentTime || 0);
 
-        let progressData = [];
-        if (savedProgress) {
-          try {
-            progressData = JSON.parse(savedProgress);
-          } catch {
-            progressData = [];
-          }
-        }
+        // ✅ Use exact currentTime from player if overrideSeconds is not passed
+        const sendSecs = overrideSeconds != null
+          ? Math.floor(overrideSeconds)
+          : Math.floor(currentTimeRef.current);
 
-        const index = progressData.findIndex(
-          (p) => p.video_id === videoId
-        );
+        //console.log("Sending watched time (exact currentTime):", sendSecs);
 
-        let previousFinishCount = 0;
-
-        if (index > -1) {
-          previousFinishCount = progressData[index].is_finished || 0;
-        }
-
-        const newFinishCount = isFinished
-          ? previousFinishCount + 1
-          : previousFinishCount;
+        const finishedThreshold = total_time ? Math.ceil(toSeconds(total_time) * 0.8) : sendSecs;
+        const finished = sendSecs >= finishedThreshold ? 1 : 0;
 
         const payload = {
           User_id: userIdInt,
           video_id: videoId,
-          last_watched_timestamp_seconds: seconds,
+          last_watched_timestamp_seconds: sendSecs,
           Language: language,
-          is_finished: newFinishCount,
+          is_finished: finished,
           level_step: step,
           total_views: 1,
-          total_time: total_time,
-          playback: 'fgdfg',
-          otp: 'dsg',
+          total_time: toSeconds(total_time),
+          playback: "fgdfg",
+          otp: "dsg",
           stage_name: `${stage_name || ""} ${displayStep ?? step}`.trim(),
           DeviceKey: deviceKey,
         };
-        //  console.log("Updating progress with:", payload);
+
         const headers = {
           Accept: "application/json",
           "Content-Type": "application/json",
@@ -269,67 +238,37 @@ const VideoPlayerScreen = () => {
           headers.Authorization = `Bearer ${token}`;
         }
 
-        const response = await fetch(
-          `${BASE_URL}User/User_Video_Data`,
-          {
-            method: "POST",
-            headers,
-            body: JSON.stringify(payload),
-          }
-        );
+        const response = await fetch(`${BASE_URL}User/User_Video_Data`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
+        });
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        // ✅ Update Local Storage Properly
-        if (index > -1) {
-          progressData[index] = {
-            ...progressData[index],
-            last_watched_timestamp_seconds: seconds,
-            is_finished: newFinishCount,
-          };
-        } else {
-          progressData.push({
-            video_id: videoId,
-            last_watched_timestamp_seconds: seconds,
-            is_finished: newFinishCount,
-            level_step: step,
-          });
-        }
+        const data = await response.json();
+        //  console.log("Progress update response:", data);
 
-        await AsyncStorage.setItem(
-          "userProgress",
-          JSON.stringify(progressData)
-        );
-
-        // mark that we've updated progress so we don't send duplicate requests
-        progressUpdated.current = true;
       } catch (error) {
-        // console.log("Progress update failed:", error);
+        // console.log("Failed to update progress", error?.message || error);
       }
     },
-    [
-      videoId,
-      currentTime,
-      total_time,
-      credentials?.otp,
-      language,
-      step,
-      stage_name,
-      displayStep,
-    ]
+    [videoId, currentTime, language, step, stage_name, displayStep, total_time]
   );
   /* ================= BACK HANDLER ================= */
 
-  const handleBack = useCallback(async () => {
-    // if (isFullscreen) {
-    //   playerRef.current?.exitFullscreenV2?.();
-    //   return true;
-    // }
 
-    await updateProgress();
+  const handleBack = useCallback(() => {
+    // 1️⃣ Stop video immediately to release native player resources
+    if (playerRef.current) {
+      playerRef.current.stop?.();
+      playerRef.current.release?.();
+    }
 
+    // 2️⃣ Fire progress update asynchronously (non-blocking)
+    updateProgress().catch(() => { });
+
+    // 3️⃣ Navigate immediately
     if (cameFrom === "Dashboard") {
       navigation.navigate("Home");
     } else if (cameFrom) {
@@ -339,7 +278,7 @@ const VideoPlayerScreen = () => {
     }
 
     return true;
-  }, [isFullscreen, navigation, cameFrom, updateProgress]);
+  }, [navigation, cameFrom, updateProgress]);
 
   /* ================= LOADING ================= */
 
@@ -368,7 +307,7 @@ const VideoPlayerScreen = () => {
       <StatusBar barStyle="light-content" backgroundColor="#000" hidden={isLandscape} />
 
       <VdoPlayerView
-        key={`${videoId}-${playerKey}`}
+        key={videoId}
         ref={playerRef}
         style={{
           width: "100%",
@@ -380,24 +319,26 @@ const VideoPlayerScreen = () => {
           playbackInfo: credentials.playbackInfo,
         }}
         onProgress={(p) => {
-          if (p?.currentTime) setCurrentTime(p.currentTime);
+          if (p && typeof p.currentTime === "number") {
+            const secs = Math.floor(p.currentTime > 1000 ? p.currentTime / 1000 : p.currentTime);
+            setCurrentTime(secs);         // state update for UI
+            currentTimeRef.current = secs; // ref for real-time usage
+            //  console.log("Current Time (s):", secs);
+          }
         }}
         onMediaEnded={async () => {
-          await updateProgress(true);
-
           setVideoCompleted(true);
-
+          try {
+            await updateProgress(true);
+          } catch (e) {
+            // console.log('updateProgress onMediaEnded failed', e);
+          }
           if (isFullscreen) {
             playerRef.current?.exitFullscreenV2?.();
           }
         }}
         onFullscreenChange={(isFull) => {
           setIsFullscreen(isFull);
-          if (!isFull) {
-            setTimeout(() => {
-              setPlayerKey(prev => prev + 1);
-            }, 400);
-          }
         }}
         onInitializationFailure={(e) => {
           Alert.alert(
