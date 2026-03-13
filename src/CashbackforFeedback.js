@@ -236,11 +236,6 @@ const CashbackforFeedback = () => {
       return;
     }
 
-    if (!token) {
-      Alert.alert("Authentication Error", "User not authenticated. Please log in again.");
-      return;
-    }
-
     setIsVideoLoading(true);
     const DETAILS_ENDPOINT = `${url}Vdocipher/GetAllVDOCipherVideosByFolderID?folderId=${folderId}`;
 
@@ -253,13 +248,11 @@ const CashbackforFeedback = () => {
         }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        Alert.alert("API Error", `Failed to get video details: ${errorData.message || response.statusText}`);
-      } else {
+      if (response.ok) {
         const videoDetails = await response.json();
         setCashbackVideos(videoDetails);
       }
+      // No alert for API error
     } catch (error) {
       Alert.alert("Network Error", `An unexpected error occurred: ${error.message}`);
     } finally {
@@ -271,7 +264,7 @@ const CashbackforFeedback = () => {
     setIsVideoLoading(true);
 
     if (!videoId) {
-      Alert.alert("Error", "Missing video ID to play the video.");
+      setIsVideoLoading(false);
       return null;
     }
 
@@ -286,8 +279,6 @@ const CashbackforFeedback = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        Alert.alert("API Error", `Failed to get video details: ${errorData.message || response.statusText}`);
         return null;
       }
 
@@ -300,7 +291,7 @@ const CashbackforFeedback = () => {
     }
   };
 
-  const handleVideoPlayback = async (videoId, language, title, poster, stepParam = null) => {
+  const handleVideoPlayback = async (videoId, language, title, poster, stepParam) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
       Alert.alert("No Internet Connection", "Please check your internet connection and try again.");
@@ -319,7 +310,7 @@ const CashbackforFeedback = () => {
     const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
     const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
 
-    // console.log("Watermark Details:", { name, email, phone, sessionId });
+    console.log("Watermark Details:", { name, email, phone, sessionId });
 
     const startX = 20;
     const startY = 5;
@@ -373,32 +364,16 @@ const CashbackforFeedback = () => {
       }
     ];
 
-    // console.log("Final Annotation Object:", annotationObject);
+    console.log("Final Annotation Object:", annotationObject);
 
 
-    // console.log("Annotation Object:", JSON.stringify(annotationObject));
-    const requestBody = {
-      UserId: parseInt(userId, 10),
-      VideoId: videoId,
-      annotate: JSON.stringify(annotationObject)
-    };
+    console.log("Annotation Object:", JSON.stringify(annotationObject));
     try {
-      if (!videoId) {
-        Alert.alert("Error", "Video not found.");
-        setIsVideoLoading(false);
-        return;
-      }
-
-      if (!userId) {
-        Alert.alert("Authentication Error", "User ID not available for watermark. Please log in again.");
-        setIsVideoLoading(false);
-        return;
-      }
-
       const detailsData = await vdoCipherApi(videoId);
       if (detailsData) {
         const total_time = detailsData.length || 0;
-        const stepToSend = stepParam ?? (selectedVideoGroup?.stepNumber ?? 1);
+        const stepToSend = typeof stepParam !== 'undefined' ? stepParam : (selectedVideoGroup?.stepNumber ?? 1);
+
         navigation.navigate('VideoPlayerScreen', {
           VideoId: videoId,
           annotate: JSON.stringify(annotationObject),
@@ -409,12 +384,12 @@ const CashbackforFeedback = () => {
           cameFrom: 'Cashback for Feedback',
           step: stepToSend,
           displayStep: 1,
-          stage_name: `Cashback for Feedback`,
+          stage_name: 'Cashback for Feedback',
           sessionId: sessionId,
         });
       }
     } catch (err) {
-      console.error('VdoCipher request error', err);
+      console.error('VdoCipher navigation error', err);
       Alert.alert("Network Error", `An unexpected error occurred: ${err.message}`);
     } finally {
       setIsVideoLoading(false);
@@ -425,6 +400,9 @@ const CashbackforFeedback = () => {
     const videos = [];
     let englishCashbackItem = null;
     let hindiCashbackItem = null;
+
+    // Debug log for API response
+    console.log('cashbackVideos.rows:', cashbackVideos?.rows);
 
     cashbackVideos?.rows?.forEach(item => {
       if (item.title && item.title.toLowerCase().includes('100 cashback for feedback')) {
@@ -454,6 +432,9 @@ const CashbackforFeedback = () => {
       });
     }
 
+    // Debug log for filtered videos
+    console.log('playableCashbackVideos:', videos);
+
     return videos;
   }, [cashbackVideos]);
 
@@ -469,19 +450,17 @@ const CashbackforFeedback = () => {
       const videoGroup = {
         hindiVideo: hindiVideo ? { id: hindiVideo.id } : null,
         englishVideo: englishVideo ? { id: englishVideo.id } : null,
-        stepNumber: 1,
+        stepNumber: 'cashback',
       };
 
       setSelectedVideoGroup(videoGroup);
       setIsLanguageModalVisible(true);
-    } else {
-      Alert.alert("Videos Not Available", "Cashback videos could not be loaded. Please try again later.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
+      <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <LinearGradient
           colors={['#FFF8E5', '#FFFDEB']}
@@ -549,7 +528,7 @@ const CashbackforFeedback = () => {
         <View style={styles.importantDetailsBox}>
           <Text style={[styles.sectionHeader, { color: theme.accentColor }]}>Important Details</Text>
           <Text style={styles.detailPoint}>
-            <Text style={styles.emphasisText}>One-time submission per user</Text> – Feedback can be submitted only once per account.
+            <Text style={styles.emphasisText}>✔️</Text> One-time submission per user – Feedback can be submitted only once per account.
           </Text>
         </View>
 
@@ -586,7 +565,7 @@ const CashbackforFeedback = () => {
               ]}>Bank Account & Payment Processing</Text>
               <Text style={styles.subListItem}>
                 <Text style={styles.emphasisText}>✔️ </Text>
-                Update your bank details after logging in to our website—this account will be used for your cashback payout.
+                Update your bank details after logging in to our website — this will be used for your cashback payout (for eligible domestic users)
                 {'\n'}
               </Text>
               <Text style={styles.subListItem}>
@@ -602,12 +581,17 @@ const CashbackforFeedback = () => {
               ]}>International Participants</Text>
               <Text style={styles.subListItem}>
                 <Text style={styles.emphasisText}>✔️ </Text>
-                For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
+                For international users, payouts are facilitated through a third-party global payout platform (such as Tremendous), subject to availability in eligible countries.
                 {'\n'}
               </Text>
               <Text style={styles.subListItem}>
                 <Text style={styles.emphasisText}>✔️ </Text>
-                The final amount credited depends on your bank’s deductions and exchange rates.
+                Applicable transaction fees, currency conversion charges, or bank deductions (if any) are determined by the payout platform and recipient’s bank.
+                {'\n'}
+              </Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                The final amount credited depends on the payout method selected and applicable exchange rates.
               </Text>
             </View>
             <View style={styles.sectionDivider} />
@@ -618,11 +602,21 @@ const CashbackforFeedback = () => {
               ]}>Tax & Compliance</Text>
               <Text style={styles.subListItem}>
                 <Text style={styles.emphasisText}>✔️ </Text>
-                No TDS will be deducted under Section 194J of the Indian Income Tax Act, subject to applicable rules.
+                Cashback is treated as a benefit/incentive under Section 194R of the Indian Income Tax Act, 1961, subject to applicable threshold limits.
+                {'\n'}
               </Text>
-              <Text style={styles.subListItem}>{'\n'}
-                <Text style={styles.emphasisText}>For International Users:</Text>
+              <Text style={styles.subListItem}>
+                <Text style={styles.emphasisText}>✔️ </Text>
+                Under the current program design (₹1,000 one-time per user), no TDS is deducted as the amount is below the prescribed threshold.
               </Text>
+            </View>
+
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+              <Text style={[
+                styles.sectionHeader,
+                { color: isDarkMode ? '#fff' : '#1434a4' }
+              ]}>For International Users</Text>
               <Text style={styles.subListItem}>
                 <Text style={styles.emphasisText}>✔️ </Text>
                 You are responsible for reporting and paying taxes in accordance with your local tax regulations.
@@ -630,9 +624,10 @@ const CashbackforFeedback = () => {
               </Text>
               <Text style={styles.subListItem}>
                 <Text style={styles.emphasisText}>✔️ </Text>
-                Cashback is treated as commission income and may be taxable under the laws of your country.
+                Cashback may be treated as an incentive or reward income under the laws of your country.
               </Text>
             </View>
+
             <View style={styles.sectionDivider} />
             <View style={styles.importantDetailsBox}>
               <Text style={[

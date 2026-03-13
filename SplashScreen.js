@@ -1,24 +1,49 @@
-import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, View, StatusBar } from 'react-native';
 import Video from 'react-native-video';
-import { StatusBar } from 'react-native';
 
-const SplashScreen = ({ onVideoEnd, onSkip }) => {
+const SplashScreen = ({ onVideoEnd }) => {
+
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+
+    timerRef.current = setTimeout(() => {
+      console.log("Fallback splash timeout");
+      if (onVideoEnd) onVideoEnd();
+    }, 7000);
+
+    return () => clearTimeout(timerRef.current);
+
+  }, []);
+
+  const handleVideoEnd = () => {
+
+    console.log("Video finished");
+
+    clearTimeout(timerRef.current);
+
+    if (onVideoEnd) onVideoEnd();
+  };
+
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#1434A4" barStyle="light-content" />
+
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+
       <Video
         source={require('./assets/splash_video.mp4')}
         style={styles.video}
         resizeMode="stretch"
-        onEnd={onVideoEnd}
+        paused={false}
+        muted={true}
         repeat={false}
+        useTextureView={false}
+        onEnd={handleVideoEnd}
+        onLoad={() => console.log("Video Loaded")}
+        onError={(e) => console.log("Video Error", e)}
       />
-      {onSkip ? (
-        <TouchableOpacity style={styles.skipOverlay} activeOpacity={0.8} onPress={onSkip} accessibilityLabel="splash-skip">
-          <Text style={styles.skipText}>Tap to continue</Text>
-        </TouchableOpacity>
-      ) : null}
+
     </View>
   );
 };
@@ -28,11 +53,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor:'black',
+    backgroundColor: "black",
   },
   video: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
 });
 

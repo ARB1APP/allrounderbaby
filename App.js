@@ -1,3 +1,5 @@
+import { PermissionsAndroid, Linking } from "react-native";
+import RNScreenshotPrevent from "react-native-screenshot-prevent";
 import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
 // silence console in production to reduce JS-thread overhead
 import './src/utils/disableConsole';
@@ -42,7 +44,7 @@ const Stack = createNativeStackNavigator();
 const url = BASE_URL;
 export const navigationRef = createNavigationContainerRef();
 export const skipNavigationGuards = { current: false };
-
+// ...existing code...
 const LightThemeColors = {
   background: '#FFFFFF',
   text: '#000000',
@@ -222,6 +224,12 @@ export const CustomDrawerContent = memo(({ theme, handleLogout, ...props }) => {
 });
 
 const App = () => {
+  useEffect(() => {
+    RNScreenshotPrevent.enabled(true);
+    return () => {
+      RNScreenshotPrevent.enabled(false);
+    };
+  }, []);
   const [initialRoute, setInitialRoute] = useState(null);
   const isLoggedInRef = React.useRef(false);
   const colorScheme = useColorScheme();
@@ -702,7 +710,7 @@ const App = () => {
             }}
           >
             {initialRoute === 'Splash' ? (
-              <SplashScreen onVideoEnd={handleVideoEnd} onSkip={() => setInitialRoute('Login')} />
+              <SplashScreen onVideoEnd={handleVideoEnd} />
             ) : (
               renderDrawerNavigator(initialRoute)
             )}
