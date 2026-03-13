@@ -32,7 +32,11 @@ class MainActivity : ReactActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Removed: FLAG_SECURE which was blocking screenshots/screen recording
+        // Enable FLAG_SECURE to block screenshots, screen recording, and screen mirroring
+        window.setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+            android.view.WindowManager.LayoutParams.FLAG_SECURE
+        )
     }
 
     // @RequiresApi(Build.VERSION_CODES.O)

@@ -161,17 +161,21 @@ const LoginOTP = ({ navigation }) => {
                         </View>
 
                         <TouchableOpacity style={styles.button} onPress={handleVerifyOTP} disabled={verifyLoading}>
-                            <Text style={styles.buttonText}>{verifyLoading ? 'Verifying...' : 'Verify OTP'}</Text>
+                            <Text style={[styles.buttonText, verifyLoading && styles.buttonTextDisabled]}>{verifyLoading ? 'Verifying...' : 'Verify OTP'}</Text>
                         </TouchableOpacity>
                     </>
                 ) : (
-                    <TouchableOpacity style={styles.button} onPress={handleSendOTP} disabled={loading}>
-                        <Text style={styles.buttonText}>{loading ? 'Sending...' : 'Send OTP'}</Text>
+                    <TouchableOpacity
+                        style={[styles.button, (loading || !identifier.trim()) && styles.buttonDisabled]}
+                        onPress={handleSendOTP}
+                        disabled={loading || !identifier.trim()}
+                    >
+                        <Text style={[styles.buttonText, (loading || !identifier.trim()) && styles.buttonTextDisabled]}>{loading ? 'Sending...' : 'Send OTP'}</Text>
                     </TouchableOpacity>
                 )}
 
                 <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 12 }}>
-                    <Text style={styles.backLink}>Back to Login</Text>
+                    <Text style={styles.backLink}>Close</Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAwareScrollView>
@@ -185,8 +189,10 @@ const styles = StyleSheet.create({
     label: { alignSelf: 'flex-start', marginLeft: '5%', marginBottom: 8, fontSize: 14, fontWeight: '600' },
     input: { width: '90%', backgroundColor: '#f2f4f7', borderRadius: 8, height: 48, paddingHorizontal: 12, fontSize: 14, borderColor: '#e1e4e8', borderWidth: 1 },
     button: { marginTop: 20, width: '90%', backgroundColor: '#1434A4', paddingVertical: 14, borderRadius: 6, alignItems: 'center' },
+    buttonDisabled: { backgroundColor: '#bdbdbd', opacity: 1 },
     buttonText: { color: '#FFFFFF', fontWeight: '700' },
-    backLink: { color: '#1434A4', textDecorationLine: 'underline', fontWeight: '600' },
+    buttonTextDisabled: { color: '#e6e6e6' },
+    backLink: { color: '#1434A4', textDecorationLine: 'underline', fontWeight: '700' },
     otpRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 6 },
     otpBox: { width: 44, height: 52, borderRadius: 8, borderWidth: 1, borderColor: '#e6e9ee', backgroundColor: '#fff', textAlign: 'center', fontSize: 18, fontWeight: '700', color: '#000' },
 });
