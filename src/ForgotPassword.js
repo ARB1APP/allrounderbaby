@@ -202,9 +202,17 @@ const ForgotPassword = ({ navigation }) => {
                     />
                 </View>
 
-                {/* Send OTP Button */}
-                {email?.trim() && !otpSent && (
-                    <TouchableOpacity style={[styles.otpButton, styles.fullWidthButton]} onPress={handleSendOtp} disabled={sendingOtp}>
+                {/* Send OTP Button - always visible until OTP is sent (disabled when no Login ID) */}
+                {!otpSent && (
+                    <TouchableOpacity
+                        style={[
+                            styles.otpButton,
+                            styles.fullWidthButton,
+                            (!email?.trim() || sendingOtp) ? styles.otpButtonDisabled : null,
+                        ]}
+                        onPress={handleSendOtp}
+                        disabled={sendingOtp || !email?.trim()}
+                    >
                         {sendingOtp ? <ActivityIndicator color="#fff" /> : <Text style={styles.otpButtonText}>Send OTP</Text>}
                     </TouchableOpacity>
                 )}
@@ -239,49 +247,53 @@ const ForgotPassword = ({ navigation }) => {
                     </>
                 )}
 
-                {otpVerified && <Text style={styles.otpInfo}>OTP verified — set your new password below.</Text>}
+                {otpVerified && (
+                    <>
+                        <Text style={styles.otpInfo}>OTP verified — set your new password below.</Text>
 
-                {/* New Password */}
-                <Text style={[styles.label, dynamicStyles.legend]}>New Password</Text>
-                <View style={[styles.fieldset, dynamicStyles.fieldset, { flexDirection: 'row', alignItems: 'center', backgroundColor: fieldsEnabled ? '#f2f2f2' : '#ececec' }]}>
-                    <TextInput
-                        style={[styles.input, dynamicStyles.input, { flex: 1, color: fieldsEnabled ? '#000' : '#6c757d' }]}
-                        placeholder="Create a password"
-                        placeholderTextColor="#a6a6a6"
-                        secureTextEntry={!showNew}
-                        value={newPassword}
-                        onChangeText={setNewPassword}
-                        editable={fieldsEnabled}
-                        onFocus={(event) => scrollRef.current?.scrollToFocusedInput(event.target, 220)}
-                    />
-                    <TouchableOpacity onPress={() => setShowNew(!showNew)} style={styles.eyeBtn} disabled={!fieldsEnabled}>
-                        <Text style={[styles.eyeText, !fieldsEnabled ? { color: '#9aa0a6' } : null]}>{showNew ? 'Hide' : 'Show'}</Text>
-                    </TouchableOpacity>
-                </View>
+                        {/* New Password */}
+                        <Text style={[styles.label, dynamicStyles.legend]}>New Password</Text>
+                        <View style={[styles.fieldset, dynamicStyles.fieldset, { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2' }]}>
+                            <TextInput
+                                style={[styles.input, dynamicStyles.input, { flex: 1, color: '#000' }]}
+                                placeholder="Create a password"
+                                placeholderTextColor="#a6a6a6"
+                                secureTextEntry={!showNew}
+                                value={newPassword}
+                                onChangeText={setNewPassword}
+                                editable={true}
+                                onFocus={(event) => scrollRef.current?.scrollToFocusedInput(event.target, 220)}
+                            />
+                            <TouchableOpacity onPress={() => setShowNew(!showNew)} style={styles.eyeBtn}>
+                                <Text style={styles.eyeText}>{showNew ? 'Hide' : 'Show'}</Text>
+                            </TouchableOpacity>
+                        </View>
 
-                {/* Confirm Password */}
-                <Text style={[styles.label, dynamicStyles.legend]}>Confirm Password</Text>
-                <View style={[styles.fieldset, dynamicStyles.fieldset, { flexDirection: 'row', alignItems: 'center', backgroundColor: fieldsEnabled ? '#f2f2f2' : '#ececec' }, passwordsMismatch ? { borderColor: '#dc3545' } : null]}>
-                    <TextInput
-                        style={[styles.input, dynamicStyles.input, { flex: 1, color: fieldsEnabled ? '#000' : '#6c757d' }]}
-                        placeholder="Confirm your password"
-                        placeholderTextColor="#a6a6a6"
-                        secureTextEntry={!showConfirm}
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
-                        editable={fieldsEnabled}
-                        onFocus={(event) => scrollRef.current?.scrollToFocusedInput(event.target, 220)}
-                    />
-                    <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeBtn} disabled={!fieldsEnabled}>
-                        <Text style={[styles.eyeText, !fieldsEnabled ? { color: '#9aa0a6' } : null]}>{showConfirm ? 'Hide' : 'Show'}</Text>
-                    </TouchableOpacity>
-                </View>
+                        {/* Confirm Password */}
+                        <Text style={[styles.label, dynamicStyles.legend]}>Confirm Password</Text>
+                        <View style={[styles.fieldset, dynamicStyles.fieldset, { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2' }, passwordsMismatch ? { borderColor: '#dc3545' } : null]}>
+                            <TextInput
+                                style={[styles.input, dynamicStyles.input, { flex: 1, color: '#000' }]}
+                                placeholder="Confirm your password"
+                                placeholderTextColor="#a6a6a6"
+                                secureTextEntry={!showConfirm}
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                editable={true}
+                                onFocus={(event) => scrollRef.current?.scrollToFocusedInput(event.target, 220)}
+                            />
+                            <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeBtn}>
+                                <Text style={styles.eyeText}>{showConfirm ? 'Hide' : 'Show'}</Text>
+                            </TouchableOpacity>
+                        </View>
 
-                {passwordsMismatch && <Text style={styles.errorText}>Passwords do not match</Text>}
+                        {passwordsMismatch && <Text style={styles.errorText}>Passwords do not match</Text>}
 
-                <TouchableOpacity style={[styles.resetButton, (!fieldsEnabled || loading) ? styles.resetButtonDisabled : null, styles.fullWidthButton]} onPress={handleReset} disabled={!fieldsEnabled || loading}>
-                    {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.resetButtonText}>Reset Password</Text>}
-                </TouchableOpacity>
+                        <TouchableOpacity style={[styles.resetButton, (loading) ? styles.resetButtonDisabled : null, styles.fullWidthButton]} onPress={handleReset} disabled={loading}>
+                            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.resetButtonText}>Reset Password</Text>}
+                        </TouchableOpacity>
+                    </>
+                )}
 
                 <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()}>
                     <Text style={styles.closeText}>Close</Text>
@@ -306,6 +318,7 @@ const styles = StyleSheet.create({
     closeText: { color: '#1434A4', fontWeight: '700' },
     resetButtonDisabled: { backgroundColor: '#a9a9a9' },
     otpButton: { marginTop: 10, alignSelf: 'center', width: '90%', maxWidth: 500, backgroundColor: '#1434A4', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+    otpButtonDisabled: { backgroundColor: '#a9a9a9' },
     otpButtonText: { color: '#fff', fontWeight: '700' },
     fullWidthButton: { width: '100%', alignSelf: 'center' },
     otpRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 6 },

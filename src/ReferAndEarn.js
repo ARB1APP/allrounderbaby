@@ -402,18 +402,13 @@ const ReferAndEarn = ({ navigation }) => {
     }
   };
 
-  const handleVideoPlayback = async (videoId, language, title, poster, stepParam = null) => {
+  const handleVideoPlayback = async (videoId, language, title, poster, stepParam) => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isInternetReachable) {
       Alert.alert("No Internet Connection", "Please check your internet connection and try again.");
       return;
     }
-    // read fresh token and userId to avoid race/stale state causing auth errors
-    const storedToken = await AsyncStorage.getItem('token');
-    const storedUserId = await AsyncStorage.getItem('userId');
-    const tokenToUse = storedToken || token;
-    const userIdToUse = storedUserId || userId;
-    if (!userIdToUse) {
+    if (!userId) {
       Alert.alert("Authentication Error", "User ID not available for watermark. Please log in again.");
       setIsVideoLoading(false);
       return;
@@ -431,7 +426,7 @@ const ReferAndEarn = ({ navigation }) => {
     const phone = typeof phoneRaw === 'string' ? phoneRaw : JSON.stringify(phoneRaw);
     const sessionId = typeof sessionIdRaw === 'string' ? sessionIdRaw : JSON.stringify(sessionIdRaw);
 
-    // console.log("Watermark Details:", { name, email, phone, sessionId });
+    console.log("Watermark Details:", { name, email, phone, sessionId });
 
     // Define safe positions
     const startX = 20;   // all watermarks start 5 units from left
@@ -486,24 +481,18 @@ const ReferAndEarn = ({ navigation }) => {
       }
     ];
 
-    //  console.log("Final Annotation Object:", annotationObject);
+    console.log("Final Annotation Object:", annotationObject);
 
 
-    // console.log("Annotation Object:", JSON.stringify(annotationObject));
-    const requestBody = {
-      UserId: userIdToUse ? parseInt(userIdToUse, 10) : null,
-      VideoId: videoId,
-      annotate: JSON.stringify(annotationObject)
-    };
-    //console.log("Request Body:", JSON.stringify(requestBody));
+    console.log("Annotation Object:", JSON.stringify(annotationObject));
     try {
       if (videoId) {
         const detailsData = await vdoCipher_api(videoId);
         if (detailsData && !detailsData.error) {
           const total_time = detailsData.length || 0;
+          const step = selectedVideoGroup?.stepNumber;
           const stepToSend = stepParam ?? step ?? 1;
-          // Instead of calling the backend POST endpoint, directly navigate
-          // to the video player passing the VideoId and prepared details.
+
           navigation.navigate('VideoPlayerScreen', {
             VideoId: videoId,
             annotate: JSON.stringify(annotationObject),
@@ -514,10 +503,12 @@ const ReferAndEarn = ({ navigation }) => {
             cameFrom: 'Refer and Earn',
             step: stepToSend,
             displayStep: 1,
-            stage_name: `Refer and Earn`,
+            stage_name: 'Refer and Earn',
+            sessionId: sessionId,
           });
           setIsVideoLoading(false);
-        } else {
+        }
+        else {
           let errMsg = "Failed to fetch video details from Vdocipher API.";
           if (detailsData && typeof detailsData.message === 'string') {
             errMsg = detailsData.message;
@@ -531,7 +522,8 @@ const ReferAndEarn = ({ navigation }) => {
         Alert.alert("Error", "Video not found.");
         setIsVideoLoading(false);
       }
-    } catch (err) {
+    }
+    catch (err) {
       const errMsg = typeof err?.message === 'string' ? err.message : 'Unknown error';
       Alert.alert("Network Error", `An unexpected error occurred: ${errMsg}`);
       setIsVideoLoading(false);
@@ -595,7 +587,7 @@ const ReferAndEarn = ({ navigation }) => {
       const videoGroup = {
         hindiVideo: hindiVideo ? { id: hindiVideo.id } : null,
         englishVideo: englishVideo ? { id: englishVideo.id } : null,
-        stepNumber: 1,
+        stepNumber: 'refer-and-earn',
       };
 
       setSelectedVideoGroup(videoGroup);
@@ -607,7 +599,7 @@ const ReferAndEarn = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1434A4" />
+      <StatusBar barStyle={theme.statusBarContent} backgroundColor={theme.screenBackground} />
       <ScreenScroll contentContainerStyle={styles.scrollViewContent}>
         <LinearGradient
           colors={['#FFF8E5', '#FFFDEB']}
@@ -713,12 +705,17 @@ const ReferAndEarn = ({ navigation }) => {
               <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>Processing & Bank Details</Text>
 
               <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✔️</Text> Update your bank details after logging in to our website—this account will be used for your earning payout.
+                <Text style={styles.boldText}>✔️</Text> Update your bank details after logging in to our website — this will be used for your earning payout (for eligible domestic users)
                 {'\n'}
               </Text>
 
               <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✔️</Text> Cashback is processed within 1 to 60 days depending on transaction volume and verification time.
+                <Text style={styles.boldText}>✔️</Text> International payouts are available only in supported countries.
+                {'\n'}
+              </Text>
+
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text> Payouts are processed within 1 to 60 days depending on transaction volume and verification time​.
               </Text>
             </View>
 
@@ -731,53 +728,67 @@ const ReferAndEarn = ({ navigation }) => {
 
               <Text style={styles.listItem}>
                 <Text style={styles.boldText}>✔️</Text>
-                ️ For payments made in currencies other than INR, applicable transaction fees and currency conversion charges may apply
+                ️ For international users, payouts are facilitated through a third-party global payout platform (such as Tremendous), subject to availability in eligible countries.
                 {'\n'}
               </Text>
 
               <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✔️</Text> The final amount credited depends on your bank’s deductions and exchange rates.
+                <Text style={styles.boldText}>✔️</Text> Any transaction fees, currency conversion charges, or bank deductions (if applicable) are determined by the payout platform and recipient’s bank
+                {'\n'}
+              </Text>
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text> The final amount credited depends on the payout method selected and applicable exchange rates
               </Text>
             </View>
 
-            <View style={styles.sectionDivider} />
 
             <View style={styles.sectionDivider} />
             <View style={styles.importantDetailsBox}>
 
               <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>
-                Tax & Compliance
+
+                Tax & Compliance (India)
               </Text>
 
               <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✔️</Text> Referral income is considered commission income and is subject to Indian tax laws.
+                <Text style={styles.boldText}>✔️</Text> Referral earnings are treated as commission income and are subject to Indian tax laws
                 {'\n'}
               </Text>
 
               <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✔️</Text> Payouts may be withheld until PAN details are submitted to ensure tax compliance.
+                <Text style={styles.boldText}>✔️</Text> Payouts may be withheld until PAN details are submitted to ensure tax compliance
                 {'\n'}
               </Text>
 
               <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✔️</Text> A TDS (Tax Deducted at Source) of 5% has been deducted under Section 194H of the Income Tax Act,
-                1961. Payouts are made after tax deduction.
-                You may claim credit for this TDS when filing your income tax return
-                {'\n'}{'\n'}
+                <Text style={styles.boldText}>✔️</Text> TDS is deducted under Section 194H of the Income Tax Act, 1961 at the applicable rate and payouts are made after tax deduction
+                {'\n'}
+              </Text>
+              <Text style={styles.listItem}>
+                <Text style={styles.boldText}>✔️</Text> You may claim credit for such TDS while filing your income tax return
+
+                {'\n'}
               </Text>
 
 
+            </View>
 
-              <Text style={styles.boldText}>For International Users:   {'\n'}</Text>
+            <View style={styles.sectionDivider} />
+            <View style={styles.importantDetailsBox}>
+
+              <Text style={[styles.contentHeader, { color: isDarkMode ? '#fff' : '#1434a4' }]}>For International Users
+              </Text>
 
               <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✔️ </Text>You are responsible for reporting your referral income according to your local tax laws.
+                <Text style={styles.boldText}>✔️ </Text>You are responsible for reporting your referral income in accordance with your local tax laws
+
                 {'\n'}
               </Text>
 
               <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✔️ </Text>We do not deduct or file international taxes on your behalf.
+                <Text style={styles.boldText}>✔️ </Text>️ We do not deduct or file international taxes on your behalf
               </Text>
+
 
             </View>
 
@@ -793,7 +804,7 @@ const ReferAndEarn = ({ navigation }) => {
               </Text>
 
               <Text style={styles.listItem}>
-                <Text style={styles.boldText}>✔️ </Text>By receiving referral earnings, you agree to our Terms of Use and Privacy Policy.
+                <Text style={styles.boldText}>✔️ </Text>By receiving referral earnings, you agree to our Terms of Use and Privacy Policy
               </Text>
 
 
@@ -803,7 +814,7 @@ const ReferAndEarn = ({ navigation }) => {
               <Text style={[styles.listItem, { textAlign: 'center' }]}>
                 <Text style={styles.boldText}>
                   Science says – “Your child grows better with good friends”
-                  REFER your child’s friends’ parents !
+                  Refer your child’s friend’s parents !
                 </Text>
               </Text>
             </View>
@@ -815,43 +826,39 @@ const ReferAndEarn = ({ navigation }) => {
         </TouchableOpacity>
       </ScreenScroll>
       {isLanguageModalVisible && selectedVideoGroup && (
-        <Pressable style={styles.modalOverlay} onPress={() => setIsLanguageModalVisible(false)}>
-          <Pressable style={styles.modalView} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
+        <Pressable style={styles.modalLikeContainer} onPress={() => setIsLanguageModalVisible(false)}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalContentMainDiv}>
               <Text style={styles.modalTitle}>Select Language</Text>
-              <TouchableOpacity onPress={() => setIsLanguageModalVisible(false)} style={styles.modalCloseButton}>
-                <Text style={styles.modalCloseIcon}>✕</Text>
+              <TouchableOpacity onPress={() => setIsLanguageModalVisible(false)}>
+                <Text style={styles.modalContentClose}>✕</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.borderLine} />
-            <Text style={styles.radioGroupTitle}>In which language would you like to watch this video?</Text>
-            <View style={styles.modalButtonContainer}>
+            <Text style={styles.modalText}>In which language would you like to watch this video?</Text>
+            <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, !selectedVideoGroup?.hindiVideo && styles.disabledButton, { backgroundColor: theme.primaryAction }]}
+                style={[styles.modalButton, !selectedVideoGroup.hindiVideo && styles.disabledButton]}
                 onPress={() => {
-                  if (selectedVideoGroup?.hindiVideo) {
-                    setIsLanguageModalVisible(false);
-                    handleVideoPlayback(selectedVideoGroup.hindiVideo.id, 'hindi', 'Refer & Earn Video (Hindi)', null, selectedVideoGroup.stepNumber || 1);
-                  }
+                  setIsLanguageModalVisible(false);
+                  handleVideoPlayback(selectedVideoGroup.hindiVideo.id, 'hindi', 'Refer & Earn Video (Hindi)', null);
                 }}
-                disabled={!selectedVideoGroup?.hindiVideo}
+                disabled={!selectedVideoGroup.hindiVideo}
               >
-                <Text style={[styles.modalButtonText, { color: theme.primaryActionText }]}>Hindi</Text>
+                <Text style={styles.modalButtonText}>Hindi</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, !selectedVideoGroup?.englishVideo && styles.disabledButton, { backgroundColor: theme.primaryAction }]}
+                style={[styles.modalButton, !selectedVideoGroup.englishVideo && styles.disabledButton]}
                 onPress={() => {
-                  if (selectedVideoGroup?.englishVideo) {
-                    setIsLanguageModalVisible(false);
-                    handleVideoPlayback(selectedVideoGroup.englishVideo.id, 'english', 'Refer & Earn Video (English)', null, selectedVideoGroup.stepNumber || 1);
-                  }
+                  setIsLanguageModalVisible(false);
+                  handleVideoPlayback(selectedVideoGroup.englishVideo.id, 'english', 'Refer & Earn Video (English)', null);
                 }}
-                disabled={!selectedVideoGroup?.englishVideo}
+                disabled={!selectedVideoGroup.englishVideo}
               >
-                <Text style={[styles.modalButtonText, { color: theme.primaryActionText }]}>English</Text>
+                <Text style={styles.modalButtonText}>English</Text>
               </TouchableOpacity>
             </View>
-          </Pressable>
+          </View>
         </Pressable>
       )}
       {shareModalVisible && (
@@ -880,18 +887,18 @@ const ReferAndEarn = ({ navigation }) => {
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={styles.modalButtonContainer}>
+            <View style={styles.modalButtonContainers}>
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: theme.modalButtonShareBackground }]}
                 onPress={performActualShare}
               >
-                <Text style={[styles.modalButtonText, { color: theme.modalButtonShareText }]}>Share Now</Text>
+                <Text style={[{ color: theme.modalButtonShareText, fontWeight: 'bold' }]}>Share Now</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: theme.modalButtonCloseBackground }]}
                 onPress={closeShareModal}
               >
-                <Text style={[styles.modalButtonText, { color: theme.modalButtonCloseText }]}>Close</Text>
+                <Text style={[{ color: theme.modalButtonCloseText, fontWeight: 'bold' }]}>Close</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -945,7 +952,7 @@ const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) 
     fontSize: 15,
     lineHeight: 22,
     color: theme.textSecondary,
-    marginBottom: 10,
+    // marginBottom: 10,
     marginHorizontal: 10,
   },
   scrollViewContent: {
@@ -1160,6 +1167,13 @@ const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) 
     width: '100%',
     marginTop: 10,
   },
+  modalButtonContainers: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 10,
+    marginTop: 10,
+    justifyContent: 'center',
+  },
   modalButton: {
     borderRadius: 8,
     paddingVertical: 12,
@@ -1183,6 +1197,18 @@ const createReferAndEarnStyles = (theme, windowWidth = 360, windowHeight = 640) 
     backgroundColor: 'gray',
     opacity: 0.6
   },
+  // ...existing code...
+  modalLikeContainer: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
+  modalContent: { backgroundColor: theme.cardBackground, borderRadius: 10, padding: 20, width: '90%', maxWidth: 380 },
+  modalContentMainDiv: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 0 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: theme.linkColor },
+  modalContentClose: { fontSize: 16, fontWeight: 'bold', color: theme.textMutedClose },
+  borderLine: { borderBottomWidth: 1, borderBottomColor: theme.borderColorD, marginVertical: 10 },
+  modalText: { fontSize: 16, textAlign: 'center', marginBottom: 20, color: theme.textPrimaryModal },
+  modalButtons: { flexDirection: 'row', justifyContent: 'space-around', width: '100%' },
+  modalButton: { backgroundColor: theme.primaryAction, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, width: '45%', alignItems: 'center' },
+  modalButtonText: { color: theme.cardBackground, fontSize: 15, fontWeight: 'bold' },
+  disabledButton: { backgroundColor: theme.textMuted },
   image: { width: Math.max(150, windowWidth - 40), height: 200, borderRadius: 5, alignSelf: 'center' },
   thumbnailWrapper: { width: Math.max(120, windowWidth - 70), height: 180, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   pulseShadow: { position: 'absolute', width: 80, height: 80, borderRadius: 40, left: '50%', top: '50%', zIndex: 2 },
